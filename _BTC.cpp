@@ -166,6 +166,7 @@ CTimeSeries::CTimeSeries(string Filename)
 	while (file.eof()== false)
 	{
 		s = aquiutils::getline(file,',');
+
 		if (s.size() == 1)
 		{
 			error = true;
@@ -189,6 +190,17 @@ CTimeSeries::CTimeSeries(string Filename)
 	file.close();
 }
 
+CTimeSeries::CTimeSeries(arma::mat &x, arma::mat &y)
+{
+    if (x.size()!=y.size())
+        return;
+
+    for (int i=0; i<x.size(); i++)
+    {
+        append(x[i],y[i]);
+    }
+
+}
 /*CTimeSeries CTimeSeries::operator = (const CTimeSeries &CC)
 {
 	n=CC.n;
@@ -929,6 +941,16 @@ double CTimeSeries::maxC()
     return max;
 }
 
+double CTimeSeries::maxt()
+{
+    double max = -1e32;
+    for (int i=0; i<n; i++)
+    {	if (t[i]>max)
+            max = t[i];
+    }
+    return max;
+}
+
 double CTimeSeries::maxfabs()
 {
     if (max_fabs>0)
@@ -951,6 +973,16 @@ double CTimeSeries::minC()
     for (int i=0; i<n; i++)
     {	if (C[i]<min)
             min = C[i];
+    }
+    return min;
+}
+
+double CTimeSeries::mint()
+{
+    double min = 1e32;
+    for (int i=0; i<n; i++)
+    {	if (t[i]<min)
+            min = t[i];
     }
     return min;
 }

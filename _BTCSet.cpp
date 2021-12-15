@@ -415,7 +415,7 @@ void CTimeSeriesSet::getfromfile(string filename, bool varytime)
 	if (varytime==false)
 		while (file.eof()== false)
 		{
-			s = aquiutils::getline(file,',');
+            s = aquiutils::getline(file,',');
 			if (s.size()>0)
 			{
                             if (s[0] == "names")
