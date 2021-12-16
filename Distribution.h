@@ -22,8 +22,8 @@ public:
 	int n;
 	vector<double> s;
 	vector<double> e;
-	CTimeSeries inverse_cumulative;
-	CTimeSeries density;
+        CTimeSeries<double> inverse_cumulative;
+        CTimeSeries<double> density;
 	CDistribution(int nn);
 	CDistribution(const CDistribution &C);
 	CDistribution operator = (const CDistribution &C);

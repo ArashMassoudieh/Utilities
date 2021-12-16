@@ -6,7 +6,10 @@
 #include <vector>
 #include "QuickSort.h"
 #include "NormalDist.h"
-
+#ifdef _arma
+#include "mlpack/core.hpp"
+#include "armadillo"
+#endif
 //GUI
 #ifdef QT_version
 #include "qlist.h"
@@ -39,11 +42,16 @@ public:
     CTimeSeries interpol(CTimeSeries &x) const; //interpolate at times in the time axis of x
 	CTimeSeries(const CTimeSeries &C);
 	CTimeSeries(string Filename); //create BTC based on the filename
+#ifdef _arma
+    CTimeSeries(arma::mat &x, arma::mat &y); //build timeseries from arma::mat
+#endif
 	CTimeSeries& operator = (const CTimeSeries &C);
 	void readfile(string); //read the values from a text file
 	void writefile(string Filename); //writes the BTC contets into a fild
     T maxC(); //returns the maximum value
     T minC(); //returns the minimum value
+    T maxt();
+    T mint();
 	void setnumpoints(int); //resize the timeseries
 	CTimeSeries Log(); //take the log of all the data points
     CTimeSeries Log(T min); //log(min(min,C))
