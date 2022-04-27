@@ -655,7 +655,7 @@ T diff(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, CTimeSeries<T> Q)
 }
 
 template<class T>
-void CTimeSeries<T>::readfile(string Filename)
+bool CTimeSeries<T>::readfile(string Filename)
 {
     clear();
     filename = Filename;
@@ -664,7 +664,7 @@ void CTimeSeries<T>::readfile(string Filename)
 	if (file.good() == false)
 	{
 		file_not_found = true;
-		return;
+                return false;
 	}
 
 	if (file.good())
@@ -691,6 +691,7 @@ void CTimeSeries<T>::readfile(string Filename)
 		}
 	}
     file_not_found = false;
+    return true;
     file.close();
 
 }
@@ -743,7 +744,7 @@ CTimeSeries<T> operator/(CTimeSeries<T> &CTimeSeries_T, T alpha)
     for (int i=0; i<CTimeSeries_T.n; i++)
     {
         //S.t[i] = CTimeSeries_T.t[i];
-        S.C[i] = 1/alpha*CTimeSeries_T.C[i];
+        S.SetC(i, 1/alpha*CTimeSeries_T.GetC(i));
     }
 
 
@@ -1500,6 +1501,18 @@ CTimeSeries<T> operator>(CTimeSeries<T> BTC1, CTimeSeries<T> BTC2)
 		S.C[i] = BTC1.C[i] - BTC2.C[i];
 
 	return S;
+}
+
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::inverse_cumulative_uniform(int ninitervals)
+{
+    CTimeSeries<T> out;
+    out.t = C;
+    out.C = t;
+    out.n = n;
+
+    return out.make_uniform(ninitervals);
+
 }
 #ifdef QT_version
 template<class T>

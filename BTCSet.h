@@ -62,7 +62,7 @@ public:
     void resize(unsigned int _size);
     void ResizeIfNeeded(unsigned int _increment);
     void adjust_size();
-	bool file_not_found=false;
+    bool file_not_found=false;
     CTimeSeries<T> &operator[](int index);
     CTimeSeries<T> &operator[](string BTCName);
     bool Contains(string BTCName);

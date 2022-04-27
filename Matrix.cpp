@@ -8,7 +8,8 @@
 #define ARMA_DONT_PRINT_ERRORS
 #include "armadillo"
 #include "Vector.h"
-#include "Expression.h"
+//#include "Expression.h"
+#include "Utilities.h"
 #ifdef QT_version
 #include "qstring.h"
 #include "qmap.h"

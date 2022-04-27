@@ -1,8 +1,11 @@
 #include "Distribution.h"
 #include "gsl/gsl_cdf.h"
 #include "Utilities.h"
+#include "interface.h"
 
-CDistribution::CDistribution(void)
+vector<string> CDistribution::list_of_commands = vector<string>({"CreateDistribution"});
+
+CDistribution::CDistribution(void):Interface()
 {
 	pi = 4 * atan(1.0);
 }
@@ -16,12 +19,13 @@ CDistribution::CDistribution(string _name)
 {
 	pi = 4 * atan(1.0);
 	name = _name;
-	if (name == "normal") params.resize(2);
-	if (name == "lognormal") params.resize(2);
-	if (name == "levy") params.resize(1);
-	if (name == "exp") params.resize(1);
-	if (name == "invgaussian") params.resize(2);
-	if (name == "gamma") params.resize(2);
+    if (name == "normal") {params.resize(2); DistributionType=distribution_type::normal;}
+    if (name == "lognormal") {params.resize(2); DistributionType=distribution_type::lognormal;}
+    if (name == "levy") {params.resize(1); DistributionType=distribution_type::levy;}
+    if (name == "exp") {params.resize(1); DistributionType=distribution_type::exponential;}
+    if (name == "invgaussian") {params.resize(2); DistributionType=distribution_type::inverse_gaussian;}
+    if (name == "gamma") {params.resize(2); DistributionType=distribution_type::gamma;}
+    if (name == "nonparametric") {DistributionType=distribution_type::nonparameteric;}
 
 }
 
@@ -241,9 +245,29 @@ bool CDistribution::readfromfile(const string &filename)
         cout<< "File [" << filename << "] was not found!"<<endl;
         return false;
     }
-    CBTC cumulative = density.getcummulative();
-    cumulative = cumulative/cumulative.C[cumulative.n-1];
+    CTimeSeries<double> cumulative = density.getcummulative();
+    cumulative = cumulative/cumulative.GetC(cumulative.n-1);
     inverse_cumulative = cumulative.inverse_cumulative_uniform();
     return true;
 }
+
+vector<string> CDistribution::commands()
+{
+    return Commands();
+}
+
+vector<string> CDistribution::Commands()
+{
+    //return vector<string>();
+    return list_of_commands;
+}
+
+bool CDistribution::HasCommand(const string &cmd)
+{
+    if (aquiutils::lookup(Commands(),cmd)!=-1)
+        return true;
+    else
+        return false;
+}
+
 

@@ -46,7 +46,7 @@ public:
     CTimeSeries(arma::mat &x, arma::mat &y); //build timeseries from arma::mat
 #endif
 	CTimeSeries& operator = (const CTimeSeries &C);
-	void readfile(string); //read the values from a text file
+    bool readfile(string); //read the values from a text file
 	void writefile(string Filename); //writes the BTC contets into a fild
     T maxC(); //returns the maximum value
     T minC(); //returns the minimum value
@@ -120,6 +120,7 @@ public:
     unsigned int tSize() {return t.size();}
     unsigned int DSize() {return D.size(); }
     void AppendD(const T &value) { D.push_back(value); }
+    CTimeSeries<T> inverse_cumulative_uniform(int ninitervals=100);
 private:
     vector<T> t;
     vector<T> C;

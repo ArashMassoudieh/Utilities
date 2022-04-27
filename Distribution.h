@@ -5,10 +5,13 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "BTC.h"
+#include "interface.h"
 
 using namespace std;
 
-class CDistribution
+enum class distribution_type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
+
+class CDistribution: public Interface
 {
 public:
 	CDistribution(void);
@@ -18,13 +21,18 @@ public:
 	string name;
 	double evaluate(double x);
 	double evaluate_CDF(double x, bool flux_w = false);
-	double pi;
+    static bool HasCommand(const string &cmd);
+    vector<string> commands();
+    static vector<string> Commands();
+    static vector<string> list_of_commands;
+    double pi;
 	int n;
 	vector<double> s;
 	vector<double> e;
-        CTimeSeries<double> inverse_cumulative;
-        CTimeSeries<double> density;
-	CDistribution(int nn);
+    CTimeSeries<double> inverse_cumulative;
+    CTimeSeries<double> density;
+    distribution_type DistributionType;
+    CDistribution(int nn);
 	CDistribution(const CDistribution &C);
 	CDistribution operator = (const CDistribution &C);
 	int GetRand();

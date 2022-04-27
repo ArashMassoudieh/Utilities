@@ -1114,6 +1114,7 @@ void CTimeSeriesSet<T>::adjust_size()
 }
 
 
+
 #ifdef QT_version
 template <class T>
 void CTimeSeriesSet<T>::compact(QDataStream &data) const
