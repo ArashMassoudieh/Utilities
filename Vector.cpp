@@ -37,24 +37,6 @@ CVector::CVector(const double x, int n)
 	for (int i=0; i<num; i++) vec[i] = x;
 }
 
-CVector::CVector(const string &filename)
-{
-    ifstream file(filename);
-
-    if (file.good())
-    {
-    vector<double> s = aquiutils::ATOF(aquiutils::getline(file));
-        if (s.size() > 1)
-        {
-            append(s[0]);
-            append(s[1]);
-        }
-    }
-
-}
-
-
-
 CVector::CVector(const double x_min, const double x_max, int n)
 {
 	num = n+1;
@@ -73,6 +55,14 @@ CVector::CVector(const vector<double> &v)
 {
 	num = v.size();
 	vec = v;
+}
+
+CVector::CVector(CVector_arma &v)
+{
+	num = v.num;
+	vec.resize(num);
+	for (int i = 0; i<num; i++)
+		vec[i] = v[i];
 }
 
 CVector::CVector(const vector<int> &v)
@@ -95,6 +85,14 @@ double& CVector::operator[](int i)
 		return vec[i];
 	else
 		return *p;
+}
+
+double CVector::at(int i) const
+{
+    if ((i<num) & (i>-1))
+        return vec[i];
+    else
+        return -9999;
 }
 
 int CVector::range(int i)
@@ -142,7 +140,7 @@ void CVector::swap(int i, int j)
 
 }
 
-int CVector::getsize() {return num;}
+int CVector::getsize() const {return num;}
 
 CVector& CVector::operator*=(double x)
 {
@@ -160,6 +158,16 @@ CVector& CVector::operator/=(double x)
 
 }
 
+bool CVector::haszeros() const
+{
+    bool out = false;
+    for (int i=0; i<num; ++i)
+        if (vec[i] == 0) out = true;
+
+    return out;
+
+}
+
 CVector& CVector::operator+=(const CVector &v)
 {
 	for (int i=0; i<num; ++i)
@@ -174,14 +182,14 @@ CVector& CVector::operator-=(const CVector &v)
 	return *this;
 }
 
-CVector operator+(const CVector &v1, const CVector &v2)
+CVector operator+(CVector v1, CVector v2)
 {
 	CVector v=v1;
 	for (int i=0; i<v1.num; i++) v[i]=v1.vec[i]+v2.vec[i];
 	return v;
 }
 
-CVector operator-(const CVector &v1, const CVector &v2)
+CVector operator-(CVector v1, CVector v2)
 {
 	CVector v=v1;
 	for (int i=0; i<v1.num; i++) v[i]=v1.vec[i]-v2.vec[i];
@@ -194,11 +202,12 @@ double dotproduct(CVector v1, CVector v2)
 	double d;
 	if (v1.num == v2.num)
 	{
-	d = 0;
-	for (int i=0; i<v1.num; ++i)
-		d += v1.vec[i]*v2.vec[i];
-	return d;
+        d = 0;
+        for (int i=0; i<v1.num; ++i)
+            d += v1.vec[i]*v2.vec[i];
+        return d;
 	}
+	return 0;
 }
 
 CVector& CVector::operator*=(const CVector& v)
@@ -249,20 +258,11 @@ CVector operator+(double a, CVector v)
 	return v1;
 }
 
-CVector operator-(double a, CVector &v)
+CVector operator-(double a, CVector v)
 {
 	CVector v1(v.num);
 	for (int i=0; i<v.num; i++)
 		v1[i] = a - v[i];
-	return v1;
-
-}
-
-CVector operator-(CVector &v, double a)
-{
-	CVector v1(v.num);
-	for (int i=0; i<v.num; i++)
-		v1[i] = v[i]-a;
 	return v1;
 
 }
@@ -315,6 +315,13 @@ bool CVector::is_finite()
 	return r;
 }
 
+string CVector::toString()
+{
+	string s;
+    s += aquiutils::numbertostring(vec);
+	return s; 
+}
+
 double CVector::max()
 {
 	double a = -1E14;
@@ -325,25 +332,6 @@ double CVector::max()
 	}
 	return a;
 
-}
-
-vector<int> CVector::maxelements()
-{
-    double a = -1E14;
-    vector<int> max_elements;
-	for (int i=0;i<num; i++)
-	{
-		if (vec[i]>a)
-			a = vec[i];
-	}
-	for (int i=0;i<num; i++)
-    {
-        if (a==vec[i])
-        {
-            max_elements.push_back(i);
-        }
-    }
-    return max_elements;
 }
 
 double max(CVector &V)
@@ -376,6 +364,21 @@ double CVector::abs_max()
 			a = fabs(vec[i]);
 	}
 	return a;
+}
+
+int CVector::abs_max_elems()
+{
+	double a = -1E14;
+	int ii;
+	for (int i = 0; i<num; i++)
+	{
+		if (fabs(vec[i]) > a)
+		{
+			a = fabs(vec[i]);
+			ii = i;
+		}
+	}
+	return ii;
 }
 
 double abs_max(CVector &V)
@@ -420,32 +423,15 @@ CVector CVector::Log()
 	return x;
 }
 
-CVector Log(CVector &V)
+CVector Log(CVector V)
 {
 	return V.Log();
 
 }
 
-double avg(CVector &V)
+double avg(CVector V)
 {
 	return V.sum()/V.num;
-}
-
-double stdev(CVector &V)
-{
-	double average = avg(V);
-	double sumsquared = 0;
-	for (int i=0; i<V.num; i++)
-	{
-        sumsquared += pow(V[i]-average,2);
-	}
-	return sqrt(sumsquared/V.num);
-}
-
-CVector NormalizetoGaussian(CVector &V)
-{
-    CVector Vout = (V-avg(V))/stdev(V);
-    return Vout;
 }
 
 CVector CVector::Exp()
@@ -473,7 +459,7 @@ CVector CVector::abs()
 }
 
 
-CVector Exp(CVector &V)
+CVector Exp(CVector V)
 {
 	return V.Exp();
 
@@ -550,7 +536,7 @@ CVector CVector::sort()
 	return *this;
 }
 
-CVector combinesort(const CVector& V1, const CVector &V2)
+CVector combinesort(const CVector V1, const CVector V2)
 {
 	CVector V3 = V1;
 	CVector V = V3.append(V2);
@@ -558,7 +544,7 @@ CVector combinesort(const CVector& V1, const CVector &V2)
 
 }
 
-CVector combinesort_s(const CVector& V1, const CVector &V2)
+CVector combinesort_s(const CVector V1, const CVector V2)
 {
 	int n1=0;
 	int n2=0;
@@ -593,7 +579,7 @@ CVector combinesort_s(const CVector& V1, const CVector &V2)
 int lookup(vector<int> v, int val)
 {
 	int res = -1;
-	for (int i=0; i<int(v.size()); i++)
+	for (unsigned int i=0; i<v.size(); i++)
 		if (v[i] == val)
 			res = i;
 
@@ -604,7 +590,7 @@ int lookup(vector<int> v, int val)
 int lookup(vector<string> v, string val)
 {
 	int res = -1;
-	for (int i=0; i<int(v.size()); i++)
+	for (unsigned int i=0; i<v.size(); i++)
 		if (v[i] == val)
 			res = i;
 
@@ -615,7 +601,7 @@ int lookup(vector<string> v, string val)
 int lookup(vector<double> v, double val)
 {
 	int res = -1;
-	for (int i=0; i<int(v.size()); i++)
+	for (unsigned int i=0; i<v.size(); i++)
 		if (v[i] == val)
 			res = i;
 	return res;
@@ -648,7 +634,7 @@ double H(double x)
 vector<double> H(vector<double> x)
 {
 	vector<double> X(x.size());
-	for (int i=0; i<int(x.size()); i++)
+	for (unsigned int i=0; i<x.size(); i++)
 		X[i] = H(x[i]);
 
 	return X;
@@ -710,6 +696,16 @@ vector<vector<double>> create_vector(int i, int j)
 		X[i].resize(j);
 
 	return X;
+
+}
+
+vector<int> CVector::negative_elements()
+{
+    vector<int> out;
+    for (int i=0; i<num; i++)
+        if (vec[i]<0)
+            out.push_back(i);
+    return out;
 
 }
 

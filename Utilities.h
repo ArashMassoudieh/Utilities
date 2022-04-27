@@ -10,6 +10,7 @@
 #include <sstream>
 
 #define SMALLNUMBER 1e-23
+#define PI 3.14159265359
 
 using namespace std;
 
@@ -63,16 +64,18 @@ namespace aquiutils
     void writeendl(ofstream& f);
     double Heavyside(double x);
     double Pos(double x);
-    string numbertostring(double x, bool scientific);
-    string numbertostring(vector<double> x, bool scientific=false);
+    string numbertostring(const double &x, bool scientific=false);
+    string numbertostring(vector<double> &x, bool scientific=false);
     string numbertostring(int x);
     string numbertostring(unsigned int x);
-    string numbertostring(vector<int> x, bool scientific=false);
+    string numbertostring(vector<int> &x, bool scientific=false);
     string tail(std::string const& source, size_t const length);
     string tabs(int i);
     bool And(vector<bool> x);
-    double max(vector<double> x);
-    int max(vector<int> x);
+    //double max(vector<double> x);
+    //int max(vector<int> x);
+    double Max(vector<double>);
+    int Max(vector<int>);
     string remove_backslash_r(const string &ss);
     string GetOnlyFileName(const string &fullfilename);
     template<class T>
@@ -81,6 +84,7 @@ namespace aquiutils
         unsigned int i=rand()%vec.size();
         return vec[i];
     };
+    template<typename T> bool isfinite(T arg);
 
 }
 

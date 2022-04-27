@@ -6,11 +6,9 @@
 #include "armadillo"
 
 
-
 using namespace arma;
 using namespace std;
 
-class CMatrix_arma_sp;
 class CMatrix_arma;
 class CVector;
 class SizeDist;
@@ -29,12 +27,12 @@ public:
 	CVector_arma(CVector &v);
 	CVector_arma(const vector<int> &v);
 	CVector_arma(const double x, int n);
-	CVector_arma(const double x_min, const double x_max, int n);  //CVector_arma:: is redundant. However, works fine here.
+    CVector_arma(const double x_min, const double x_max, int n);  //CVector_arma:: is redundant. However, works fine here.
 	CVector_arma(const CVector_arma&);
 	double& operator[](int);
 	virtual ~CVector_arma();
 	int num;
-	int range(int);
+    int range(int);
 	CVector_arma& operator=(const CVector_arma&);
 	CVector_arma& operator=(const CVector&);
 	CVector_arma& operator=(const vector<double>&);
@@ -42,25 +40,26 @@ public:
 	CVector_arma operator=(mat);
 	CVector_arma& operator+();
 	void swap(int , int );
-	int getsize();
+    int getsize() const;
+    bool haszeros() const;
 	CVector_arma& operator*=(double);
 	CVector_arma& operator/=(double);
 	CVector_arma& operator+=(const CVector_arma&);
 	CVector_arma& operator-=(const CVector_arma&);
 	CVector_arma& operator*=(const CVector_arma&);
 	friend double dotproduct(CVector_arma, CVector_arma);
-	friend CVector_arma mult(CMatrix_arma_sp&, CVector_arma&);
+	friend CVector_arma mult(CMatrix_arma&, CVector_arma&);
 	friend double norm(CVector_arma);			//Friend can be deleted. we don't have any private or protected variable in this class  //
 	friend double dotproduct(CVector_arma v1, CVector_arma v2);
 	bool operator==(double v);
 	bool operator==(CVector_arma &v);
 	double max();
 	double min();
-	vector<int> maxelements();
 	double norm2();
 	double sum();
 	double abs_max();
-	CMatrix_arma_sp T();
+	int abs_max_elems();
+	CMatrix_arma T();
 	CVector_arma Log();
 	CVector_arma abs();
 	CVector_arma H();
@@ -71,7 +70,6 @@ public:
 	CVector_arma Exp();
 	vector<int> Int();
 	CMatrix_arma diagmat();
-	CMatrix_arma_sp diagmat_sp();
 	CVector_arma append(const CVector_arma& V1);
 	CVector_arma append(double d);
 	CVector_arma sort();
@@ -79,7 +77,9 @@ public:
 	void print(string s);
 	CVector_arma sub(int i, int j);
 	bool is_finite();
-
+	vector<int> get_nan_elements();
+    string toString() const;
+    vector<int> negative_elements();
 };
 
 CVector_arma Log(CVector_arma &);

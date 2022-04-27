@@ -1,7 +1,5 @@
 #include "Utilities.h"
 
-#define SMALLNUMBER 1e-23
-
 using namespace std;
 
 namespace aquiutils
@@ -200,7 +198,7 @@ namespace aquiutils
 
     bool isnumber(char S)
     {
-        if ((((int)S > 47) && ((int)S < 58)) || (S=='.'))
+        if ((((int)S > 47) && ((int)S < 58)) || (S=='.') || (S=='-'))
             return true;
         else
             return false;
@@ -503,7 +501,8 @@ namespace aquiutils
         if (x>0) return x; else return 0;
     }
 
-    string numbertostring(double x, bool scientific)
+
+    string numbertostring(const double &x, bool scientific)
     {
         string Result;          // string which will contain the result
         ostringstream convert;   // stream used for the conversion
@@ -514,7 +513,7 @@ namespace aquiutils
         return Result;
     }
 
-    string numbertostring(vector<double> x, bool scientific)
+    string numbertostring(vector<double> &x, bool scientific)
     {
         string Result = "[";
         for (int i=0; i<x.size()-1;i++)
@@ -541,7 +540,7 @@ namespace aquiutils
         return Result;
     }
 
-    string numbertostring(vector<int> x, bool scientific)
+    string numbertostring(vector<int> &x, bool scientific)
     {
         string Result = "[";
         if (x.size()>0)
@@ -570,6 +569,14 @@ namespace aquiutils
     bool And(vector<bool> x) { bool out = true;  for (int i = 0; i < x.size(); i++) out &= x[i]; return out; }
     double max(vector<double> x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out=std::max(out, x[i]); return out; }
     int max(vector<int> x)
+    {	int out = -37000;
+        for (int i = 0; i < x.size(); i++)
+            out=std::max(out, x[i]);
+        return out;
+
+    }
+    double Max(vector<double> x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out=std::max(out, x[i]); return out; }
+    int Max(vector<int> x)
     {	int out = -37000;
         for (int i = 0; i < x.size(); i++)
             out=std::max(out, x[i]);

@@ -7,8 +7,13 @@
 #include <iostream>
 #define ARMA_DONT_PRINT_ERRORS
 #include "armadillo"
-#include "Matrix_arma.h"
-#include "Matrix_arma_sp.h"
+#include "Vector.h"
+#include "Expression.h"
+#ifdef QT_version
+#include "qstring.h"
+#include "qmap.h"
+#include "qvariant.h"
+#endif // QT_version
 
 
 
@@ -52,6 +57,52 @@ CMatrix::CMatrix(int m)
 		matr[i].num = numcols;
 	}
 }
+
+CMatrix::CMatrix(string filename)
+{
+
+    bool file_not_found;
+
+	ifstream file(filename);
+	vector<string> s;
+	if (file.good() == false)
+	{
+		file_not_found = true;
+		return;
+	}
+	int num_cols = 0;
+	int num_rows = 0;
+	int i=0;
+	while (!file.eof())
+	{
+		s = aquiutils::getline(file,'\t');
+		if (i==0) num_cols = s.size();
+		if (s.size()==num_cols) i++;
+    }
+    num_rows=i;
+    numrows = num_rows;
+	numcols = num_cols;
+	file.close();
+	matr.resize(numrows);
+
+	for (int i = 0;i<numrows; ++i)
+	{
+		matr[i].vec.resize(numcols);
+		matr[i].num = numcols;
+	}
+	file.open(filename);
+
+	for (int i=0; i<num_rows; i++)
+	{
+		s = aquiutils::getline(file,'\t');
+        for (int j=0; j<num_cols; j++)
+            matr[i][j] = atof(s[j].c_str());
+    }
+
+	return;
+
+}
+
 
 CMatrix::CMatrix(const CMatrix &m)
 {
@@ -112,20 +163,11 @@ CMatrix& CMatrix::operator=(const CMatrix &m)
 	return *this;
 }
 
-CMatrix& CMatrix::operator=(const double &m)
-{
-
-	for (int i = 0; i<numrows; ++i)
-		for (int j=0; j<numcols; j++)
-		matr[i][j] = m;
-	return *this;
-}
-
 CMatrix& CMatrix::operator+=(const CMatrix &m)
 {
 
 	for (int i=0; i<numrows; i++)
-		matr[i] += m.matr[i];
+        matr[i] += m.matr[i];
 	return *this;
 }
 
@@ -173,7 +215,7 @@ CMatrix mult(CMatrix &m1, CMatrix &m2)
 	return mt;
 }
 
-CMatrix operator*(CMatrix &m1, CMatrix &m2)
+CMatrix operator*(CMatrix m1, CMatrix m2)
 {
 	CMatrix a= mult(m1,m2);
 	return a;
@@ -259,7 +301,7 @@ CMatrix operator/(double d, CMatrix m1)
 }
 
 
-CVector operator*(CMatrix &m, CVector &v)
+CVector operator*(CMatrix m, CVector v)
 {
 	return mult(m,v);
 }
@@ -305,6 +347,11 @@ CVector operator/(CVector &V, CMatrix &M)
 	return solve_ar(M,V);
 }
 
+CVector operator/(const CVector &V, const CMatrix &M)
+{
+    return solve_ar(M,V);
+}
+
 CMatrix Log(CMatrix &M1)
 {
 	CMatrix TrM(M1.getnumrows(), M1.getnumcols());
@@ -313,16 +360,6 @@ CMatrix Log(CMatrix &M1)
 			TrM[i][j] = log(M1[i][j]);
 	return TrM;
 }
-
-CMatrix Log(CMatrix M1)
-{
-	CMatrix TrM(M1.getnumrows(), M1.getnumcols());
-	for (int i=0; i<M1.getnumrows(); i++)
-		for (int j=0; j<M1.getnumcols(); j++)
-			TrM[i][j] = log(M1[i][j]);
-	return TrM;
-}
-
 
 CMatrix Exp(CMatrix &M1)
 {
@@ -342,15 +379,7 @@ CMatrix Sqrt(CMatrix &M1)
 	return TrM;
 }
 
-double & CMatrix::operator()(int i, int j)
-{
-	return matr[i].vec[j];
-}
 
-double & CMatrix::operator()(unsigned int i, unsigned int j)
-{
-	return matr[i].vec[j];
-}
 
 CMatrix Invert(CMatrix M1)
 {
@@ -548,6 +577,7 @@ CMatrix CMatrix::LU_decomposition()
     CMatrix A = *this;
 	double AMAX,DUM, SUM;
 	int  I,IMAX,J,K;
+
 	int n = A.getnumrows();
 	CVector VV(n);
 
@@ -603,19 +633,19 @@ CMatrix CMatrix::LU_decomposition()
 
 }
 
-CVector diag(CMatrix m)
+CVector diag(const CMatrix &m)
 {
 	CVector v(m.getnumcols());
 	for (int i=0; i<m.getnumcols(); ++i)
-		v[i] = m[i][i];
+        v[i] = m.matr[i].at(i);
 	return v;
 }
 
 CMatrix operator*(CVector v, CMatrix m)
 {
-    CMatrix V = CMatrix(v);
-    CMatrix a = V*m;
-    return a;
+    auto tempMap = CMatrix(v);
+    CMatrix a = tempMap*m;
+	return a;
 }
 
 
@@ -691,14 +721,14 @@ void CMatrix::print(string s)
 
 	ofstream Afile;
 	Afile.open(s+".txt");
-	cout<<s+"="<<endl;
+	cout<<s+"\="<<endl;
 
 	for (int i = 0; i<numrows; ++i)
 	{
 		for (int j = 0; j<numcols; ++j)
 		{
-			Afile << matr[i][j] << ", ";
-			cout<< matr[i][j] << ", ";
+			Afile << matr[i][j] << "\, ";
+			cout<< matr[i][j] << "\, ";
 		}
 		Afile << "\n";
 		cout<< "\n";
@@ -729,7 +759,6 @@ CVector solve_ar(CMatrix &M, CVector &V)
 	catch(int rtt)
 	{
 
-
 	}
 	for (int i = 0;i<V.getsize(); ++i)
 		ansr[i] = C(i,0);
@@ -737,13 +766,44 @@ CVector solve_ar(CMatrix &M, CVector &V)
 	return ansr;
 }
 
-CMatrix inv(CMatrix &M)
+CVector solve_ar(const CMatrix &M, const CVector &V)
+{
+
+    mat A(M.getnumrows(),M.getnumcols());
+    mat B(V.getsize(),1);
+
+    CVector ansr = V;
+
+    for (int i = 0;i<M.getnumrows(); ++i)
+    {
+        B(i,0) = V.at(i);
+        for (int j = 0;j<M.getnumcols(); ++j)
+            A(i,j) = M.matr[i].at(j);
+    };
+
+    mat C;
+    try {
+        C = solve(A,B);
+        throw 0;
+    }
+
+    catch(int rtt)
+    {
+
+    }
+    for (int i = 0;i<V.getsize(); ++i)
+        ansr[i] = C(i,0);
+
+    return ansr;
+}
+
+CMatrix inv(CMatrix M)
 {
 
 	mat A(M.getnumrows(),M.getnumcols());
 
 	CMatrix inv_M;
-	bool indef = false;
+
 	for (int i = 0;i<M.getnumrows(); ++i)
 	{
 		for (int j = 0;j<M.getnumcols(); ++j)
@@ -805,13 +865,13 @@ void write_to_file(vector<CMatrix> M, string filename)
 	ofstream Afile;
 	Afile.open(filename);
 	M.push_back(Average(M));
-	for (int k = 0; k<int(M.size()); k++)
+	for (unsigned int k = 0; k<M.size(); k++)
 	{	for (int i = 0; i<M[k].numrows; ++i)
 		{
 			for (int j = 0; j<M[k].numcols; ++j)
 			{
-				Afile << M[k][i][j] << ", ";
-				cout<< M[k][i][j] << ", ";
+				Afile << M[k][i][j] << "\, ";
+				cout<< M[k][i][j] << "\, ";
 			}
 			Afile << "\n";
 		}
@@ -824,7 +884,7 @@ CMatrix Average(vector<CMatrix> M)
 {
 	CMatrix AVG(M[0].numrows, M[0].numcols);
 	int n = M.size();
-	for (int k = 0; k<int(M.size()); k++)
+	for (unsigned int k = 0; k<M.size(); k++)
 		for (int i = 0; i<M[k].numrows; ++i)
 			for (int j = 0; j<M[k].numcols; ++j)
 				AVG[i][j] += M[k][i][j]/n;
@@ -855,6 +915,18 @@ CMatrix normalize_diag(CMatrix &M1, CMatrix&M2)
 
 }
 
+CVector normalize_diag( CVector V, CVector D)
+{
+    CVector M(V);
+
+    for (int i = 0; i<V.getsize(); i++)
+    {
+        M[i] = V[i] / D[i];
+    }
+    return M;
+}
+
+
 CVector normalize_diag(CVector &V, CMatrix&M2)
 {
 	CVector M(V);
@@ -865,6 +937,89 @@ CVector normalize_diag(CVector &V, CMatrix&M2)
 		M[i] = V[i]/D[i];
 	}
 	return M;
+}
+
+CVector normalize_diag(const CVector &V, const CMatrix&M2)
+{
+    CVector M(V);
+    CVector D = diag(M2);
+
+    for (int i=0; i<V.getsize(); i++)
+    {
+        M[i] = V.at(i)/D.at(i);
+    }
+    return M;
+}
+
+CVector maxelements(const CMatrix &m)
+{
+    CVector_arma v(m.getnumcols());
+    for (int i=0; i<m.getnumcols(); ++i)
+    {   double maxval = -1e36;
+        for (int j=0; j<m.getnumrows(); ++j)
+            maxval = max(fabs(m.matr[i].at(j)),maxval);
+        v[i] = maxval;
+    }
+    return v;
+}
+
+CVector CMatrix::maxelements() const
+{
+    CVector_arma v(getnumcols());
+    for (int i=0; i<getnumcols(); ++i)
+    {   double maxval = -1e36;
+        for (int j=0; j<getnumrows(); ++j)
+            maxval = max(fabs(matr[i].at(j)),maxval);
+        v[i] = maxval;
+    }
+    return v;
+}
+
+
+CVector normalize_diag(const CVector &V, const CVector&D)
+{
+    CVector M(V);
+
+    for (int i=0; i<V.getsize(); i++)
+    {
+        M[i] = V.at(i)/D.at(i);
+    }
+    return M;
+}
+
+CMatrix normalize_max( const CMatrix &M1, const CMatrix &M2)
+{
+    CMatrix M(M1);
+    CVector D = maxelements(M2);
+    for (int i = 0; i<M1.getnumcols(); i++)
+    {
+        for (int j=0; j<M1.getnumrows(); j++)
+            M.matr[i][j] = M1.matr[i].at(j) / D[i];
+    }
+    return M;
+
+}
+
+CVector normalize_max( const CVector &V, const CMatrix &M2)
+{
+    CVector M(V);
+    CVector D = maxelements(M2);
+    for (int i = 0; i<V.getsize(); i++)
+    {
+        M[i] = V.at(i) / D[i];
+    }
+    return M;
+}
+
+CVector normalize_max( const CVector &V, const CVector &D)
+{
+    CVector M(V);
+
+    for (int i = 0; i<V.getsize(); i++)
+    {
+        M[i] = V.at(i) / D.at(i);
+    }
+    return M;
 }
 
 vector<vector<bool>> CMatrix::non_posdef_elems(double tol)
@@ -915,11 +1070,11 @@ CMatrix CMatrix::Preconditioner(double tol)
 
 	return M;
 }
-vector<string> CMatrix::toString(string format, vector<string> columnHeaders, vector<string> rowHeaders)
+vector<string> CMatrix::toString(string format, vector<string> columnHeaders, vector<string> rowHeaders) const
 {
 	vector<string> r;
 	bool rowH = false, colH = false;
-	int rowOffset = 0, colOffset = 0;
+	int rowOffset = 0, colOffset=0;
 	if (columnHeaders.size() && int(columnHeaders.size()) == numcols)
 	{
 		colH = true;
@@ -935,11 +1090,11 @@ vector<string> CMatrix::toString(string format, vector<string> columnHeaders, ve
 
 	if (colH)
 	{
-		if (rowH) r[0] += ", ";
+		if (rowH) r[0] += "\, ";
 		for (int j = 0; j<numcols; j++)
 		{
 			r[0] += columnHeaders[j];
-			if (j < numcols - 1) r[0] += ", ";
+			if (j < numcols - 1) r[0] += "\, ";
 		}
 
 	}
@@ -948,16 +1103,39 @@ vector<string> CMatrix::toString(string format, vector<string> columnHeaders, ve
 		if (rowH)
 		{
 			r[i + rowOffset] += rowHeaders[i];
-			r[i + rowOffset] += ", ";
+			r[i + rowOffset] += "\, ";
 		}
 		for (int j = 0; j<numcols; j++)
 		{
-			r[i + rowOffset] += to_string(matr[i][j]);
-			if (j < numcols - 1) r[i + rowOffset] += ", ";
+            std::ostringstream streamObj;
+            streamObj << matr[i].at(j);
+            std::string strObj = streamObj.str();
+            r[i + rowOffset] += strObj;
+			if (j < numcols - 1) r[i + rowOffset] += "\, ";
 		}
 	}
 	return r;
 }
+
+#ifdef QT_version
+vector<string> CMatrix::toHtml(string format, vector<string> columnHeaders, vector<string> rowHeaders)
+{
+	vector<string> html, csv = toString(format, columnHeaders, rowHeaders);
+	QString line;
+	html.push_back("<!DOCTYPE html>");
+	html.push_back("<html>");
+	html.push_back("<body>");
+	html.push_back("<table border = '1'>");
+
+	for (int i = 0; i < csv.size(); i++)
+	{
+		line = QString::fromStdString(csv[i]);
+		html.push_back("<tr><td>" + line.replace(",", "</td> <td>").toStdString() + "</td></tr>");
+	}
+	html.push_back("</table></body></html>");
+	return html;
+}
+#endif // QT_version
 
 void CMatrix::setnumcolrows()
 {
@@ -973,25 +1151,75 @@ void CMatrix::setnumcolrows()
 	}
 }
 
+#ifdef QT_version
+QMap<QString, QVariant> CMatrix::compact() const
+{
+	QMap<QString, QVariant> r;
+	r["nrows"] = numrows;
+	r["ncols"] = numcols;
+	for (int i = 0; i<numrows; ++i)
+	{
+		QStringList rowList;
+		for (int j = 0; j < numcols; j++)
+		{
+			rowList.append(QString::number(matr[i].vec[j]));
+		}
+		QString code = QString("row %1").arg(i);
+		r[code] = rowList;
+	}
+	return r;
+}
+CMatrix CMatrix::unCompact(QMap<QString, QVariant> r)
+{
+	CMatrix m;
+	m.numrows = r["nrows"].toInt();
+	m.numcols = r["ncols"].toInt();
+	m.matr.resize(m.numrows);
 
-CMatrix::CMatrix(CMatrix_arma_sp &M)
+	for (int i = 0; i < m.numrows; ++i)
+	{
+		m.matr[i].vec.resize(m.numcols);
+		m.matr[i].num = m.numcols;
+	}
+	for (int i = 0; i < m.numrows; ++i)
+	{
+		QString code = QString("row %1").arg(i);
+		QStringList rowList = r[code].toStringList();
+		for (int j = 0; j < rowList.count(); j++)
+		{
+			m.matr[i].vec[j] = rowList[j].toDouble();
+		}
+	}
+	return m;
+}
+#endif // QT_version
+
+CMatrix::CMatrix(CMatrix_arma &M)
 {
 	numrows = M.getnumrows();
 	numcols = M.getnumcols();
-	*this = CMatrix(numrows, numcols);
+	matr.resize(numrows);
+
+	for (int i = 0; i<numrows; ++i)
+	{
+		matr[i].vec.resize(numcols);
+		matr[i].num = numcols;
+	}
 	for (int i = 0; i < numrows; i++)
 		for (int j = 0; j < numcols; j++)
 			matr[i][j] = M(i, j);
 
 }
 
-CMatrix::CMatrix(CMatrix_arma &M)
+double& CMatrix::operator()(int i, int j)
 {
-	numrows = M.getnumrows();
-	numcols = M.getnumcols();
-	*this = CMatrix(numrows, numcols);
-	for (int i = 0; i < numrows; i++)
-		for (int j = 0; j < numcols; j++)
-			matr[i][j] = M(i, j);
+	return matr[i].vec[j];
+}
 
+void CMatrix::ScaleDiagonal(double x)
+{
+	for (int i = 0; i < getnumcols(); i++)
+	{
+		matr[i].vec[i] *= x;
+	}
 }
