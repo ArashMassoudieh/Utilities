@@ -35,6 +35,10 @@ public:
     distribution_type DistributionType;
     CDistribution(int nn);
 	CDistribution(const CDistribution &C);
+    void SetInverseCumulative(int ninc);
+    CTimeSeries<double> InverseCumulative;
+    double InverseCumulativeValue(double u);
+    double CumulativeValue(double x);
 	CDistribution operator = (const CDistribution &C);
 	int GetRand();
 	double inverseCDF(double u, bool flux_weight=false);

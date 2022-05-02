@@ -335,3 +335,71 @@ bool CDistribution::Execute(const string &cmd, const map<string,string> &argumen
     return false;
 }
 
+void CDistribution::SetInverseCumulative(int ninc)
+{
+    InverseCumulative.clear();
+    double epsilon = 1e-8;
+
+    for (int i = 0; i < ninc+1; i++)
+    {
+        double u = double(i) / double(ninc)*(1 - 2 * epsilon) + epsilon;
+        InverseCumulative.append(u, InverseCumulativeValue(u));
+    }
+
+}
+
+double CDistribution::InverseCumulativeValue(double u)
+{
+    double x2 = 1000;
+    double x1 = 0.001;
+    double tol = 1e-8;
+    double err1 = CumulativeValue(x1) - u;
+    double err2 = CumulativeValue(x2) - u;
+    while (err1 > 0)
+    {
+        x1 /= 2;
+        err1 = CumulativeValue(x1) - u;
+    }
+
+    while (err2 < 0)
+    {
+        x2 *= 2;
+        err2 = CumulativeValue(x2) - u;
+    }
+
+    while (min(fabs(err1),fabs(err2)) > tol && fabs(x1-x2)>tol)
+    {
+        double slope = (err2 - err1) / (log(x2) - log(x1));
+        double x_p = exp(log(x1) - err1 / slope);
+        double err_p = CumulativeValue(x_p) - u;
+        if (err_p > 0)
+        {
+            x2 = x_p;
+            err2 = CumulativeValue(x2) - u;
+        }
+        else
+        {
+            x1 = x_p;
+            err1 = CumulativeValue(x1) - u;
+        }
+
+    }
+    if (fabs(err1) > fabs(err2))
+        return x2;
+    else
+        return x1;
+}
+
+double CDistribution::CumulativeValue(double x)
+{
+    double out = 0;
+    if (this->name == "lognormal")
+    {
+        int n = params.size() / 3.0;
+
+        for (int i = 0; i < n; i++)
+            out += params[3 * i] * 0.5*(1.0 + erf((log(x) - log(params[3 * i + 1])) / (sqrt(2.0)*params[3 * i + 2])));
+    }
+    return out;
+
+}
