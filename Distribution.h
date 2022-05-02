@@ -17,6 +17,7 @@ public:
 	CDistribution(void);
 	CDistribution(string name);
 	~CDistribution(void);
+    bool CreateDistribution(const map<string,string> &Arguments);
 	vector<double> params;
 	string name;
 	double evaluate(double x);
@@ -39,6 +40,9 @@ public:
 	double inverseCDF(double u, bool flux_weight=false);
 	double map_normal_to(double z);
     bool readfromfile(const string &filename);
+    bool WriteToFile(const map<string,string> Arguments);
+    vector<double> SetRangeBasedOnMeanStd(const double &stdcoeff=3);
+    bool Execute(const string &cmd, const map<string,string> &arguments);
 };
 
 //double erf(double x);

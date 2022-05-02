@@ -3,13 +3,26 @@
 #include "Utilities.h"
 #include "interface.h"
 
-vector<string> CDistribution::list_of_commands = vector<string>({"CreateDistribution"});
+vector<string> CDistribution::list_of_commands = vector<string>({"CreateDistribution","WriteToFile"});
 
 CDistribution::CDistribution(void):Interface()
 {
 	pi = 4 * atan(1.0);
 }
 
+bool CDistribution::CreateDistribution(const map<string,string> &Arguments)
+{
+    if (Arguments.count("type")==0)
+        return false;
+    name = Arguments.at("type");
+    params.clear();
+    for (map<string,string>::const_iterator it=Arguments.begin(); it!=Arguments.end(); it++)
+    {
+        if (aquiutils::left(it->first,1) == "p" && aquiutils::isnumber(aquiutils::right(it->first,it->first.size()-1)))
+            params.push_back(atof(it->second.c_str()));
+    }
+    return true;
+}
 
 CDistribution::~CDistribution(void)
 {
@@ -270,4 +283,55 @@ bool CDistribution::HasCommand(const string &cmd)
         return false;
 }
 
+bool CDistribution::WriteToFile(const map<string,string> Arguments)
+{
+    int nbins = 100;
+    if (Arguments.count("filename")==0)
+        return false;
+    if (params.size()==0)
+        return false;
+    if (Arguments.count("nbins")>0)
+        nbins = aquiutils::atof(Arguments.at("nbins"));
+
+    vector<double> range = SetRangeBasedOnMeanStd(3);
+    CTimeSeries<double> timeseries;
+    for (double x = range[0]; x<=range[1]; x+=(range[1]-range[0])/nbins)
+    {
+        timeseries.append(x, evaluate(x));
+    }
+    timeseries.writefile(Arguments.at("filename"));
+    return true;
+}
+
+vector<double> CDistribution::SetRangeBasedOnMeanStd(const double &stdcoeff)
+{
+    vector<double> range(2);
+    if (name=="normal")
+    {
+        range[0]=params[0]-stdcoeff*params[1];
+        range[1]=params[0]+stdcoeff*params[1];
+        return range;
+    }
+    else if (name=="lognormal")
+    {
+        range[0]=exp(params[0])*exp(-stdcoeff*params[1]);
+        range[1]=exp(params[0])*exp(stdcoeff*params[1]);
+        return range;
+    }
+    else if (name=="exponential")
+    {
+        range[0] = 0;
+        range[1] = stdcoeff/params[0];
+        return range;
+    }
+}
+
+bool CDistribution::Execute(const string &cmd, const map<string,string> &arguments)
+{
+    if (cmd=="CreateDistribution")
+        return CreateDistribution(arguments);
+    if (cmd=="WriteToFile")
+        return WriteToFile(arguments);
+    return false;
+}
 
