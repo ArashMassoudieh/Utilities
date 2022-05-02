@@ -3,7 +3,7 @@
 #include "Utilities.h"
 #include "interface.h"
 
-vector<string> CDistribution::list_of_commands = vector<string>({"CreateDistribution","WriteToFile"});
+vector<string> CDistribution::list_of_commands = vector<string>({"CreateDistribution","WriteToFile", "SetInverseCumulative", "WriteInverseCumulativeToFile"});
 
 CDistribution::CDistribution(void):Interface()
 {
@@ -44,7 +44,7 @@ CDistribution::CDistribution(string _name)
 
 double CDistribution::evaluate(double x)
 {
-	if (name == "normal")
+    if (name == "normal")
 		return 1 / (sqrt(2*pi)*params[1])*exp(-pow(x - params[0], 2) / (2 * params[1] * params[1]));
 	if (name == "lognormal")
 		return 1 / (sqrt(2*pi)*params[1] * x)*exp(-pow(log(x) - params[0], 2) / (2 * params[1] * params[1]));
@@ -332,11 +332,17 @@ bool CDistribution::Execute(const string &cmd, const map<string,string> &argumen
         return CreateDistribution(arguments);
     if (cmd=="WriteToFile")
         return WriteToFile(arguments);
+    if (cmd=="SetInverseCumulative")
+        return SetInverseCumulative(arguments);
+    if (cmd=="WriteInverseCumulativeToFile")
+        return SetInverseCumulative(arguments);
     return false;
 }
 
-void CDistribution::SetInverseCumulative(int ninc)
+bool CDistribution::SetInverseCumulative(const map<string,string> &arguments)
 {
+    if (arguments.count("ninc")==0) return false;
+    int ninc = aquiutils::atoi(arguments.at("ninc"));
     InverseCumulative.clear();
     double epsilon = 1e-8;
 
@@ -345,7 +351,15 @@ void CDistribution::SetInverseCumulative(int ninc)
         double u = double(i) / double(ninc)*(1 - 2 * epsilon) + epsilon;
         InverseCumulative.append(u, InverseCumulativeValue(u));
     }
+    return true;
+}
 
+bool CDistribution::WriteInverseCumulativeToFile(const map<string,string> &arguments)
+{
+    if (inverse_cumulative.n==0)
+        return false;
+    if (arguments.count("filename")==0) return false;
+    return inverse_cumulative.writefile(arguments.at("filename"));
 }
 
 double CDistribution::InverseCumulativeValue(double u)

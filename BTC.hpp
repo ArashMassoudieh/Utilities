@@ -697,16 +697,18 @@ bool CTimeSeries<T>::readfile(string Filename)
 }
 
 template<class T>
-void CTimeSeries<T>::writefile(string Filename)
+bool CTimeSeries<T>::writefile(const string &Filename)
 {
-	ofstream file(Filename);
+    ofstream file(Filename);
     if (file.good())
     {
         file<< "n " << n <<", BTC size " << C.size() << std::endl;
         for (int i=0; i<n; i++)
             file << t[i] << ", " << C[i] << std::endl;
+        file.close();
     }
-	file.close();
+    else return false;
+
 
 }
 

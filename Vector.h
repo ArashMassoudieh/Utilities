@@ -19,7 +19,7 @@ private:
 
 
 public:
-	vector<double> vec;
+    vector<double> vec;
 	CVector();
 	CVector(int);
 	CVector(const vector<double>, int);

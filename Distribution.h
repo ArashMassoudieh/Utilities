@@ -35,7 +35,8 @@ public:
     distribution_type DistributionType;
     CDistribution(int nn);
 	CDistribution(const CDistribution &C);
-    void SetInverseCumulative(int ninc);
+    bool SetInverseCumulative(const map<string,string> &arguments);
+    bool WriteInverseCumulativeToFile(const map<string,string> &arguments);
     CTimeSeries<double> InverseCumulative;
     double InverseCumulativeValue(double u);
     double CumulativeValue(double x);

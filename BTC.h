@@ -47,7 +47,7 @@ public:
 #endif
 	CTimeSeries& operator = (const CTimeSeries &C);
     bool readfile(string); //read the values from a text file
-	void writefile(string Filename); //writes the BTC contets into a fild
+    bool writefile(const string &Filename); //writes the BTC contets into a fild
     T maxC(); //returns the maximum value
     T minC(); //returns the minimum value
     T maxt();

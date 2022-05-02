@@ -144,10 +144,11 @@ double getpdflognormal(CVector &X, CVector &mu, CMatrix &std)
     int k = X.num;
     double pi = atan(1.0) * 4;
     CMatrix Mu=Log(X) - mu;
-        CMatrix Mu_p = Log(X.T()) - mu.T();
-        CMatrix M_inv = Invert(std);
-        CMatrix M1 = Mu_p*M_inv;
-        CMatrix exparg = 0.5*(M1*Mu);
+    CMatrix TransposeMu = X.T();
+    CMatrix Mu_p = Log(TransposeMu) - mu.T();
+    CMatrix M_inv = Invert(std);
+    CMatrix M1 = Mu_p*M_inv;
+    CMatrix exparg = 0.5*(M1*Mu);
 
         double pdf = 1 / pow(2 * pi, k) / sqrt(fabs(std.det()))*exp(-exparg[0][0]);
     return pdf;
