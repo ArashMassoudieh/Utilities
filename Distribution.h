@@ -17,6 +17,7 @@ public:
 	CDistribution(void);
 	CDistribution(string name);
 	~CDistribution(void);
+    static int NumberOfCoreParameters(string _name);
     bool CreateDistribution(const map<string,string> &Arguments);
 	vector<double> params;
 	string name;
@@ -37,7 +38,6 @@ public:
 	CDistribution(const CDistribution &C);
     bool SetInverseCumulative(const map<string,string> &arguments);
     bool WriteInverseCumulativeToFile(const map<string,string> &arguments);
-    CTimeSeries<double> InverseCumulative;
     double InverseCumulativeValue(double u);
     double CumulativeValue(double x);
 	CDistribution operator = (const CDistribution &C);

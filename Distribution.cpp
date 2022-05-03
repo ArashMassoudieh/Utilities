@@ -32,33 +32,54 @@ CDistribution::CDistribution(string _name)
 {
 	pi = 4 * atan(1.0);
 	name = _name;
-    if (name == "normal") {params.resize(2); DistributionType=distribution_type::normal;}
-    if (name == "lognormal") {params.resize(2); DistributionType=distribution_type::lognormal;}
-    if (name == "levy") {params.resize(1); DistributionType=distribution_type::levy;}
-    if (name == "exp") {params.resize(1); DistributionType=distribution_type::exponential;}
-    if (name == "invgaussian") {params.resize(2); DistributionType=distribution_type::inverse_gaussian;}
-    if (name == "gamma") {params.resize(2); DistributionType=distribution_type::gamma;}
+    if (name == "normal") {DistributionType=distribution_type::normal;}
+    if (name == "lognormal") {DistributionType=distribution_type::lognormal;}
+    if (name == "levy") {DistributionType=distribution_type::levy;}
+    if (name == "exp") {DistributionType=distribution_type::exponential;}
+    if (name == "invgaussian") {DistributionType=distribution_type::inverse_gaussian;}
+    if (name == "gamma") {DistributionType=distribution_type::gamma;}
     if (name == "nonparametric") {DistributionType=distribution_type::nonparameteric;}
+    params.resize(NumberOfCoreParameters(name)+1);
 
 }
 
+int CDistribution::NumberOfCoreParameters(string _name)
+{
+    if (_name == "normal") {return 2;}
+    if (_name == "lognormal") {return 2;}
+    if (_name == "levy") {return 1;}
+    if (_name == "exp") {return 1;}
+    if (_name == "invgaussian") {return 2;}
+    if (_name == "gamma") {return 2;}
+    if (_name == "nonparametric") {return 0;}
+    return -1;
+}
+
+
 double CDistribution::evaluate(double x)
 {
-    if (name == "normal")
-		return 1 / (sqrt(2*pi)*params[1])*exp(-pow(x - params[0], 2) / (2 * params[1] * params[1]));
-	if (name == "lognormal")
-		return 1 / (sqrt(2*pi)*params[1] * x)*exp(-pow(log(x) - params[0], 2) / (2 * params[1] * params[1]));
-	if (name == "levy")
-		return sqrt(params[0] / (2 * pi))*exp(-params[0] / (2 * x)) / pow(x, 1.5);
-	if (name == "exp")
-		return 1 / params[0] * exp(x / params[0]);
-	if (name == "invgaussian")
-		return sqrt(params[1] / (2 * pi*pow(x, 3)))*exp(-params[1] * pow(x - params[0], 2) / (2 * params[0] * params[0] * x));
-	if (name == "gamma")
-		return 0;
+    double out = 0;
     if (name == "nonparameteric")
-        return density.getcummulative().interpol(x);
+        return density.interpol(x);
+    int m = NumberOfCoreParameters(name)+1;
+    int n=params.size()/m;
+    for (unsigned int i=0; i<n; i++)
+    {
+        if (name == "normal")
+            out+= params[i*m] / (sqrt(2*pi)*params[i*m+2])*exp(-pow(x - params[i*m+1], 2) / (2 * params[i*m+2] * params[i*m+2]));
+        if (name == "lognormal")
+            out+= params[i*m] / (sqrt(2*pi)*params[i*m+2] * x)*exp(-pow(log(x) - params[i*m+1], 2) / (2 * params[i*m+2] * params[i*m+2]));
+        if (name == "levy")
+            out += params[i*m]*sqrt(params[i*m+1] / (2 * pi))*exp(-params[i*m+1] / (2 * x)) / pow(x, 1.5);
+        if (name == "exp")
+            out +=  params[i*m] / params[i*m+1] * exp(x / params[i*m+1]);
+        if (name == "invgaussian")
+            out +=  params[i*m]*sqrt(params[i*m+2] / (2 * pi*pow(x, 3)))*exp(-params[i*m+2] * pow(x - params[i*m+1], 2) / (2 * params[i*m+1] * params[i*m+1] * x));
+        if (name == "gamma")
+            out+= params[i*m]*Gammapdf(x,params[i*m+1],params[i*m+2]);
 
+    }
+    return out;
 }
 
 double Gammapdf(double x, double k, double theta)
@@ -306,24 +327,28 @@ bool CDistribution::WriteToFile(const map<string,string> Arguments)
 vector<double> CDistribution::SetRangeBasedOnMeanStd(const double &stdcoeff)
 {
     vector<double> range(2);
-    if (name=="normal")
-    {
-        range[0]=params[0]-stdcoeff*params[1];
-        range[1]=params[0]+stdcoeff*params[1];
-        return range;
+    int n=NumberOfCoreParameters(name);
+    range[0] = 1e12;
+    range[1] = -1e12;
+    for (int i=0; i<params.size()/NumberOfCoreParameters(name); i++)
+    {   if (name=="normal")
+        {
+            range[0]=min(params[i*n+1]-stdcoeff*params[i*n+2],range[0]);
+            range[1]=max(params[i*n+1]+stdcoeff*params[i*n+2],range[1]);
+        }
+        else if (name=="lognormal")
+        {
+            range[0]=min(exp(params[i*n+1])*exp(-stdcoeff*params[i*n+2]),range[0]);
+            range[1]=max(exp(params[i*n+1])*exp(stdcoeff*params[i*n+2]),range[1]);
+        }
+        else if (name=="exponential")
+        {
+            range[0] = 0;
+            range[1] = max(stdcoeff/params[i*n+1],range[1]);
+
+        }
     }
-    else if (name=="lognormal")
-    {
-        range[0]=exp(params[0])*exp(-stdcoeff*params[1]);
-        range[1]=exp(params[0])*exp(stdcoeff*params[1]);
-        return range;
-    }
-    else if (name=="exponential")
-    {
-        range[0] = 0;
-        range[1] = stdcoeff/params[0];
-        return range;
-    }
+    return range;
 }
 
 bool CDistribution::Execute(const string &cmd, const map<string,string> &arguments)
@@ -335,7 +360,7 @@ bool CDistribution::Execute(const string &cmd, const map<string,string> &argumen
     if (cmd=="SetInverseCumulative")
         return SetInverseCumulative(arguments);
     if (cmd=="WriteInverseCumulativeToFile")
-        return SetInverseCumulative(arguments);
+        return WriteInverseCumulativeToFile(arguments);
     return false;
 }
 
@@ -343,13 +368,13 @@ bool CDistribution::SetInverseCumulative(const map<string,string> &arguments)
 {
     if (arguments.count("ninc")==0) return false;
     int ninc = aquiutils::atoi(arguments.at("ninc"));
-    InverseCumulative.clear();
+    inverse_cumulative.clear();
     double epsilon = 1e-8;
 
     for (int i = 0; i < ninc+1; i++)
     {
         double u = double(i) / double(ninc)*(1 - 2 * epsilon) + epsilon;
-        InverseCumulative.append(u, InverseCumulativeValue(u));
+        inverse_cumulative.append(u, InverseCumulativeValue(u));
     }
     return true;
 }
@@ -367,34 +392,34 @@ double CDistribution::InverseCumulativeValue(double u)
     double x2 = 1000;
     double x1 = 0.001;
     double tol = 1e-8;
-    double err1 = CumulativeValue(x1) - u;
-    double err2 = CumulativeValue(x2) - u;
+    double err1 = log(CumulativeValue(x1)) - log(u);
+    double err2 = log(CumulativeValue(x2)) - log(u);
     while (err1 > 0)
     {
         x1 /= 2;
-        err1 = CumulativeValue(x1) - u;
+        err1 = log(CumulativeValue(x1)) - log(u);
     }
 
     while (err2 < 0)
     {
         x2 *= 2;
-        err2 = CumulativeValue(x2) - u;
+        err2 = log(CumulativeValue(x2)) - log(u);
     }
 
     while (min(fabs(err1),fabs(err2)) > tol && fabs(x1-x2)>tol)
     {
         double slope = (err2 - err1) / (log(x2) - log(x1));
         double x_p = exp(log(x1) - err1 / slope);
-        double err_p = CumulativeValue(x_p) - u;
+        double err_p = log(CumulativeValue(x_p)) - log(u);
         if (err_p > 0)
         {
             x2 = x_p;
-            err2 = CumulativeValue(x2) - u;
+            err2 = log(CumulativeValue(x2)) - log(u);
         }
         else
         {
             x1 = x_p;
-            err1 = CumulativeValue(x1) - u;
+            err1 = log(CumulativeValue(x1)) - log(u);
         }
 
     }
@@ -407,12 +432,20 @@ double CDistribution::InverseCumulativeValue(double u)
 double CDistribution::CumulativeValue(double x)
 {
     double out = 0;
+    int m = NumberOfCoreParameters(name)+1;
+    int n = params.size() / (NumberOfCoreParameters(name)+1);
     if (this->name == "lognormal")
     {
-        int n = params.size() / 3.0;
-
         for (int i = 0; i < n; i++)
-            out += params[3 * i] * 0.5*(1.0 + erf((log(x) - log(params[3 * i + 1])) / (sqrt(2.0)*params[3 * i + 2])));
+        {
+            double _erf = erf((log(x) - params[m * i + 1]) / (sqrt(2.0)*params[m * i + 2]));
+            out += params[m * i] * 0.5*(1.0 + _erf);
+
+        }
+    }
+    else
+    {
+
     }
     return out;
 
