@@ -7,6 +7,7 @@
 #include "BTC.h"
 #include "interface.h"
 
+
 using namespace std;
 
 enum class distribution_type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
@@ -14,8 +15,8 @@ enum class distribution_type {nonparameteric, normal, lognormal, gamma, levy, ex
 class CDistribution: public Interface
 {
 public:
-	CDistribution(void);
-	CDistribution(string name);
+    CDistribution();
+    CDistribution(string name);
 	~CDistribution(void);
     static int NumberOfCoreParameters(string _name);
     bool CreateDistribution(const map<string,string> &Arguments);
