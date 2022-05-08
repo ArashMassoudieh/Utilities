@@ -78,6 +78,7 @@ namespace aquiutils
     int Max(vector<int>);
     string remove_backslash_r(const string &ss);
     string GetOnlyFileName(const string &fullfilename);
+    double avg(double x, double y, string type="arithmetic");
     template<class T>
     T randompick(const vector<T> &vec)
     {

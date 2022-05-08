@@ -603,6 +603,18 @@ namespace aquiutils
 
     }
 
+    double avg(double x, double y, string type)
+    {
+        if (type == "arithmetic")
+                return 0.5*(x + y);
+        if (type == "geometric")
+                return sqrt(x*y);
+        if (type == "harmonic")
+                return (2.0*x*y / (x + y));
+            else
+                return 0.5*(x + y);
+    }
+
 }
 
 
