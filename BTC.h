@@ -70,7 +70,7 @@ public:
     T average(); //integral of time-series devided by the domail length
     T average(T t); // integral to time t devided by domain length
     T slope(); //slope of time-series at its end
-	CTimeSeries distribution(int n_bins, int limit); //extract the histogram of values
+	CTimeSeries<T> distribution(int n_bins, int limit); //extract the histogram of values
     bool append(T x); //appends a data point with value x
     bool append(T tt, T xx); //appends a datapoint with value xx at time tt
 	void append(CTimeSeries &CC);// appends a time-series to the time-series
@@ -121,6 +121,7 @@ public:
     unsigned int DSize() {return D.size(); }
     void AppendD(const T &value) { D.push_back(value); }
     CTimeSeries<T> inverse_cumulative_uniform(int ninitervals=100);
+    CTimeSeries<T> distribution(int n_bins = 40, double smoothing_span=0, int limit=0);
 private:
     vector<T> t;
     vector<T> C;

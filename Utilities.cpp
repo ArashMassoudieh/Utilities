@@ -501,6 +501,11 @@ namespace aquiutils
         if (x>0) return x; else return 0;
     }
 
+    double Neg(double x)
+    {
+        return Pos(-x);
+    }
+
 
     string numbertostring(const double &x, bool scientific)
     {

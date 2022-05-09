@@ -64,6 +64,7 @@ namespace aquiutils
     void writeendl(ofstream& f);
     double Heavyside(double x);
     double Pos(double x);
+    double Neg(double x);
     string numbertostring(const double &x, bool scientific=false);
     string numbertostring(vector<double> &x, bool scientific=false);
     string numbertostring(int x);

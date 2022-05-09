@@ -693,6 +693,7 @@ bool CTimeSeries<T>::readfile(string Filename)
     file_not_found = false;
     return true;
     file.close();
+    return true;
 
 }
 
@@ -746,7 +747,7 @@ CTimeSeries<T> operator/(CTimeSeries<T> &CTimeSeries_T, T alpha)
     for (int i=0; i<CTimeSeries_T.n; i++)
     {
         //S.t[i] = CTimeSeries_T.t[i];
-        S.SetC(i, 1/alpha*CTimeSeries_T.GetC(i));
+        S.SetC(i,1/alpha*CTimeSeries_T.GetC(i));
     }
 
 
@@ -1322,7 +1323,7 @@ void CTimeSeries<T>::assign_D()
 		if (i + 1 == n && n > 1)
 			counter = t[n - 1] - t[n - 2];
 		else if (n == 1)
-			counter = 100; 
+			counter = 100;
 		if (counter == 0)
 			counter = t[i] - ((i > 0)? t[i - 1]:0);
 		D.push_back(std::fabs(counter));
@@ -1505,17 +1506,7 @@ CTimeSeries<T> operator>(CTimeSeries<T> BTC1, CTimeSeries<T> BTC2)
 	return S;
 }
 
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::inverse_cumulative_uniform(int ninitervals)
-{
-    CTimeSeries<T> out;
-    out.t = C;
-    out.C = t;
-    out.n = n;
 
-    return out.make_uniform(ninitervals);
-
-}
 #ifdef QT_version
 template<class T>
 void CTimeSeries<T>::compact(QDataStream &data) const
@@ -1657,4 +1648,70 @@ T &CTimeSeries<T>::lastt()
 {
     return t[n-1];
 }
+
+
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::inverse_cumulative_uniform(int ninitervals)
+{
+    CTimeSeries<T> out;
+    out.t = C;
+    out.C = t;
+    out.n = n;
+
+    return out.make_uniform(ninitervals);
+
+}
+
+
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, double smoothing_span, int limit)
+{
+    CTimeSeries<T> out(n_bins+2);
+
+    CVector C1(C.size()-limit);
+    for (int i=0; i<C1.num; i++)
+            C1[i] = C[i+limit];
+
+    double p_start = min(C1);
+    double p_end = max(C1)*1.001;
+    double dp = abs(p_end - p_start)/n_bins;
+    //cout << "low limit: " << p_start << " up limit: " << p_end << " increment: " << dp << std::endl;
+    if (dp == 0) return out;
+    out.t[0] = p_start - dp/2;
+    out.C[0] = 0;
+    for (int i=0; i<n_bins+1; i++)
+    {
+        out.t[i+1] = out.t[i] + dp;
+        out.C[i+1] = out.C[i];
+    }
+
+    if (smoothing_span==0)
+    {
+       for (int i=0; i<C1.num; i++)
+            out.C[int((C1[i]-p_start)/dp)+1] += 1.0/C1.num/dp;
+       return out/out.integrate();
+    }
+    else
+    {
+       int span_count = smoothing_span/dp;
+
+       for (int i=0; i<C1.num; i++)
+       {
+            int center = int((C1[i]-p_start)/dp)+1;
+            for (int j=max(0,center-3*span_count); j<=min(n_bins,center+3*span_count); j++)
+            {
+                double l_bracket = p_start + (j-1)*dp;
+                double r_bracket = p_start + (j)*dp;
+                double eff_smoothing_span = max(min(min(C[i]-p_start,smoothing_span),p_end-C[i]),dp/10.0);
+                double portion = (exp((C1[i]-l_bracket)/eff_smoothing_span)/(1+exp((C1[i]-l_bracket)/eff_smoothing_span)) - exp((C1[i]-r_bracket)/eff_smoothing_span)/(1+exp((C1[i]-r_bracket)/eff_smoothing_span)));
+                out.C[j] += 1.0/C1.num/dp*portion;
+            }
+        }
+        return out/out.integrate();
+
+    }
+}
+
+
+
 
