@@ -1712,6 +1712,18 @@ CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, double smoothing_span, i
     }
 }
 
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::derivative()
+{
+    CTimeSeries out;
+    for (int i = 0; i < n - 1; i++)
+    {
+        out.C.push_back((C[i + 1] - C[i]) / (t[i + 1] - t[i]));
+        out.t.push_back((t[i + 1] + t[i])/2);
+        out.n++;
+    }
 
+    return out;
+}
 
 

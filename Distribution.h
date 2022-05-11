@@ -48,7 +48,7 @@ public:
     bool readfromfile(const string &filename);
     bool WriteToFile(const map<string,string> Arguments);
     vector<double> SetRangeBasedOnMeanStd(const double &stdcoeff=3);
-    bool Execute(const string &cmd, const map<string,string> &arguments);
+    FunctionOutPut Execute(const string &cmd, const map<string,string> &arguments);
 };
 
 //double erf(double x);

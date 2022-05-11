@@ -351,17 +351,26 @@ vector<double> CDistribution::SetRangeBasedOnMeanStd(const double &stdcoeff)
     return range;
 }
 
-bool CDistribution::Execute(const string &cmd, const map<string,string> &arguments)
+FunctionOutPut CDistribution::Execute(const string &cmd, const map<string,string> &arguments)
 {
+    FunctionOutPut output;
     if (cmd=="CreateDistribution")
-        return CreateDistribution(arguments);
+    {   output.success = CreateDistribution(arguments);
+
+    }
     if (cmd=="WriteToFile")
-        return WriteToFile(arguments);
+    {   output.success = WriteToFile(arguments);
+
+    }
     if (cmd=="SetInverseCumulative")
-        return SetInverseCumulative(arguments);
+    {   output.success = SetInverseCumulative(arguments);
+
+    }
     if (cmd=="WriteInverseCumulativeToFile")
-        return WriteInverseCumulativeToFile(arguments);
-    return false;
+    {   output.success = WriteInverseCumulativeToFile(arguments);
+
+    }
+    return output;
 }
 
 bool CDistribution::SetInverseCumulative(const map<string,string> &arguments)

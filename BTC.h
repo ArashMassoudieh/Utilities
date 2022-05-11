@@ -122,6 +122,7 @@ public:
     void AppendD(const T &value) { D.push_back(value); }
     CTimeSeries<T> inverse_cumulative_uniform(int ninitervals=100);
     CTimeSeries<T> distribution(int n_bins = 40, double smoothing_span=0, int limit=0);
+    CTimeSeries<T> derivative();
 private:
     vector<T> t;
     vector<T> C;
