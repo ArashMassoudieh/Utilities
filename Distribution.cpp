@@ -356,6 +356,7 @@ FunctionOutPut CDistribution::Execute(const string &cmd, const map<string,string
     FunctionOutPut output;
     if (cmd=="CreateDistribution")
     {   output.success = CreateDistribution(arguments);
+        output.output = this;
 
     }
     if (cmd=="WriteToFile")

@@ -1672,8 +1672,8 @@ CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, double smoothing_span, i
     for (int i=0; i<C1.num; i++)
             C1[i] = C[i+limit];
 
-    double p_start = min(C1);
-    double p_end = max(C1)*1.001;
+    double p_start = C1.min();
+    double p_end = C1.max()*1.001;
     double dp = abs(p_end - p_start)/n_bins;
     //cout << "low limit: " << p_start << " up limit: " << p_end << " increment: " << dp << std::endl;
     if (dp == 0) return out;
