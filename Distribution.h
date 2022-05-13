@@ -27,7 +27,6 @@ public:
     static bool HasCommand(const string &cmd);
     vector<string> commands();
     static vector<string> Commands();
-    static vector<string> list_of_commands;
     double pi;
 	int n;
 	vector<double> s;
