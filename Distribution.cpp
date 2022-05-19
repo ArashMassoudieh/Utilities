@@ -2,8 +2,7 @@
 #include "gsl/gsl_cdf.h"
 #include "Utilities.h"
 #include "interface.h"
-
-vector<string> CDistribution::list_of_commands = vector<string>({"CreateDistribution","WriteToFile", "SetInverseCumulative", "WriteInverseCumulativeToFile"});
+#include "command.h"
 
 CDistribution::CDistribution(void):Interface()
 {
@@ -292,8 +291,13 @@ vector<string> CDistribution::commands()
 
 vector<string> CDistribution::Commands()
 {
-    //return vector<string>();
-    return list_of_commands;
+    vector<string> cmds;
+    for (map<string,command_parameters>::iterator i=Command::Command_Structures.begin(); i!=Command::Command_Structures.end(); i++)
+    {
+        if (i->second.Object==object_type::distribution)
+            cmds.push_back(i->first);
+    }
+    return cmds;
 }
 
 bool CDistribution::HasCommand(const string &cmd)
@@ -356,9 +360,9 @@ FunctionOutPut CDistribution::Execute(const string &cmd, const map<string,string
     FunctionOutPut output;
     if (cmd=="CreateDistribution")
     {   output.success = CreateDistribution(arguments);
-
+        output.output = this;
     }
-    if (cmd=="WriteToFile")
+    if (cmd=="WriteDistToFile")
     {   output.success = WriteToFile(arguments);
 
     }

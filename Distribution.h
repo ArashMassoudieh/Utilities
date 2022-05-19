@@ -6,6 +6,7 @@
 #include "Matrix.h"
 #include "BTC.h"
 #include "interface.h"
+#include "Structs.h"
 
 
 using namespace std;
@@ -27,7 +28,6 @@ public:
     static bool HasCommand(const string &cmd);
     vector<string> commands();
     static vector<string> Commands();
-    static vector<string> list_of_commands;
     double pi;
 	int n;
 	vector<double> s;
