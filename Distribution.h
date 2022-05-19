@@ -6,6 +6,7 @@
 #include "Matrix.h"
 #include "BTC.h"
 #include "interface.h"
+#include "Structs.h"
 
 
 using namespace std;
