@@ -21,7 +21,7 @@ public:
 	CTimeSeriesSet& operator = (const CTimeSeriesSet &C);
 	vector<string> names;
 	bool unif = false;
-	void writetofile(string outputfile, bool writeColumnHeaders = false);
+    bool writetofile(string outputfile, bool writeColumnHeaders = false);
 	void writetofile(string outputfile, int writeinterval);
     vector<T> interpolate(T t);
     vector<T> interpolate(T t, int fnvars);
