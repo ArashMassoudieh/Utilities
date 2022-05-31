@@ -10,7 +10,7 @@
 #include "NormalDist.h"
 #include <cstdlib>
 #include "math.h"
-#include "Distribution.h"
+
 
 CNormalDist::CNormalDist(void)
 {

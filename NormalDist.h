@@ -23,6 +23,7 @@ CVector getlognormal(CVector &mu, CMatrix &sigma);
 CMatrix getlognormal(int m, int n, double mu, double std);
 CVector getlognormal(int m, double mu, double std);
 double getnormalrand(double mu, double std);
+double stdnormal_cdf(double u);
 double getnormalcdf(double x, double mu = 0, double std = 1);
 double getstdnormalrand();
 double stdnormal_inv(double p);

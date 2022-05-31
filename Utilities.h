@@ -76,6 +76,7 @@ namespace aquiutils
     //double max(vector<double> x);
     //int max(vector<int> x);
     double Max(vector<double>);
+    double Min(vector<double>);
     int Max(vector<int>);
     string remove_backslash_r(const string &ss);
     string GetOnlyFileName(const string &fullfilename);

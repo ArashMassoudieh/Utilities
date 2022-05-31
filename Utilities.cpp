@@ -581,6 +581,8 @@ namespace aquiutils
 
     }
     double Max(vector<double> x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out=std::max(out, x[i]); return out; }
+    double Min(vector<double> x) { double out = 1e+24;  for (int i = 0; i < x.size(); i++) out=std::min(out, x[i]); return out; }
+
     int Max(vector<int> x)
     {	int out = -37000;
         for (int i = 0; i < x.size(); i++)
