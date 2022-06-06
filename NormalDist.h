@@ -25,6 +25,7 @@ CVector getlognormal(int m, double mu, double std);
 double getnormalrand(double mu, double std);
 double stdnormal_cdf(double u);
 double getnormalcdf(double x, double mu = 0, double std = 1);
+double stdnormal_cdf(double u);
 double getstdnormalrand();
 double stdnormal_inv(double p);
 double unitrandom();

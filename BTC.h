@@ -123,6 +123,8 @@ public:
     CTimeSeries<T> inverse_cumulative_uniform(int ninitervals=100);
     CTimeSeries<T> distribution(int n_bins = 40, double smoothing_span=0, int limit=0);
     CTimeSeries<T> derivative();
+    vector<double> tToStdVector() {return t;}
+    vector<double> ValuesToStdVector() {return C;}
 private:
     vector<T> t;
     vector<T> C;
