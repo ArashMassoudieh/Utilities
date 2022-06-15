@@ -1,4 +1,9 @@
 #include "Utilities.h"
+#ifdef _WINDOWS
+#include <cctype>
+#include <algorithm>
+#endif // _WINDOWS
+
 
 using namespace std;
 

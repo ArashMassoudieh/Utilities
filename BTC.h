@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include "QuickSort.h"
-#include "NormalDist.h"
 #ifdef _arma
 #include "mlpack/core.hpp"
 #include "armadillo"
@@ -18,6 +17,14 @@
 #endif // QT_version
 
 //#define CBTC CTimeSeries
+
+class CDistribution;
+
+struct RegressionParameters {
+    vector<double> parameters; 
+    double MSE = 0; 
+    double R2 = 0; 
+};
 
 using namespace std;
 
@@ -125,6 +132,10 @@ public:
     CTimeSeries<T> derivative();
     vector<double> tToStdVector() {return t;}
     vector<double> ValuesToStdVector() {return C;}
+    CTimeSeries<T> KernelSmooth(CDistribution *dist, int span=100);
+    CTimeSeries<T> KernelSmooth(CDistribution* dist, const double &span = 1);
+    RegressionParameters LinearRegress(const CTimeSeries<T> othertimeseries);
+    RegressionParameters PowerRegress(const CTimeSeries<T> othertimeseries);
 private:
     vector<T> t;
     vector<T> C;

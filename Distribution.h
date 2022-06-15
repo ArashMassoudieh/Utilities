@@ -5,15 +5,20 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "BTC.h"
+#ifdef interface
 #include "interface.h"
 #include "Structs.h"
+#endif
 
 
 using namespace std;
 
 enum class distribution_type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
-
-class CDistribution: public Interface
+#ifdef interface
+class CDistribution : public Interface
+#else // interface
+class CDistribution
+#endif
 {
 public:
     CDistribution();
@@ -48,7 +53,13 @@ public:
     bool readfromfile(const string &filename);
     bool WriteToFile(const map<string,string> Arguments);
     vector<double> SetRangeBasedOnMeanStd(const double &stdcoeff=3);
+    CTimeSeries<double> CDistribution::ToTimeSeries(int nbins=100, const double& stdcoeff = 3);
+    double unitrandom();
+    double getstdnormalrand();
+    double getnormalrand(double mu, double std);
+#ifdef interface
     FunctionOutPut Execute(const string &cmd, const map<string,string> &arguments);
+#endif
 };
 
 //double erf(double x);

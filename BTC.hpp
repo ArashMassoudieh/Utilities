@@ -7,6 +7,7 @@
 #include "string.h"
 #include <iostream>
 #include <fstream>
+#include "math.h"
 //#include "StringOP.h"
 #include "Utilities.h"
 #include "NormalDist.h"
@@ -1726,4 +1727,52 @@ CTimeSeries<T> CTimeSeries<T>::derivative()
     return out;
 }
 
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist,int span)
+{
+	CTimeSeries<T> smoothed_ts;
+	
+	for (int i = 0; i < n; i++)
+	{
+		double sum = 0; 
+		double integral = 0; 
+		for (int j = std::max(0, i - span / 2); j < std::min(i + span / 2, n); j++)
+		{
+			sum += GetC(j) * dist->evaluate(GetT(i) - GetT(j));
+			integral += dist->evaluate(GetT(i) - GetT(j));
+		}
+		smoothed_ts.append(GetT(i), sum/integral);
+	}
+	return smoothed_ts;
+}
 
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist, const double &span)
+{
+	CTimeSeries<T> smoothed_ts;
+
+	for (int i = 0; i < n; i++)
+	{
+		double sum = 0;
+		double integral = 0;
+		for (double t_prime = std::max(0.0, GetT(i)-span/2); t_prime < std::min(GetT(i) + span / 2, lastt()); t_prime+=span/100)
+		{
+			sum += interpol(t_prime) * dist->evaluate(GetT(i) - t_prime);
+			integral += dist->evaluate(GetT(i) - t_prime);
+		}
+		smoothed_ts.append(GetT(i), sum / integral);
+	}
+	return smoothed_ts;
+}
+
+
+template<class T>
+RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> othertimeseries)
+{
+
+}
+template<class T>
+RegressionParameters CTimeSeries<T>::PowerRegress(const CTimeSeries<T> othertimeseries)
+{
+
+}
