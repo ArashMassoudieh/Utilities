@@ -8,9 +8,11 @@
 #include <iostream>
 #include <fstream>
 #include "math.h"
+#include <iomanip>
 //#include "StringOP.h"
 #include "Utilities.h"
 #include "NormalDist.h"
+#include "gsl/gsl_fit.h"
 #ifdef Q_version
 #include "qfile.h"
 #include "qdatastream.h"
@@ -357,6 +359,17 @@ CTimeSeries<T> CTimeSeries<T>::interpol(CTimeSeries<T> &x) const
 }
 
 template<class T>
+CTimeSeries<T> CTimeSeries<T>::interpol(CTimeSeries<T> *x) const
+{
+	CTimeSeries<T> BTCout;
+	for (int i = 0; i < x->n; i++)
+		BTCout.append(x->GetT(i), interpol(x->GetT(i)));
+	return BTCout;
+
+}
+
+
+template<class T>
 T ADD(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d)
 {
     T sum = 0;
@@ -474,6 +487,19 @@ T diff2(const CTimeSeries<T> &BTC_p, const CTimeSeries<T> &BTC_d)
 }
 
 template<class T>
+T diff2(const CTimeSeries<T>* BTC_p, const CTimeSeries<T>* BTC_d)
+{
+	T sum = 0;
+	for (int i = 0; i < BTC_d->n; i++)
+	{
+		sum += pow(BTC_d->GetC(i) - BTC_p->interpol(BTC_d->GetT(i)), 2);
+	}
+
+	return sum / double(BTC_d->n);
+}
+
+
+template<class T>
 T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d)
 {
     T sumcov = 0;
@@ -483,16 +509,38 @@ T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d)
     T sum2 = 0;
 	for (int i=0; i<BTC_d.n; i++)
 	{
-        T x2 = BTC_p.interpol(BTC_d.t[i]);
-		sumcov += BTC_d.C[i]*x2/BTC_d.n;
-		sumvar1 += BTC_d.C[i]*BTC_d.C[i]/BTC_d.n;
+        T x2 = BTC_p.interpol(BTC_d.GetT(i));
+		sumcov += BTC_d.GetC(i)*x2/BTC_d.n;
+		sumvar1 += BTC_d.GetC(i)*BTC_d.GetC(i)/BTC_d.n;
 		sumvar2 += x2*x2/BTC_d.n;
-		sum1 += BTC_d.C[i]/BTC_d.n;
+		sum1 += BTC_d.GetC(i)/BTC_d.n;
 		sum2 += x2/BTC_d.n;
 	}
 
 	return pow(sumcov-sum1*sum2,2)/(sumvar1-sum1*sum1)/(sumvar2-sum2*sum2);
 }
+
+template<class T>
+T R2(CTimeSeries<T> *BTC_p, CTimeSeries<T> *BTC_d)
+{
+	T sumcov = 0;
+	T sumvar1 = 0;
+	T sumvar2 = 0;
+	T sum1 = 0;
+	T sum2 = 0;
+	for (int i = 0; i < BTC_d->n; i++)
+	{
+		T x2 = BTC_p->interpol(BTC_d->GetT(i));
+		sumcov += BTC_d->GetC(i) * x2 / BTC_d->n;
+		sumvar1 += BTC_d->GetC(i) * BTC_d->GetC(i) / BTC_d->n;
+		sumvar2 += x2 * x2 / BTC_d->n;
+		sum1 += BTC_d->GetC(i) / BTC_d->n;
+		sum2 += x2 / BTC_d->n;
+	}
+
+	return pow(sumcov - sum1 * sum2, 2) / (sumvar1 - sum1 * sum1) / (sumvar2 - sum2 * sum2);
+}
+
 
 template<class T>
 T R(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, int nlimit)
@@ -702,11 +750,12 @@ template<class T>
 bool CTimeSeries<T>::writefile(const string &Filename)
 {
     ofstream file(Filename);
-    if (file.good())
+    
+	if (file.good())
     {
         file<< "n " << n <<", BTC size " << C.size() << std::endl;
         for (int i=0; i<n; i++)
-            file << t[i] << ", " << C[i] << std::endl;
+            file << setprecision(10) << t[i] << ", " << C[i] << std::endl;
         file.close();
     }
     else return false;
@@ -1769,10 +1818,87 @@ CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist, const double &s
 template<class T>
 RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> othertimeseries)
 {
-
+	RegressionParameters parameters;
+	CTimeSeries<T> othertimeseries_mapped = othertimeseries.interpol(this);
+	T sum_y = othertimeseries_mapped.sum();
+	T sum_x2 = sum_squared(); 
+	T sum_x = sum(); 
+	T sum_xy = 0; 
+	for (int i = 0; i < n; i++)
+	{
+		sum_xy += C[i] * othertimeseries_mapped.GetC(i);
+	}
+	
+	//intercept
+	parameters.parameters.push_back((sum_y * sum_x2 - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x));
+	//slope
+	parameters.parameters.push_back((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x));
+	parameters.regress_type = RegressionParameters::_regress_type::linear;
+	CTimeSeries<T> predicted = Predict(parameters);
+	parameters.R2 = R2(othertimeseries, &predicted);
+	parameters.MSE = diff2(othertimeseries, &predicted);
+	return parameters;
+	
 }
+
 template<class T>
 RegressionParameters CTimeSeries<T>::PowerRegress(const CTimeSeries<T> othertimeseries)
 {
+	RegressionParameters parameters;
+	CTimeSeries<T> othertimeseries_mapped = othertimeseries.interpol(this).Log();
+	CTimeSeries<T> thistimeseries_mapped = Log();
+	T sum_y = othertimeseries_mapped.sum();
+	T sum_x2 = thistimeseries_mapped.sum_squared();
+	T sum_x = thistimeseries_mapped.sum();
+	T sum_xy = 0;
+	for (int i = 0; i < n; i++)
+	{
+		sum_xy += thistimeseries_mapped.GetC(i) * othertimeseries_mapped.GetC(i);
+	}
 
+	//intercept
+	parameters.parameters.push_back((sum_y * sum_x2 - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x));
+	//slope
+	parameters.parameters.push_back((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x));
+	parameters.regress_type = RegressionParameters::_regress_type::power;
+	CTimeSeries<T> predicted = Predict(parameters);
+	parameters.R2 = R2(othertimeseries, &predicted);
+	parameters.MSE = diff2(othertimeseries, &predicted);
+	return parameters;
+}
+
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::Predict(const RegressionParameters& regression_parameters)
+{
+	CTimeSeries<T> predicted;
+	for (int i = 0; i < n; i++)
+	{
+		if (regression_parameters.regress_type==RegressionParameters::_regress_type::linear)
+			predicted.append(t[i], regression_parameters.parameters[0] + regression_parameters.parameters[1] * C[i]);
+		else if (regression_parameters.regress_type == RegressionParameters::_regress_type::power)
+			predicted.append(t[i], exp(regression_parameters.parameters[0]) *pow(C[i], regression_parameters.parameters[1]));
+	}
+	return predicted;
+}
+
+template<class T>
+T CTimeSeries<T>::sum()
+{
+	T sum = 0; 
+	for (int i = 0; i < n; i++)
+	{
+		sum += C[i];
+	}
+	return sum; 
+}
+
+template<class T>
+T CTimeSeries<T>::sum_squared()
+{
+	T sum2 = 0;
+	for (int i = 0; i < n; i++)
+	{
+		sum2 += C[i]*C[i];
+	}
+	return sum2;
 }

@@ -24,6 +24,7 @@ struct RegressionParameters {
     vector<double> parameters; 
     double MSE = 0; 
     double R2 = 0; 
+    enum class _regress_type {linear, power, exponential} regress_type;
 };
 
 using namespace std;
@@ -47,6 +48,7 @@ public:
     T interpol_D(const T &x); //interpolate the distance to the next non-zero data point
     CTimeSeries interpol(vector<T> x); //interpolate at each value in vector x
     CTimeSeries interpol(CTimeSeries &x) const; //interpolate at times in the time axis of x
+    CTimeSeries interpol(CTimeSeries *x) const; //interpolate at times in the time axis of x
 	CTimeSeries(const CTimeSeries &C);
 	CTimeSeries(string Filename); //create BTC based on the filename
 #ifdef _arma
@@ -136,6 +138,9 @@ public:
     CTimeSeries<T> KernelSmooth(CDistribution* dist, const double &span = 1);
     RegressionParameters LinearRegress(const CTimeSeries<T> othertimeseries);
     RegressionParameters PowerRegress(const CTimeSeries<T> othertimeseries);
+    CTimeSeries<T> Predict(const RegressionParameters& regression_parameters);
+    T sum(); 
+    T sum_squared(); 
 private:
     vector<T> t;
     vector<T> C;
@@ -157,10 +162,12 @@ template<class T> T diff(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, CTimeSeries
 template<class T> T diff2(CTimeSeries<T> *BTC_p, CTimeSeries<T> BTC_d);
 template<class T> T diff2(CTimeSeries<T> BTC_p, CTimeSeries<T> *BTC_d);
 template<class T> T diff2(const CTimeSeries<T> &BTC_p, const CTimeSeries<T> &BTC_d);
+template<class T> T diff2(const CTimeSeries<T>* BTC_p, const CTimeSeries<T>* BTC_d);
 template<class T> T diff_mixed(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d, double lowlim, double std_n, double std_ln);
 template<class T> T ADD(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d);
 template<class T> T diff_relative(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d, double m);
 template<class T> T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d);
+template<class T> T R2(CTimeSeries<T> *BTC_p, CTimeSeries<T> *BTC_d);
 template<class T> T R(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, int nlimit);
 template<class T> CTimeSeries<T> operator*(T, CTimeSeries<T>&);
 template<class T> CTimeSeries<T> operator*(CTimeSeries<T>&, double);
