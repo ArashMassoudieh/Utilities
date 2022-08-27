@@ -6,7 +6,9 @@
 #include "math.h"
 #include "Matrix.h"
 #include <cfloat>
+#ifdef _arma
 #include "Vector_arma.h"
+#endif
 #include "Utilities.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -116,6 +118,7 @@ CVector& CVector::operator=(const vector<double> &v)
 	return *this;
 }
 
+#ifdef _arma
 CVector &CVector::operator=(CVector_arma &v)
 {
 	vec.reserve(v.num);
@@ -124,6 +127,7 @@ CVector &CVector::operator=(CVector_arma &v)
 		vec[i] = v[i];
 	return *this;
 }
+#endif
 
 CVector& CVector::operator=(const double &v)
 {
@@ -310,7 +314,7 @@ bool CVector::is_finite()
 {
 	bool r=true;
 	for (int i=0; i<num; ++i)
-		if (isfinite(vec[i])!=true)
+        if (aquiutils::isfinite(vec[i])!=true)
 			r=false;
 	return r;
 }
@@ -666,6 +670,7 @@ void CVector::print(string s)
 
 }
 
+#ifdef _arma
 CVector CVector::operator=(mat A)
 {
 	num = A.n_rows;
@@ -676,6 +681,7 @@ CVector CVector::operator=(mat A)
 
 	return *this;
 }
+#endif
 
 CVector CVector::sub(int i, int j)
 {

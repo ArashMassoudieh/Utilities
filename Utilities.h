@@ -81,6 +81,13 @@ namespace aquiutils
         unsigned int i=rand()%vec.size();
         return vec[i];
     };
+    template<typename T> bool isfinite(T arg)
+    {
+        if (arg==arg)
+            return true;
+        else
+            return false;
+    }
 
 }
 

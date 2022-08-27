@@ -5,14 +5,18 @@
 #include "Matrix.h"
 #include "math.h"
 #include <iostream>
+#include <fstream>
 #define ARMA_DONT_PRINT_ERRORS
+#ifdef _arma
 #include "armadillo"
 #include "Matrix_arma.h"
 #include "Matrix_arma_sp.h"
-
-
-
 using namespace arma;
+#endif
+
+
+
+
 
 
 using namespace std;
@@ -300,10 +304,12 @@ CVector gauss0(CMatrix M, CVector V)
 	return b;
 }
 
+#ifdef _arma
 CVector operator/(CVector &V, CMatrix &M)
 {
 	return solve_ar(M,V);
 }
+#endif
 
 CMatrix Log(CMatrix &M1)
 {
@@ -352,6 +358,7 @@ double & CMatrix::operator()(unsigned int i, unsigned int j)
 	return matr[i].vec[j];
 }
 
+#ifdef _arma
 CMatrix Invert(CMatrix M1)
 {
 	CMatrix InvM(M1.getnumcols(), M1.getnumcols());
@@ -363,7 +370,7 @@ CMatrix Invert(CMatrix M1)
 	}
 	return Transpose(InvM);
 }
-
+#endif
 CMatrix Cholesky_factor(CMatrix &M)
 {
 	int i;
@@ -705,6 +712,7 @@ void CMatrix::print(string s)
 	}
 }
 
+#ifdef _arma
 CVector solve_ar(CMatrix &M, CVector &V)
 {
 
@@ -781,7 +789,6 @@ double det(CMatrix &M)
 	return det(A);
 }
 
-
 CMatrix& CMatrix::operator=(mat &A)
 {
 	numcols = A.n_cols;
@@ -799,6 +806,7 @@ CMatrix& CMatrix::operator=(mat &A)
 
 	return *this;
 }
+#endif
 
 void write_to_file(vector<CMatrix> M, string filename)
 {
@@ -973,7 +981,7 @@ void CMatrix::setnumcolrows()
 	}
 }
 
-
+#ifdef _arma
 CMatrix::CMatrix(CMatrix_arma_sp &M)
 {
 	numrows = M.getnumrows();
@@ -995,3 +1003,4 @@ CMatrix::CMatrix(CMatrix_arma &M)
 			matr[i][j] = M(i, j);
 
 }
+#endif

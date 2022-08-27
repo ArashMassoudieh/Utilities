@@ -4,13 +4,12 @@
 #include <iostream>
 #include <vector>
 #include "QuickSort.h"
+#ifdef _arma
 #include "armadillo"
-
-
 using namespace arma;
 using namespace std;
-
 class CVector_arma;
+#endif
 class CMatrix;
 class SizeDist;
 class CVector
@@ -35,9 +34,12 @@ public:
 	int range(int);
 	CVector& operator=(const CVector&);
 	CVector& operator=(const vector<double>&);
-	CVector& operator=(CVector_arma&);
+#ifdef _arma
+    CVector& operator=(CVector_arma&);
+    CVector operator=(mat);
+#endif
 	CVector& operator=(const double &v);
-	CVector operator=(mat);
+
 	//mat CVector::operator=(const CVector&);
 	CVector& operator+();
 	void swap(int , int );

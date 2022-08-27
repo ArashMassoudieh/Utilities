@@ -4,10 +4,11 @@
 #include <iostream>
 #include <vector>
 #include "armadillo"
-
-
-
 using namespace arma;
+
+
+
+
 using namespace std;
 
 class CMatrix_arma_sp;

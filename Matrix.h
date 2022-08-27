@@ -8,15 +8,18 @@
 #include <iostream>
 #include "math.h"
 #define ARMA_DONT_PRINT_ERRORS
+#ifdef _arma
 #include "armadillo"
+#include "Matrix_arma.h"
+#include "Vector_arma.h"
+using namespace arma;
+#endif
 class QVariant;
 //class QString;
 //class QList;
 
-#include "Matrix_arma.h"
-#include "Vector_arma.h"
 
-using namespace arma;
+
 class CVector;
 class CMatrix
 {
@@ -31,8 +34,11 @@ public:
 	CMatrix(int);
 	CMatrix();
 	CMatrix(const CMatrix&);
-	CMatrix(CMatrix_arma_sp&);
+#ifdef _arma
+    CMatrix(CMatrix_arma_sp&);
 	CMatrix(CMatrix_arma &M);
+    CMatrix& operator=(mat&);
+#endif
 	CMatrix(const CVector&);
 	CVector& operator[](int);
     double & operator()(int i, int j);
@@ -44,7 +50,7 @@ public:
 	CMatrix & operator=(const double & m);
 	CMatrix& operator+=(const CMatrix&);
 	CMatrix& operator-=(const CMatrix &);
-	CMatrix& operator=(mat&);
+
 	friend CMatrix mult(CMatrix&, CMatrix&);
 	friend CVector mult(CMatrix&, CVector&);
 	friend CVector mult(CVector&, CMatrix&);
@@ -99,8 +105,11 @@ CMatrix Transpose(CMatrix &M1);
 CMatrix Invert(CMatrix M1);
 CVector SpareSolve(CMatrix, CVector);
 CMatrix oneoneprod(CMatrix &m1, CMatrix &m2);
+#ifdef _arma
 CVector solve_ar(CMatrix&, CVector&);
+#endif
 CMatrix inv(CMatrix&);
+
 CMatrix normalize_diag(CMatrix&, CMatrix&);
 CVector normalize_diag(CVector&, CMatrix&);
 CMatrix Identity(int rows);
