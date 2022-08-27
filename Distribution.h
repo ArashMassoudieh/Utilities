@@ -5,32 +5,61 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "BTC.h"
+#ifdef interface
+#include "interface.h"
+#include "Structs.h"
+#endif
+
 
 using namespace std;
 
+enum class distribution_type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
+#ifdef interface
+class CDistribution : public Interface
+#else // interface
 class CDistribution
+#endif
 {
 public:
-	CDistribution(void);
-	CDistribution(string name);
+    CDistribution();
+    CDistribution(string name);
 	~CDistribution(void);
+    static int NumberOfCoreParameters(string _name);
+    bool CreateDistribution(const map<string,string> &Arguments);
 	vector<double> params;
 	string name;
 	double evaluate(double x);
 	double evaluate_CDF(double x, bool flux_w = false);
-	double pi;
+    static bool HasCommand(const string &cmd);
+    vector<string> commands();
+    static vector<string> Commands();
+    double pi;
 	int n;
 	vector<double> s;
 	vector<double> e;
-        CTimeSeries<double> inverse_cumulative;
-        CTimeSeries<double> density;
-	CDistribution(int nn);
+    CTimeSeries<double> inverse_cumulative;
+    CTimeSeries<double> density;
+    distribution_type DistributionType;
+    CDistribution(int nn);
 	CDistribution(const CDistribution &C);
+    bool SetInverseCumulative(const map<string,string> &arguments);
+    bool WriteInverseCumulativeToFile(const map<string,string> &arguments);
+    double InverseCumulativeValue(double u);
+    double CumulativeValue(double x);
 	CDistribution operator = (const CDistribution &C);
 	int GetRand();
 	double inverseCDF(double u, bool flux_weight=false);
 	double map_normal_to(double z);
     bool readfromfile(const string &filename);
+    bool WriteToFile(const map<string,string> Arguments);
+    vector<double> SetRangeBasedOnMeanStd(const double &stdcoeff=3);
+    CTimeSeries<double> CDistribution::ToTimeSeries(int nbins=100, const double& stdcoeff = 3);
+    double unitrandom();
+    double getstdnormalrand();
+    double getnormalrand(double mu, double std);
+#ifdef interface
+    FunctionOutPut Execute(const string &cmd, const map<string,string> &arguments);
+#endif
 };
 
 //double erf(double x);

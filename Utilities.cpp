@@ -1,6 +1,9 @@
 #include "Utilities.h"
+#ifdef _WINDOWS
+#include <cctype>
+#include <algorithm>
+#endif // _WINDOWS
 
-#define SMALLNUMBER 1e-23
 
 using namespace std;
 
@@ -200,7 +203,7 @@ namespace aquiutils
 
     bool isnumber(char S)
     {
-        if ((((int)S > 47) && ((int)S < 58)) || (S=='.'))
+        if ((((int)S > 47) && ((int)S < 58)) || (S=='.') || (S=='-'))
             return true;
         else
             return false;
@@ -503,7 +506,13 @@ namespace aquiutils
         if (x>0) return x; else return 0;
     }
 
-    string numbertostring(double x, bool scientific)
+    double Neg(double x)
+    {
+        return Pos(-x);
+    }
+
+
+    string numbertostring(const double &x, bool scientific)
     {
         string Result;          // string which will contain the result
         ostringstream convert;   // stream used for the conversion
@@ -514,7 +523,7 @@ namespace aquiutils
         return Result;
     }
 
-    string numbertostring(vector<double> x, bool scientific)
+    string numbertostring(vector<double> &x, bool scientific)
     {
         string Result = "[";
         for (int i=0; i<x.size()-1;i++)
@@ -541,7 +550,7 @@ namespace aquiutils
         return Result;
     }
 
-    string numbertostring(vector<int> x, bool scientific)
+    string numbertostring(vector<int> &x, bool scientific)
     {
         string Result = "[";
         if (x.size()>0)
@@ -576,6 +585,16 @@ namespace aquiutils
         return out;
 
     }
+    double Max(vector<double> x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out=std::max(out, x[i]); return out; }
+    double Min(vector<double> x) { double out = 1e+24;  for (int i = 0; i < x.size(); i++) out=std::min(out, x[i]); return out; }
+
+    int Max(vector<int> x)
+    {	int out = -37000;
+        for (int i = 0; i < x.size(); i++)
+            out=std::max(out, x[i]);
+        return out;
+
+    }
 
     string remove_backslash_r(const string &ss)
     {
@@ -594,6 +613,18 @@ namespace aquiutils
         vector<string> splittedbyslash = split(fullfilename,del);
         return splittedbyslash[splittedbyslash.size()-1];
 
+    }
+
+    double avg(double x, double y, string type)
+    {
+        if (type == "arithmetic")
+                return 0.5*(x + y);
+        if (type == "geometric")
+                return sqrt(x*y);
+        if (type == "harmonic")
+                return (2.0*x*y / (x + y));
+            else
+                return 0.5*(x + y);
     }
 
 }

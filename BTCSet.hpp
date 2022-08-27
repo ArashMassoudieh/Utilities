@@ -108,14 +108,14 @@ void CTimeSeriesSet<T>::writetofile(char outputfile[])
 }
 
 template <class T>
-void CTimeSeriesSet<T>::writetofile(string outputfile, bool writeColumnNameHeaders)
+bool CTimeSeriesSet<T>::writetofile(string outputfile, bool writeColumnNameHeaders)
 {
 	FILE *Fil;
 	Fil = fopen(outputfile.c_str() , "w");
 	if (!Fil)
     {
         cout << "File '" + outputfile +"' cannot be opened!"<<std::endl;
-        return;
+        return false;
     }
 	if (writeColumnNameHeaders)
 	{
@@ -142,6 +142,7 @@ void CTimeSeriesSet<T>::writetofile(string outputfile, bool writeColumnNameHeade
 	}
 
 	fclose(Fil);
+    return true;
 
 }
 
@@ -1112,6 +1113,7 @@ void CTimeSeriesSet<T>::adjust_size()
     for (unsigned int i = 0; i < BTC.size(); i++)
         BTC[i].adjust_size();
 }
+
 
 
 #ifdef QT_version

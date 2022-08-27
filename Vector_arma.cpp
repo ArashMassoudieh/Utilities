@@ -5,9 +5,10 @@
 #include "Vector_arma.h"
 #include "math.h"
 #include "Matrix_arma.h"
-#include "Matrix_arma_sp.h"
 #include <cfloat>
 #include "Vector.h"
+//#include "Expression.h"
+#include "Utilities.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -137,7 +138,7 @@ void CVector_arma::swap(int i, int j)
 
 }
 
-int CVector_arma::getsize() {return num;}
+int CVector_arma::getsize() const {return num;}
 
 CVector_arma& CVector_arma::operator*=(double x)
 {
@@ -145,6 +146,14 @@ CVector_arma& CVector_arma::operator*=(double x)
 		vect(i) *= x;
 	return *this;
 
+}
+
+bool CVector_arma::haszeros() const
+{
+    bool out = false;
+    for (int i=0; i<num; ++i)
+        if (vect(i) == 0) out = true;
+    return out;
 }
 
 CVector_arma& CVector_arma::operator/=(double x)
@@ -298,6 +307,17 @@ bool CVector_arma::is_finite()
 	return r;
 }
 
+vector<int> CVector_arma::get_nan_elements()
+{
+	vector<int> out;
+	for (int i = 0; i < num; i++)
+	{
+		if ((vect[i] == vect[i]) != true || !isfinite(vect[i]))
+			out.push_back(i);
+	}
+	return out;
+}
+
 double CVector_arma::max()
 {
 	return vect.max();
@@ -328,6 +348,21 @@ double CVector_arma::abs_max()
 	return a;
 }
 
+int CVector_arma::abs_max_elems()
+{
+	double a = -1E14;
+	int ii;
+	for (int i = 0; i<num; i++)
+	{
+		if (fabs(vect(i)) > a)
+		{
+			a = fabs(vect(i));
+			ii = i;
+		}
+	}
+	return ii;
+}
+
 double abs_max(CVector_arma &V)
 {
 	return V.abs_max();
@@ -352,6 +387,14 @@ double CVector_arma::sum()
 		a+=vect(i);
 	}
 	return a;
+}
+
+CMatrix_arma CVector_arma::T()
+{
+	CMatrix_arma K(1,num);
+	for (int i=0; i<num; i++)
+		K.get(0,i) = vect(i);
+	return K;
 }
 
 CVector_arma CVector_arma::Log()
@@ -438,9 +481,9 @@ void CVector_arma::writetofile_app(string filename)
 	fclose(f);
 }
 
-CMatrix_arma_sp CVector_arma::diagmat_sp()
+CMatrix_arma CVector_arma::diagmat()
 {
-	CMatrix_arma_sp A(num,num);
+	CMatrix_arma A(num,num);
 	for (int i=0; i<num; i++)
 		A.matr(i,i) = vect(i);
 
@@ -522,25 +565,6 @@ vector<int> CVector_arma::lookup(double val)
 	return res;
 }
 
-vector<int> CVector_arma::maxelements()
-{
-    double a = -1E14;
-    vector<int> max_elements;
-	for (int i=0;i<num; i++)
-	{
-		if (vect(i)>a)
-			a = vect(i);
-	}
-	for (int i=0;i<num; i++)
-    {
-        if (a==vect(i))
-        {
-            max_elements.push_back(i);
-        }
-    }
-    return max_elements;
-}
-
 CVector_arma H(CVector_arma &V)
 {
 	CVector_arma x(V.num);
@@ -587,6 +611,27 @@ CVector_arma CVector_arma::sub(int i, int j)
 	return C;
 
 }
+
+string CVector_arma::toString() const
+{
+    string s = "[" + aquiutils::numbertostring(int(vect(0)));
+    for (int i=1; i<num; i++)
+        s += "," + aquiutils::numbertostring(int(vect(i)));
+    s+= "]";
+    return s;
+
+}
+
+vector<int> CVector_arma::negative_elements()
+{
+    vector<int> out;
+    for (int i=0; i<num; i++)
+        if (vect(i)<0)
+            out.push_back(i);
+    return out;
+
+}
+
 //mat CVector_arma::operator=(const CVector_arma&V)
 //{
 //	mat A(num,1);

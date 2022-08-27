@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include "QuickSort.h"
-#include "NormalDist.h"
 #ifdef _arma
 #include "mlpack/core.hpp"
 #include "armadillo"
@@ -18,6 +17,15 @@
 #endif // QT_version
 
 //#define CBTC CTimeSeries
+
+class CDistribution;
+
+struct RegressionParameters {
+    vector<double> parameters; 
+    double MSE = 0; 
+    double R2 = 0; 
+    enum class _regress_type {linear, power, exponential} regress_type;
+};
 
 using namespace std;
 
@@ -40,14 +48,15 @@ public:
     T interpol_D(const T &x); //interpolate the distance to the next non-zero data point
     CTimeSeries interpol(vector<T> x); //interpolate at each value in vector x
     CTimeSeries interpol(CTimeSeries &x) const; //interpolate at times in the time axis of x
+    CTimeSeries interpol(CTimeSeries *x) const; //interpolate at times in the time axis of x
 	CTimeSeries(const CTimeSeries &C);
 	CTimeSeries(string Filename); //create BTC based on the filename
 #ifdef _arma
     CTimeSeries(arma::mat &x, arma::mat &y); //build timeseries from arma::mat
 #endif
 	CTimeSeries& operator = (const CTimeSeries &C);
-	void readfile(string); //read the values from a text file
-	void writefile(string Filename); //writes the BTC contets into a fild
+    bool readfile(string); //read the values from a text file
+    bool writefile(const string &Filename); //writes the BTC contets into a fild
     T maxC(); //returns the maximum value
     T minC(); //returns the minimum value
     T maxt();
@@ -70,7 +79,7 @@ public:
     T average(); //integral of time-series devided by the domail length
     T average(T t); // integral to time t devided by domain length
     T slope(); //slope of time-series at its end
-	CTimeSeries distribution(int n_bins, int limit); //extract the histogram of values
+	CTimeSeries<T> distribution(int n_bins, int limit); //extract the histogram of values
     bool append(T x); //appends a data point with value x
     bool append(T tt, T xx); //appends a datapoint with value xx at time tt
 	void append(CTimeSeries &CC);// appends a time-series to the time-series
@@ -120,6 +129,18 @@ public:
     unsigned int tSize() {return t.size();}
     unsigned int DSize() {return D.size(); }
     void AppendD(const T &value) { D.push_back(value); }
+    CTimeSeries<T> inverse_cumulative_uniform(int ninitervals=100);
+    CTimeSeries<T> distribution(int n_bins = 40, double smoothing_span=0, int limit=0);
+    CTimeSeries<T> derivative();
+    vector<double> tToStdVector() {return t;}
+    vector<double> ValuesToStdVector() {return C;}
+    CTimeSeries<T> KernelSmooth(CDistribution *dist, int span=100);
+    CTimeSeries<T> KernelSmooth(CDistribution* dist, const double &span = 1);
+    RegressionParameters LinearRegress(const CTimeSeries<T> othertimeseries);
+    RegressionParameters PowerRegress(const CTimeSeries<T> othertimeseries);
+    CTimeSeries<T> Predict(const RegressionParameters& regression_parameters);
+    T sum(); 
+    T sum_squared(); 
 private:
     vector<T> t;
     vector<T> C;
@@ -141,10 +162,12 @@ template<class T> T diff(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, CTimeSeries
 template<class T> T diff2(CTimeSeries<T> *BTC_p, CTimeSeries<T> BTC_d);
 template<class T> T diff2(CTimeSeries<T> BTC_p, CTimeSeries<T> *BTC_d);
 template<class T> T diff2(const CTimeSeries<T> &BTC_p, const CTimeSeries<T> &BTC_d);
+template<class T> T diff2(const CTimeSeries<T>* BTC_p, const CTimeSeries<T>* BTC_d);
 template<class T> T diff_mixed(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d, double lowlim, double std_n, double std_ln);
 template<class T> T ADD(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d);
 template<class T> T diff_relative(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d, double m);
 template<class T> T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d);
+template<class T> T R2(CTimeSeries<T> *BTC_p, CTimeSeries<T> *BTC_d);
 template<class T> T R(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, int nlimit);
 template<class T> CTimeSeries<T> operator*(T, CTimeSeries<T>&);
 template<class T> CTimeSeries<T> operator*(CTimeSeries<T>&, double);

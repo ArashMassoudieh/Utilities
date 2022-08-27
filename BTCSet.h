@@ -21,7 +21,7 @@ public:
 	CTimeSeriesSet& operator = (const CTimeSeriesSet &C);
 	vector<string> names;
 	bool unif = false;
-	void writetofile(string outputfile, bool writeColumnHeaders = false);
+    bool writetofile(string outputfile, bool writeColumnHeaders = false);
 	void writetofile(string outputfile, int writeinterval);
     vector<T> interpolate(T t);
     vector<T> interpolate(T t, int fnvars);
@@ -62,7 +62,7 @@ public:
     void resize(unsigned int _size);
     void ResizeIfNeeded(unsigned int _increment);
     void adjust_size();
-	bool file_not_found=false;
+    bool file_not_found=false;
     CTimeSeries<T> &operator[](int index);
     CTimeSeries<T> &operator[](string BTCName);
     bool Contains(string BTCName);
