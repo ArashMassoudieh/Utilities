@@ -77,6 +77,7 @@ CVector::CVector(const vector<double> &v)
 	vec = v;
 }
 
+#ifdef _arma
 CVector::CVector(CVector_arma &v)
 {
 	num = v.num;
@@ -84,7 +85,7 @@ CVector::CVector(CVector_arma &v)
 	for (int i = 0; i<num; i++)
 		vec[i] = v[i];
 }
-
+#endif
 CVector::CVector(const vector<int> &v)
 {
 	num = v.size();
@@ -479,14 +480,14 @@ CVector Log(CVector V)
 
 }
 
-double avg(CVector V)
+double avg(CVector &V)
 {
 	return V.sum()/V.num;
 }
 
 double stdev(CVector &V)
 {
-	double average = avg(V);
+    double average = avg(V);
 	double sumsquared = 0;
 	for (int i=0; i<V.num; i++)
 	{

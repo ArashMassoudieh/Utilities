@@ -21,7 +21,7 @@ class QVariant;
 #include <QMap>
 #endif // QT_version
 
-
+using namespace std;
 
 class CVector;
 class CMatrix
@@ -84,7 +84,6 @@ public:
     vector<string> toString(string format = "", vector<string> columnHeaders = vector<string>(), vector<string> rowHeaders = vector<string>()) const;
 	vector<string> toHtml(string format = "", vector<string> columnHeaders = vector<string>(), vector<string> rowHeaders = vector<string>());
     void setnumcolrows();
-	double& operator()(int i, int j);
 	void ScaleDiagonal(double x);
 #ifdef QT_version
     QMap<QString, QVariant> compact() const;

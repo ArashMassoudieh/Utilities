@@ -1,5 +1,6 @@
 
-#pragma once
+#ifndef C_VECTOR
+#define C_VECTOR
 
 #include <iostream>
 #include <vector>
@@ -62,6 +63,7 @@ public:
 	double norm2();
 	double sum();
 	double abs_max();
+    int abs_max_elems();
 	vector<int> maxelements();
 	CMatrix T();
 	CVector Log();
@@ -81,6 +83,8 @@ public:
 	void print(string s);
 	CVector sub(int i, int j);
 	bool is_finite();
+    string toString();
+    vector<int> negative_elements();
 
 
 };
@@ -116,3 +120,6 @@ CVector NormalizetoGaussian(CVector &V);
 vector<double> create_vector(int i);
 vector<vector<double> > create_vector(int i, int j);
 template<typename T> bool isfinite(T arg);
+
+
+#endif

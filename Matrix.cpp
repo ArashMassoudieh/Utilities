@@ -9,6 +9,7 @@
 #define ARMA_DONT_PRINT_ERRORS
 #ifdef _arma
 #include "armadillo"
+#endif
 #include "Vector.h"
 //#include "Expression.h"
 #include "Utilities.h"
@@ -350,13 +351,13 @@ CVector operator/(CVector &V, CMatrix &M)
 {
 	return solve_ar(M,V);
 }
-#endif
+
 
 CVector operator/(const CVector &V, const CMatrix &M)
 {
     return solve_ar(M,V);
 }
-
+#endif
 CMatrix Log(CMatrix &M1)
 {
 	CMatrix TrM(M1.getnumrows(), M1.getnumcols());
@@ -385,7 +386,7 @@ CMatrix Sqrt(CMatrix &M1)
 }
 
 
-
+#ifdef _arma
 CMatrix Invert(CMatrix M1)
 {
 	CMatrix InvM(M1.getnumcols(), M1.getnumcols());
@@ -957,6 +958,7 @@ CVector normalize_diag(const CVector &V, const CMatrix&M2)
     return M;
 }
 
+#ifdef _arma
 CVector maxelements(const CMatrix &m)
 {
     CVector_arma v(m.getnumcols());
@@ -980,7 +982,7 @@ CVector CMatrix::maxelements() const
     }
     return v;
 }
-
+#endif
 
 CVector normalize_diag(const CVector &V, const CVector&D)
 {
@@ -993,6 +995,7 @@ CVector normalize_diag(const CVector &V, const CVector&D)
     return M;
 }
 
+#ifdef _arma
 CMatrix normalize_max( const CMatrix &M1, const CMatrix &M2)
 {
     CMatrix M(M1);
@@ -1016,7 +1019,7 @@ CVector normalize_max( const CVector &V, const CMatrix &M2)
     }
     return M;
 }
-
+#endif
 CVector normalize_max( const CVector &V, const CVector &D)
 {
     CVector M(V);
@@ -1199,7 +1202,7 @@ CMatrix CMatrix::unCompact(QMap<QString, QVariant> r)
 	return m;
 }
 #endif // QT_version
-
+#ifdef _arma
 CMatrix::CMatrix(CMatrix_arma &M)
 {
 	numrows = M.getnumrows();
