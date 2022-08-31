@@ -39,6 +39,7 @@ public:
 #ifdef _arma
     CVector& operator=(CVector_arma&);
     CVector operator=(mat);
+    CVector(const CVector_arma&);
 #endif
 	CVector& operator=(const double &v);
 
@@ -97,17 +98,17 @@ double min(CVector );
 double max(CVector );
 CVector H(CVector );
 double H(double x);
-CVector operator+(CVector, CVector);
-CVector operator+(double, CVector);
-CVector operator+(CVector, double);
+CVector operator+(const CVector&, const CVector&);
+CVector operator+(double, const CVector&);
+CVector operator+(const CVector&, double);
 CVector operator-(const CVector&, const CVector&);
 CVector operator-(double, CVector&);
-CVector operator-(CVector&, double);
-CVector operator*(CVector, CVector);
-CVector operator*(double, CVector);
-CVector operator/(CVector, double);
-CVector operator/(CVector, CVector);
-CVector operator/(double, CVector);
+CVector operator-(const CVector&, double);
+CVector operator*(const CVector&, const CVector&);
+CVector operator*(double, const CVector&);
+CVector operator/(const CVector&, double);
+CVector operator/(const CVector&, const CVector&);
+CVector operator/(double, const CVector&);
 CVector zeros(int i);
 CVector combinesort(const CVector& V1, const CVector &V2);
 CVector combinesort_s(const CVector& V1, const CVector &V2);

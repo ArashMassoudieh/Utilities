@@ -78,12 +78,12 @@ CVector::CVector(const vector<double> &v)
 }
 
 #ifdef _arma
-CVector::CVector(CVector_arma &v)
+CVector::CVector(const CVector_arma &v)
 {
 	num = v.num;
 	vec.resize(num);
 	for (int i = 0; i<num; i++)
-		vec[i] = v[i];
+        vec[i] = v.vect[i];
 }
 #endif
 CVector::CVector(const vector<int> &v)
@@ -205,14 +205,14 @@ CVector& CVector::operator-=(const CVector &v)
 	return *this;
 }
 
-CVector operator+(CVector v1, CVector v2)
+CVector operator+(const CVector &v1, const CVector &v2)
 {
 	CVector v=v1;
 	for (int i=0; i<v1.num; i++) v[i]=v1.vec[i]+v2.vec[i];
 	return v;
 }
 
-CVector operator-(CVector v1, CVector v2)
+CVector operator-(const CVector &v1, const CVector &v2)
 {
 	CVector v=v1;
 	for (int i=0; i<v1.num; i++) v[i]=v1.vec[i]-v2.vec[i];
@@ -241,9 +241,12 @@ CVector& CVector::operator*=(const CVector& v)
 }
 
 
-CVector operator*(CVector v1, CVector v2)
+CVector operator*(const CVector &v1, const CVector &v2)
 {
-	return v1 *= v2;
+    CVector vout(v1.num);
+    for (int i=0; i<v1.num; i++)
+        vout[i] = v1.at(i)*v2.at(i);
+    return v1;
 }
 
 double norm(CVector v)
@@ -254,65 +257,71 @@ double norm(CVector v)
 	return sqrt(sum);
 }
 
-CVector operator*(double a, CVector v)
+CVector operator*(double a, const CVector &v)
 {
-	return v*=a;
+    CVector vout(v.num);
+    for (int i=0; i<v.num; i++)
+        vout[i] = v.at(i)*a;
+    return vout;
 
 }
 
-CVector operator/(CVector v, double a)
+CVector operator/(const CVector &v, double a)
 {
-	return v*=(1/a);
+    CVector v1(v.num);
+    for (int i=0; i<v.num; i++)
+        v1[i] = v.vec[i]/a;
+    return v1;
 }
 
-CVector operator+(CVector v, double a)
+CVector operator+(const CVector &v, double a)
 {
 	CVector v1(v.num);
 	for (int i=0; i<v.num; i++)
-		v1[i] = a + v[i];
+        v1[i] = a + v.vec[i];
 	return v1;
 }
 
-CVector operator+(double a, CVector v)
+CVector operator+(double a, const CVector &v)
 {
 	CVector v1(v.num);
 	for (int i=0; i<v.num; i++)
-		v1[i] = a + v[i];
+        v1[i] = a + v.vec[i];
 	return v1;
 }
 
-CVector operator-(double a, CVector v)
+CVector operator-(double a, const CVector &v)
 {
 	CVector v1(v.num);
 	for (int i=0; i<v.num; i++)
-		v1[i] = a - v[i];
-	return v1;
-
-}
-
-CVector operator-(CVector &v, double a)
-{
-	CVector v1(v.num);
-	for (int i=0; i<v.num; i++)
-		v1[i] = v[i]-a;
+        v1[i] = a - v.vec[i];
 	return v1;
 
 }
 
+CVector operator-(const CVector &v, double a)
+{
+	CVector v1(v.num);
+	for (int i=0; i<v.num; i++)
+        v1[i] = v.vec[i]-a;
+	return v1;
 
-CVector operator/(CVector v1, CVector v2)
+}
+
+
+CVector operator/(const CVector &v1, const CVector &v2)
 {
 	CVector x(v1.getsize());
 	for (int i = 0; i<v1.getsize(); ++i)
-		x[i] = v1[i]/v2[i];
+        x[i] = v1.vec[i]/v2.vec[i];
 	return x;
 }
 
-CVector operator/(double a, CVector v2)
+CVector operator/(double a, const CVector &v2)
 {
 	CVector x(v2.getsize());
 	for (int i = 0; i<v2.getsize(); ++i)
-		x[i] = a/v2[i];
+        x[i] = a/v2.vec[i];
 	return x;
 
 }

@@ -12,6 +12,7 @@
 #include "armadillo"
 #include "Matrix_arma.h"
 #include "Vector_arma.h"
+#include "Matrix_arma_sp.h"
 using namespace arma;
 #endif
 class QVariant;
@@ -116,7 +117,7 @@ CMatrix Invert(CMatrix M1);
 CVector SpareSolve(CMatrix, CVector);
 CMatrix oneoneprod(CMatrix &m1, CMatrix &m2);
 #ifdef _arma
-CVector solve_ar(CMatrix&, CVector&);
+CVector solve_ar(const CMatrix&, const CVector&);
 #endif
 CMatrix inv(CMatrix&);
 

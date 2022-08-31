@@ -337,7 +337,7 @@ CVector_arma maxelements(const CMatrix_arma &m)
 
 CVector CMatrix_arma::maxelements() const
 {
-    CVector_arma v(getnumcols());
+    CVector v(getnumcols());
     for (int i=0; i<getnumcols(); ++i)
     {   double maxval = -1e36;
         for (int j=0; j<getnumrows(); ++j)

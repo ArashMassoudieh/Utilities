@@ -6,7 +6,9 @@
 #include <vector>
 #include "QuickSort.h"
 #ifdef _arma
+#ifdef _mlpack
 #include "mlpack/core.hpp"
+#endif
 #include "armadillo"
 #endif
 //GUI

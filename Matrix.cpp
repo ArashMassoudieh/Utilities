@@ -321,7 +321,7 @@ void triangulate(CMatrix &m, CVector &v)
 	{	double diag = m[i][i];
 		for (int j=i+1; j<n; j++)
 		{	double p = m[j][i]/diag;
-			m[j] -= p*m[i];
+            m[j] -= p*m[i];
 			v[j] -= p*v[i];
 		}
 	}
