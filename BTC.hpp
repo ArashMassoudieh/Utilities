@@ -523,7 +523,7 @@ T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d)
 }
 
 template<class T>
-T R2(CTimeSeries<T> *BTC_p, CTimeSeries<T> *BTC_d)
+T R2(const CTimeSeries<T> *BTC_p, const CTimeSeries<T> *BTC_d)
 {
 	T sumcov = 0;
 	T sumvar1 = 0;
@@ -1838,8 +1838,8 @@ RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> othertim
 	parameters.parameters.push_back((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x));
 	parameters.regress_type = RegressionParameters::_regress_type::linear;
 	CTimeSeries<T> predicted = Predict(parameters);
-	parameters.R2 = R2(othertimeseries, &predicted);
-	parameters.MSE = diff2(othertimeseries, &predicted);
+	parameters.R2 = R2(&othertimeseries, &predicted);
+	parameters.MSE = diff2(&othertimeseries, &predicted);
 	return parameters;
 	
 }
@@ -1865,8 +1865,8 @@ RegressionParameters CTimeSeries<T>::PowerRegress(const CTimeSeries<T> othertime
 	parameters.parameters.push_back((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x));
 	parameters.regress_type = RegressionParameters::_regress_type::power;
 	CTimeSeries<T> predicted = Predict(parameters);
-	parameters.R2 = R2(othertimeseries, &predicted);
-	parameters.MSE = diff2(othertimeseries, &predicted);
+	parameters.R2 = R2(&othertimeseries, &predicted);
+	parameters.MSE = diff2(&othertimeseries, &predicted);
 	return parameters;
 }
 
