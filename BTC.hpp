@@ -20,6 +20,7 @@
 #endif
 
 
+
 using namespace std;
 
 
@@ -1776,6 +1777,7 @@ CTimeSeries<T> CTimeSeries<T>::derivative()
     return out;
 }
 
+/*
 template<class T>
 CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist,int span)
 {
@@ -1813,7 +1815,7 @@ CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist, const double &s
 	}
 	return smoothed_ts;
 }
-
+*/
 
 template<class T>
 RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> othertimeseries)
