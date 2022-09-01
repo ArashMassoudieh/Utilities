@@ -302,7 +302,7 @@ bool CVector_arma::is_finite()
 {
 	bool r=true;
 	for (int i=0; i<num; ++i)
-		if (isfinite(vect(i))!=true)
+        if (aquiutils::isfinite(vect(i))!=true)
 			r=false;
 	return r;
 }
@@ -312,7 +312,7 @@ vector<int> CVector_arma::get_nan_elements()
 	vector<int> out;
 	for (int i = 0; i < num; i++)
 	{
-		if ((vect[i] == vect[i]) != true || !isfinite(vect[i]))
+        if ((vect[i] == vect[i]) != true || !aquiutils::isfinite(vect[i]))
 			out.push_back(i);
 	}
 	return out;

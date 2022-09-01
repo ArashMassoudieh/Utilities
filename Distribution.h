@@ -53,7 +53,7 @@ public:
     bool readfromfile(const string &filename);
     bool WriteToFile(const map<string,string> Arguments);
     vector<double> SetRangeBasedOnMeanStd(const double &stdcoeff=3);
-    CTimeSeries<double> CDistribution::ToTimeSeries(int nbins=100, const double& stdcoeff = 3);
+    CTimeSeries<double> ToTimeSeries(int nbins=100, const double& stdcoeff = 3);
     double unitrandom();
     double getstdnormalrand();
     double getnormalrand(double mu, double std);
