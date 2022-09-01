@@ -13,6 +13,7 @@
 #include "Utilities.h"
 #include "NormalDist.h"
 #include "gsl/gsl_fit.h"
+#include "Distribution.h"
 #ifdef Q_version
 #include "qfile.h"
 #include "qdatastream.h"
