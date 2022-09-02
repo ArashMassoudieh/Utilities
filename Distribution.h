@@ -1,5 +1,6 @@
 
-#pragma once
+#ifndef DISTRIBUTION_H
+#define DISTRIBUTION_H
 #include<vector>
 #include<string>
 #include "Vector.h"
@@ -79,3 +80,4 @@ CVector getlognormal(int m, double mu, double std);
 double stdnormal_cdf(double u);
 double GetRndUniF(double xmin, double xmax);
 double std_normal_phi_inv(double u);
+#endif
