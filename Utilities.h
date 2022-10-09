@@ -87,6 +87,16 @@ namespace aquiutils
         unsigned int i=rand()%vec.size();
         return vec[i];
     };
+    template<typename T> bool isfinite(T arg);
+    template<typename T> T sum(vector<T> vec)
+    {
+        T out=0;
+        for (int i=0; i<vec.size(); i++)
+        {
+            out+=vec[i];
+        }
+        return out;
+    }
     template<typename T> bool isfinite(T arg)
     {
         if (arg==arg)
@@ -94,6 +104,8 @@ namespace aquiutils
         else
             return false;
     }
+
+
 
 }
 
