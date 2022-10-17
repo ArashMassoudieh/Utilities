@@ -30,6 +30,7 @@ public:
     CVector(const double x_min, const double x_max, int n);  //cvector:: is redundant. However, works fine here.
 	CVector(const CVector&);
     double& operator[](int);
+    double operator[](int) const;
     double at(int i) const;
 	virtual ~CVector();
 	int num;
@@ -59,8 +60,8 @@ public:
 	friend double dotproduct(CVector v1, CVector v2);
 	bool operator==(double v);
 	bool operator==(CVector &v);
-	double max();
-	double min();
+    double max() const;
+    double min() const;
 	double norm2();
 	double sum();
 	double abs_max();

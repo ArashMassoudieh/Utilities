@@ -9,9 +9,9 @@ class CNormalDist
 public:
     CNormalDist(void);
     ~CNormalDist(void);
-    double unitrandom();
-    double getstdnormalrand();
-    double getnormalrand(double mu, double std);
+    static double unitrandom();
+    static double getstdnormalrand();
+    static double getnormalrand(double mu, double std);
 
 
 };

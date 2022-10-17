@@ -108,6 +108,16 @@ double& CVector::operator[](int i)
 		return *p;
 }
 
+double CVector::operator[](int i) const
+{
+    double *p = 0;
+    if ((i<num) & (i>-1))
+        return vec.at(i);
+    else
+        return *p;
+}
+
+
 double CVector::at(int i) const
 {
     if ((i<num) & (i>-1))
@@ -363,7 +373,7 @@ string CVector::toString()
 	return s; 
 }
 
-double CVector::max()
+double CVector::max() const
 {
 	double a = -1E14;
 	for (int i=0;i<num; i++)
@@ -399,7 +409,7 @@ double max(CVector &V)
 	return V.max();
 }
 
-double CVector::min()
+double CVector::min() const
 {
 	double a = 1E14;
 	for (int i=0;i<num; i++)
