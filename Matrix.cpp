@@ -1233,3 +1233,15 @@ void CMatrix::ScaleDiagonal(double x)
 		matr[i].vec[i] *= x;
 	}
 }
+
+void CMatrix::setcol(int i,  const CVector &V)
+{
+    for (int j = 0; j < getnumrows(); j++)
+        matr[j][i] = V.vec[j];
+}
+
+void CMatrix::setrow(int j,  const CVector &V)
+{
+    for (int i = 0; i < getnumcols(); i++)
+        matr[j][i] = V.vec[i];
+}
