@@ -62,6 +62,17 @@ CMatrix::CMatrix(int m)
 	}
 }
 
+CMatrix CMatrix::Diag(int n)
+{
+    CMatrix M(n);
+
+    for (int i = 0;i<M.getnumrows(); ++i)
+    {
+        M[i][i] = 1;
+    }
+    return M;
+}
+
 CMatrix::CMatrix(string filename)
 {
 

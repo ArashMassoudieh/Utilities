@@ -56,6 +56,17 @@ CMatrix_arma::CMatrix_arma(const CMatrix_arma &m)
 
 }
 
+CMatrix_arma CMatrix_arma::Diag(int n)
+{
+    CMatrix_arma M(n);
+
+    for (int i = 0;i<M.getnumrows(); ++i)
+    {
+        M(i,i) = 1;
+    }
+    return M;
+}
+
 CMatrix_arma::CMatrix_arma(const CMatrix& m)
 {
 	numrows = m.getnumrows();

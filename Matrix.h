@@ -36,6 +36,7 @@ public:
 	vector<CVector> matr;
 	CMatrix(int, int);
 	CMatrix(int);
+    static CMatrix Diag(int n);
 	CMatrix();
 	CMatrix(string filename);
 	CMatrix(const CMatrix&);

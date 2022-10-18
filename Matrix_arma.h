@@ -31,7 +31,8 @@ public:
 	CMatrix_arma(const CMatrix_arma&);
 	CMatrix_arma(const CVector_arma&);
     CMatrix_arma(const CMatrix&);
-	//CVector_arma operator[](int);
+    static CMatrix_arma Diag(int n);
+    //CVector_arma operator[](int);
     double& get(int i, int j);
 	double& operator()(int i, int j);
     vector<double*> get(int i);
