@@ -4,6 +4,7 @@
 
 #include "Matrix_arma.h"
 #include "Vector_arma.h"
+#include "Matrix.h"
 #include "math.h"
 #include <iostream>
 #define ARMA_DONT_PRINT_ERRORS
@@ -54,6 +55,18 @@ CMatrix_arma::CMatrix_arma(const CMatrix_arma &m)
 	matr = m.matr;
 
 }
+
+CMatrix_arma::CMatrix_arma(const CMatrix& m)
+{
+	numrows = m.getnumrows();
+	numcols = m.getnumcols();
+	matr = mat(numrows, numcols);
+	for (int i = 0; i < numrows; ++i)
+		for (int j = 0; j < numcols; ++j)
+			matr(i,j) = m.matr[i][j];
+
+}
+
 
 CMatrix_arma::CMatrix_arma(const CVector_arma &v)
 {

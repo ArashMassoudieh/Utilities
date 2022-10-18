@@ -14,6 +14,7 @@ class QVariant;
 //class QList;
 //#include "QMap"
 using namespace arma;
+class CMatrix; 
 class CVector_arma;
 class CMatrix_arma
 {
@@ -29,6 +30,7 @@ public:
 	CMatrix_arma();
 	CMatrix_arma(const CMatrix_arma&);
 	CMatrix_arma(const CVector_arma&);
+    CMatrix_arma(const CMatrix&);
 	//CVector_arma operator[](int);
     double& get(int i, int j);
 	double& operator()(int i, int j);
