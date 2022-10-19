@@ -1,3 +1,5 @@
+#ifndef CDISTRIBUTION
+#define CDISTRIBUTION
 
 #ifndef DISTRIBUTION_H
 #define DISTRIBUTION_H
@@ -78,6 +80,6 @@ CVector getlognormal(CVector &mu, CMatrix &sigma);
 CMatrix getlognormal(int m, int n, double mu, double std);
 CVector getlognormal(int m, double mu, double std);
 double stdnormal_cdf(double u);
-double GetRndUniF(double xmin, double xmax);
+double unifrandom(double xmin, double xmax);
 double std_normal_phi_inv(double u);
 #endif

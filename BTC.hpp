@@ -12,8 +12,9 @@
 //#include "StringOP.h"
 #include "Utilities.h"
 #include "NormalDist.h"
+#ifndef _NO_GSL
 #include "gsl/gsl_fit.h"
-
+#endif
 #ifdef Q_version
 #include "qfile.h"
 #include "qdatastream.h"

@@ -211,7 +211,7 @@ CDistribution CDistribution::operator = (const CDistribution &C)
 
 int CDistribution::GetRand()
 {
-	double x = GetRndUniF(0, 1);
+    double x = unitrandom();
 	int ii = 0;
 	for (int i = 0; i<n - 1; i++)
 	{
@@ -257,7 +257,7 @@ double CDistribution::inverseCDF(double u,bool flux_w)
 
 }
 
-double GetRndUniF(double xmin, double xmax)
+double unifrandom(double xmin, double xmax)
 {
 	double a = double(rand());
 	double k = double(RAND_MAX);
