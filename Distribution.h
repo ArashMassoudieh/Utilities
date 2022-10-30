@@ -17,6 +17,7 @@
 using namespace std;
 
 enum class distribution_type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
+
 #ifdef interface
 class CDistribution : public Interface
 #else // interface
@@ -57,12 +58,15 @@ public:
     bool WriteToFile(const map<string,string> Arguments);
     vector<double> SetRangeBasedOnMeanStd(const double &stdcoeff=3);
     CTimeSeries<double> ToTimeSeries(int nbins=100, const double& stdcoeff = 3);
-    double unitrandom();
-    double getstdnormalrand();
-    double getnormalrand(double mu, double std);
+    static double unitrandom();
+    static double getstdnormalrand();
+    static double getnormalrand(double mu, double std);
+
 #ifdef interface
     FunctionOutPut Execute(const string &cmd, const map<string,string> &arguments);
 #endif
+
+
 };
 
 //double erf(double x);
