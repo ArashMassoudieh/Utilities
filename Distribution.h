@@ -1,8 +1,6 @@
 #ifndef CDISTRIBUTION
 #define CDISTRIBUTION
 
-#ifndef DISTRIBUTION_H
-#define DISTRIBUTION_H
 #include<vector>
 #include<string>
 #include "Vector.h"
