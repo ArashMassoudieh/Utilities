@@ -124,6 +124,7 @@ CVector getlognormal(int m, double mu, double std)
     return M;
 }
 
+#ifdef arma
 double getpdfnormal(CVector &X, CVector &mu, CMatrix &std)
 {
     int k = X.num;
@@ -138,6 +139,7 @@ double getpdfnormal(CVector &X, CVector &mu, CMatrix &std)
     return pdf;
 
 }
+
 
 double getpdflognormal(CVector &X, CVector &mu, CMatrix &std)
 {
@@ -154,6 +156,7 @@ double getpdflognormal(CVector &X, CVector &mu, CMatrix &std)
     return pdf;
 
 }
+#endif // arma
 
 
 /*double erf(double p)

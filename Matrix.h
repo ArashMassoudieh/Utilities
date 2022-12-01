@@ -116,8 +116,12 @@ CMatrix operator*(double, CMatrix);
 CVector operator/(CVector&, CMatrix&);
 CVector operator/(const CVector &V, const CMatrix &M);
 CMatrix Transpose(CMatrix &M1);
+#ifdef  arma
 CMatrix Invert(CMatrix M1);
 CVector SpareSolve(CMatrix, CVector);
+#endif //  arma
+
+
 CMatrix oneoneprod(CMatrix &m1, CMatrix &m2);
 #ifdef _arma
 CVector solve_ar(const CMatrix&, const CVector&);
