@@ -17,6 +17,13 @@ CPoint& CPoint::operator = (const CPoint &P)
     return *this;
 }
 
+CPoint::CPoint(const double &x,const double &y)
+{
+    coordinate.resize(2);
+    coordinate[0] = x;
+    coordinate[1] = y;
+}
+
 double CPoint::x() const
 {
     return coordinate[0];
