@@ -521,7 +521,7 @@ CVector NormalizetoGaussian(CVector &V)
     return Vout;
 }
 
-CVector CVector::Exp()
+CVector CVector::Exp() const
 {
 	CVector x(getsize());
 	for (int i = 0; i<getsize(); i++)
@@ -546,7 +546,7 @@ CVector CVector::abs()
 }
 
 
-CVector Exp(CVector V)
+CVector Exp(const CVector &V)
 {
 	return V.Exp();
 

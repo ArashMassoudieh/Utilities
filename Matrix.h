@@ -96,10 +96,10 @@ public:
 
 };
 
-double det(CMatrix &);
-CMatrix Log(CMatrix &M1);
-CMatrix Exp(CMatrix &M1);
-CMatrix Sqrt(CMatrix &M1);
+double det(const CMatrix &);
+CMatrix Log(const CMatrix &M1);
+CMatrix Exp(const CMatrix &M1);
+CMatrix Sqrt(const CMatrix &M1);
 CMatrix operator+(const CMatrix&, const CMatrix&);
 CMatrix operator+(double, CMatrix);
 CMatrix operator+(CMatrix, double);

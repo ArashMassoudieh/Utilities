@@ -75,7 +75,7 @@ public:
 	void writetofile(string filename);
 	void writetofile(ofstream &f);
 	void writetofile_app(string filename);
-	CVector Exp();
+    CVector Exp() const;
 	vector<int> Int();
 	CMatrix diagmat();
 	CVector append(const CVector& V1);
@@ -91,12 +91,12 @@ public:
 
 };
 
-CVector Log(CVector );
-CVector Exp(CVector );
-CVector abs(CVector );  //works w/o reference. if const included means read only
-double abs_max(CVector );
-double min(CVector );
-double max(CVector );
+CVector Log(const CVector &);
+CVector Exp(const CVector &);
+CVector abs(const CVector &);  //works w/o reference. if const included means read only
+double abs_max(const CVector &);
+double min(const CVector &);
+double max(const CVector &);
 CVector H(CVector );
 double H(double x);
 CVector operator+(const CVector&, const CVector&);

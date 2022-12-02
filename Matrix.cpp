@@ -369,30 +369,30 @@ CVector operator/(const CVector &V, const CMatrix &M)
     return solve_ar(M,V);
 }
 #endif
-CMatrix Log(CMatrix &M1)
+CMatrix Log(const CMatrix &M1)
 {
 	CMatrix TrM(M1.getnumrows(), M1.getnumcols());
 	for (int i=0; i<M1.getnumrows(); i++)
 		for (int j=0; j<M1.getnumcols(); j++)
-			TrM[i][j] = log(M1[i][j]);
+            TrM[i][j] = log(M1.matr[i].vec[j]);
 	return TrM;
 }
 
-CMatrix Exp(CMatrix &M1)
+CMatrix Exp(const CMatrix &M1)
 {
 	CMatrix TrM(M1.getnumrows(), M1.getnumcols());
 	for (int i=0; i<M1.getnumrows(); i++)
 		for (int j=0; j<M1.getnumcols(); j++)
-			TrM[i][j] = exp(M1[i][j]);
+            TrM[i][j] = exp(M1.matr[i].vec[j]);
 	return TrM;
 }
 
-CMatrix Sqrt(CMatrix &M1)
+CMatrix Sqrt(const CMatrix &M1)
 {
 	CMatrix TrM(M1.getnumrows(), M1.getnumcols());
 	for (int i=0; i<M1.getnumrows(); i++)
 		for (int j=0; j<M1.getnumcols(); j++)
-			TrM[i][j] = sqrt(M1[i][j]);
+            TrM[i][j] = sqrt(M1.matr[i].vec[j]);
 	return TrM;
 }
 
