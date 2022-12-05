@@ -485,7 +485,7 @@ CMatrix CVector::T()
 	return K;
 }
 
-CVector CVector::Log()
+CVector CVector::Log() const
 {
 	CVector x(getsize());
 	for (int i = 0; i<getsize(); i++)
@@ -493,7 +493,7 @@ CVector CVector::Log()
 	return x;
 }
 
-CVector Log(CVector V)
+CVector Log(const CVector &V)
 {
 	return V.Log();
 

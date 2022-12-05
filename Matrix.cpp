@@ -566,18 +566,6 @@ CMatrix LU_decomposition(CMatrix &M)
 }
 
 
-/*double det(CMatrix &A)
-{
-	CMatrix D = LU_decomposition(A);
-	double prod = 1;
-	for (int i=0; i<A.getnumcols(); i++)
-		prod *= A[i][i];
-
-	return prod;
-
-}
-*/
-
 double CMatrix::det()
 {
 	CMatrix A = *this;
@@ -845,7 +833,7 @@ CMatrix inv(CMatrix M)
 	return inv_M;
 }
 
-double det(CMatrix &M)
+double det(const CMatrix &M)
 {
 
 	mat A(M.getnumrows(),M.getnumcols());
@@ -853,7 +841,7 @@ double det(CMatrix &M)
 	for (int i = 0;i<M.getnumrows(); ++i)
 	{
 		for (int j = 0;j<M.getnumcols(); ++j)
-			A(i,j) = M[i][j];
+            A(i,j) = M.matr[i][j];
 	}
 
 	return det(A);
@@ -1214,7 +1202,7 @@ CMatrix CMatrix::unCompact(QMap<QString, QVariant> r)
 }
 #endif // QT_version
 #ifdef _arma
-CMatrix::CMatrix(CMatrix_arma &M)
+CMatrix::CMatrix(const CMatrix_arma &M)
 {
 	numrows = M.getnumrows();
 	numcols = M.getnumcols();
@@ -1227,7 +1215,7 @@ CMatrix::CMatrix(CMatrix_arma &M)
 	}
 	for (int i = 0; i < numrows; i++)
 		for (int j = 0; j < numcols; j++)
-			matr[i][j] = M(i, j);
+            matr[i][j] = M.matr(i, j);
 
 }
 #endif

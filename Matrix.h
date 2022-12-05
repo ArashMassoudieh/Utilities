@@ -42,7 +42,7 @@ public:
 	CMatrix(const CMatrix&);
 #ifdef _arma
     CMatrix(CMatrix_arma_sp&);
-	CMatrix(CMatrix_arma &M);
+    CMatrix(const CMatrix_arma &M);
     CMatrix& operator=(mat&);
 #endif
 	CMatrix(const CVector&);

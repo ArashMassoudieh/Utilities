@@ -18,8 +18,10 @@ public:
     double y() const;
     void setx(const double &val);
     void sety(const double &val);
+    void AppendValue(const double &val) {values.push_back(val);}
+    double Value(int i);
 
-private:
+protected:
     vector<double> coordinate;
     vector<double> values;
 };

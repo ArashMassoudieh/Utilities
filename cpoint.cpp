@@ -40,3 +40,13 @@ void CPoint::sety(const double &val)
 {
     coordinate[1] = val;
 }
+
+double CPoint::Value(int i)
+{
+    if (i<values.size())
+    {
+        return values[i];
+    }
+    else
+        return 0;
+}

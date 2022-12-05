@@ -68,7 +68,7 @@ public:
     int abs_max_elems();
 	vector<int> maxelements();
 	CMatrix T();
-	CVector Log();
+    CVector Log() const;
 	CVector abs();
 	CVector H();
 	void writetofile(FILE *f);
