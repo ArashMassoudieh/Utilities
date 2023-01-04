@@ -11,8 +11,8 @@ class CPoint
 {
 public:
     CPoint();
+    CPoint(const double &x, const double &y);
     CPoint(const CPoint&);
-    CPoint(const double &x,const double &y);
     CPoint& operator = (const CPoint &C);
     double x() const;
     double y() const;
