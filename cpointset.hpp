@@ -313,7 +313,7 @@ CPointSet<CPoint> CPointSet<T>::MapToCylindrical(const double &_x, const double 
 }
 
 template<class T>
-CPointSet<T> CPointSet<T>::Range()
+CPointSet<T> CPointSet<T>::Range() //Range
 {
     CPointSet<T> out;
     double min_x=1000000;
