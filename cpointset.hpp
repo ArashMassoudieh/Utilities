@@ -226,7 +226,7 @@ void CPointSet<T>::WriteToPointsVtp(const string &filename, vector<double> limit
         }
     }
 
-    vtkIdType pid[counter];
+    vtkIdType* pid = new vtkIdType[counter];
     counter=0;
     for (unsigned int i = 0; i < vector<T>::size(); i++)
     {
