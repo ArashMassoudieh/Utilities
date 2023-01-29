@@ -1161,4 +1161,5 @@ CTimeSeriesSet CTimeSeriesSet<T>::unCompact(QDataStream &data)
 
 	return c;
 }
+
 #endif

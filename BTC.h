@@ -18,8 +18,6 @@
 #include "qvariant.h"
 #endif // QT_version
 
-//#define CBTC CTimeSeries
-
 class CDistribution;
 
 struct RegressionParameters {

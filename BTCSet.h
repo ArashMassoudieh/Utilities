@@ -70,8 +70,6 @@ public:
 	CTimeSeries &operator[](QString BTCName) {
 		return operator[](BTCName.toStdString());}
 #endif // QT_version
-
-
     CTimeSeriesSet(vector < vector<T>> &, int writeInterval = 1);
 	int indexOf(const string& name) const;
 	void pushBackName(string name);

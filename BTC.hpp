@@ -21,10 +21,7 @@
 #include <qdebug.h>
 #endif
 
-
-
 using namespace std;
-
 
 template<class T>
 CTimeSeries<T>::CTimeSeries()
