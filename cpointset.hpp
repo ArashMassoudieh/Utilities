@@ -5,6 +5,7 @@
 #include "cpoint.h"
 #include "VTK.h"
 #include "vtkUnstructuredGrid.h"
+#include "math.h"
 
 template<class T>
 CPointSet<T>::CPointSet():vector<T> ()
@@ -15,13 +16,14 @@ CPointSet<T>::CPointSet():vector<T> ()
 template<class T>
 CPointSet<T>::CPointSet(const CPointSet &RHS):vector<T> (RHS)
 {
-
+    dimentions = RHS.dimentions;
 }
 
 template<class T>
 CPointSet<T>& CPointSet<T>::operator = (const CPointSet &RHS)
 {
     vector<T>::operator = (RHS);
+    dimentions = RHS.dimentions;
     return *this;
 }
 
@@ -115,12 +117,12 @@ void CPointSet<T>::WriteToVtp2D(const string &filename)
 
     values->SetName("Moisture Content");
 
-    for (unsigned int i = 0; i < vector<CPoint>::size(); i++)
+    for (unsigned int i = 0; i < this->size(); i++)
     {
-        xx = vector<CPoint>::at(i).x();
-        yy = vector<CPoint>::at(i).y();
+        xx = this->at(i).x();
+        yy = this->at(i).y();
         zz = 0;
-        float t[1] = { float(vector<CPoint>::at(i).Value(0)) };
+        float t[1] = { float(this->at(i).Value(0)) };
         points_3->InsertNextPoint(xx, yy, zz);
         values->InsertNextTupleValue(t);
 
@@ -224,7 +226,7 @@ void CPointSet<T>::WriteToPointsVtp(const string &filename, vector<double> limit
         }
     }
 
-    vtkIdType pid[counter];
+    vtkIdType* pid = new vtkIdType[counter];
     counter=0;
     for (unsigned int i = 0; i < vector<T>::size(); i++)
     {
@@ -299,12 +301,72 @@ template<class T>
 CPointSet<CPoint> CPointSet<T>::MapToCylindrical(const double &_x, const double &_y)
 {
     CPointSet<CPoint> out;
+    out.SetDimentions(dims::d2);
     for (int i=0; i<vector<T>::size(); i++)
     {
-        CPoint P(sqrt(pow(vector<T>::at(i).x()-_x,2)+pow(vector<T>::at(i).y()-_y,2)),pow(vector<T>::at(i).z()));
+        CPoint P(sqrt(pow(vector<T>::at(i).x()-_x,2.0)+pow(vector<T>::at(i).y()-_y,2.0)),vector<T>::at(i).z());
         P.AppendValue(vector<T>::at(i).Value(0));
         out.push_back(P);
 
+    }
+    return out;
+}
+
+template<class T>
+CPointSet<T> CPointSet<T>::Range() //Range
+{
+    CPointSet<T> out;
+    double min_x=1000000;
+    double min_y=1000000;
+    double min_z=1000000;
+    double max_x=-1000000;
+    double max_y=-1000000;
+    double max_z=-1000000;
+    for (int i=0; i<vector<T>::size(); i++)
+    {
+        if (vector<T>::at(i).x()<min_x) min_x = vector<T>::at(i).x();
+        if (vector<T>::at(i).y()<min_y) min_y = vector<T>::at(i).y();
+        if (dimentions==dims::d3)
+            if (vector<T>::at(i).z()<min_z) min_z = vector<T>::at(i).z();
+
+        if (vector<T>::at(i).x()>max_x) max_x = vector<T>::at(i).x();
+        if (vector<T>::at(i).y()>max_y) max_y = vector<T>::at(i).y();
+        if (dimentions==dims::d3)
+            if (vector<T>::at(i).z()>max_z) max_z = vector<T>::at(i).z();
+
+    }
+    T point_min;
+    point_min.setx(min_x);
+    point_min.sety(min_y);
+    if (dimentions==dims::d3)
+        point_min.setz(min_z);
+    out.push_back(point_min);
+
+    T point_max;
+    point_max.setx(max_x);
+    point_max.sety(max_y);
+    if (dimentions==dims::d3)
+        point_min.setz(max_z);
+
+    out.push_back(point_max);
+    return out;
+
+}
+
+template<class T>
+CPointSet<CPoint> CPointSet<T>::MapToGrid(const double &_dx, const double &_dy, vector<double> span)
+{
+    CPointSet<CPoint> out;
+    out.SetDimentions(dims::d2);
+    CPointSet range = Range();
+    for (double x = range[0].x(); x<=range[1].x(); x+=_dx)
+    {
+        for (double y = range[0].y(); y<=range[1].y(); y+=_dy)
+        {
+            CPoint P(x,y);
+            P.AppendValue(KernelSmoothValue(P,span));
+            out.push_back(P);
+        }
     }
     return out;
 }
@@ -342,7 +404,7 @@ double CPointSet<T>::y(int i)
 template<class T>
 double CPointSet<T>::Value(int i)
 {
-    return vector<T>::at(i).Value()[0];
+    return vector<T>::at(i).Value(0);
 }
 
 

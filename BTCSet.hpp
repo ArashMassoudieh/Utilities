@@ -361,9 +361,11 @@ void CTimeSeriesSet<T>::getfromfile(string _filename, bool varytime)
 			s = aquiutils::getline(file);
 			if (s.size()>0)
 			{
-				if (s[0] == "names")
+                if (s[0] == "names")
 					for (unsigned int i = 1; i < s.size(); i++) names.push_back(s[i]);
-				if (s[0] == "units")
+                if (s[0].substr(0, 2) == "//")
+                    for (unsigned int i = 1; i < s.size(); i+=2) names.push_back(s[i]);
+                if (s[0] == "units")
 					for (unsigned int i = 1; i < s.size(); i++) units.push_back(s[i]);
 				if ((s[0].substr(0, 2) != "//") && (s[0] != "names") && (s[0] != "units"))
 				{
@@ -371,10 +373,10 @@ void CTimeSeriesSet<T>::getfromfile(string _filename, bool varytime)
 					if (int(s.size())==nvars+1)
 						for (int i=0; i<nvars; i++)
 						{
-                                                        BTC[i].append(atof(s[0].c_str()),atof(s[i+1].c_str()));
+                            BTC[i].append(atof(s[0].c_str()),atof(s[i+1].c_str()));
 							if (BTC[i].n>2)
-                                                        if ((BTC[i].GetT(BTC[i].n-1)-BTC[i].GetT(BTC[i].n-2)) != (BTC[i].GetT(BTC[i].n-2)-BTC[i].GetT(BTC[i].n-3)))
-                                                                BTC[i].structured = false;
+                            if ((BTC[i].GetT(BTC[i].n-1)-BTC[i].GetT(BTC[i].n-2)) != (BTC[i].GetT(BTC[i].n-2)-BTC[i].GetT(BTC[i].n-3)))
+                            BTC[i].structured = false;
 						}
 
 				}
@@ -388,7 +390,9 @@ void CTimeSeriesSet<T>::getfromfile(string _filename, bool varytime)
 			{
 				if (s[0] == "names")
 					for (unsigned int i = 1; i < s.size(); i++) names.push_back(s[i]);
-				if (s[0] == "units")
+                if (s[0].substr(0, 2) == "//")
+                    for (unsigned int i = 1; i < s.size(); i+=2) names.push_back(s[i]);
+                if (s[0] == "units")
 					for (unsigned int i = 1; i < s.size(); i++) units.push_back(s[i]);
 				if ((s[0].substr(0, 2) != "//") && (s[0] != "names") && (s[0] != "units"))
 				{
