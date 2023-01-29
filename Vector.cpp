@@ -477,6 +477,11 @@ double CVector::sum()
 	return a;
 }
 
+double CVector::mean()
+{
+    return sum()/double(num);
+}
+
 CMatrix CVector::T()
 {
 	CMatrix K(1,num);
