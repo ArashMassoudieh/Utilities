@@ -2,26 +2,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "BTC.h"
+#include "TimeSeries_s.h"
 #include "math.h"
 #include "string.h"
 #include <iostream>
 #include <fstream>
 #include "math.h"
 #include <iomanip>
-//#include "StringOP.h"
 #include "Utilities.h"
-#include "NormalDist.h"
-#ifndef _NO_GSL
-#include "gsl/gsl_fit.h"
-#endif
-#ifdef Q_version
-#include "qfile.h"
-#include "qdatastream.h"
-#include <qdebug.h>
-#endif
-
-
 
 using namespace std;
 
@@ -147,22 +135,6 @@ CTimeSeries<T>::CTimeSeries(const CTimeSeries<T> &CC)
 	file_not_found = CC.file_not_found;
 
 }
-
-#ifdef _arma
-template<class T>
-CTimeSeries<T>::CTimeSeries(arma::mat &x, arma::mat &y)
-{
-    if (x.size()!=y.size())
-        return;
-
-    for (int i=0; i<x.size(); i++)
-    {
-        append(x[i],y[i]);
-    }
-
-}
-#endif
-
 
 template<class T>
 CTimeSeries<T>::CTimeSeries(string Filename)
@@ -290,56 +262,6 @@ T CTimeSeries<T>::interpol(const T &x) const
 
 }
 
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::MA_smooth(int span)
-{
-	CTimeSeries out;
-	for (int i = 0; i < n; i++)
-	{
-		double sum = 0;
-		int span_1 = min(span, i);
-		span_1 = min(span_1, n - i - 1);
-		for (int j = i - span_1; j <= i + span_1; j++)
-		{
-			sum += C[j] / double(1 + 2 * span_1);
-		}
-		out.append(t[i], sum);
-	}
-	return out;
-}
-
-template<class T>
-T CTimeSeries<T>::interpol_D(const T &x)
-{
-    T r=0;
-    if (x<t[0])
-        return t[0]-x;
-    if (n>1)
-	{
-
-		if (structured == false)
-		{	for (int i=0; i<n-1; i++)
-			{
-				if (t[i] <= x && t[i+1] >= x)
-                    r=max((D[i+1]-D[i])/(t[i+1]-t[i])*(x-t[i]) + D[i],t[i+1]-t[i]);
-			}
-			if (x>t[n-1]) r=D[n-1];
-			if (x<t[0]) r=D[0];
-		}
-		else
-		{
-            T dt = t[1]-t[0];
-			int i = int((x-t[0])/dt);
-			if (x>=t[n-1]) r=D[n-1];
-			else if (x<=t[0]) r=D[0];
-            else r=max((D[i+1]-D[i])/(t[i+1]-t[i])*(x-t[i]) + D[i],t[i+1]-t[i]);
-		}
-	}
-	else
-		r = D[0];
-    return r;
-
-}
 
 template<class T>
 CTimeSeries<T> CTimeSeries<T>::interpol(vector<T> x)
@@ -1269,32 +1191,6 @@ CTimeSeries<T> CTimeSeries<T>::extract(T t1, T t2)
 }
 
 
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, int limit)
-{
-    CTimeSeries<T> out(n_bins+2);
-
-	CVector C1(C.size()-limit);
-	for (int i=0; i<C1.num; i++)
-		C1[i] = C[i+limit];
-
-    T p_start = C1.min();
-    T p_end = C1.max()*1.001;
-    T dp = abs(p_end - p_start)/n_bins;
-	if (dp == 0) return out;
-	out.t[0] = p_start - dp/2;
-	out.C[0] = 0;
-	for (int i=0; i<n_bins+1; i++)
-	{
-		out.t[i+1] = out.t[i] + dp;
-		out.C[i+1] = out.C[i];
-	}
-
-	for (int i=0; i<C1.num; i++)
-		out.C[int((C1[i]-p_start)/dp)+1] += 1.0/C1.num/dp;
-
-	return out;
-}
 
 template<class T>
 vector<T> CTimeSeries<T>::trend()
@@ -1328,22 +1224,6 @@ T CTimeSeries<T>::mean_t()
 template<class T>
 T sgn(T val) {
     return double(double(0) < val) - (val < double(0));
-}
-
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::add_noise(T std, bool logd)
-{
-    CTimeSeries<T> X(n);
-	for (int i=0; i<n; i++)
-	{
-		X.t[i] = t[i];
-		if (logd==false)
-			X.C[i] = C[i]+getnormalrand(0,std);
-		else
-			X.C[i] = C[i]*exp(getnormalrand(0,std));
-	}
-	return X;
-
 }
 
 template<class T>
@@ -1559,88 +1439,6 @@ CTimeSeries<T> operator>(CTimeSeries<T> BTC1, CTimeSeries<T> BTC2)
 	return S;
 }
 
-
-#ifdef QT_version
-template<class T>
-void CTimeSeries<T>::compact(QDataStream &data) const
-{
-	QMap<QString, QVariant> r;
-	r.insert("n", n);
-	//r.insert("t", t.size());
-	//r.insert("C", C.size());
-	//r.insert("D", D.size());
-	r.insert("structured", structured);
-	r.insert("name", QString::fromStdString(name));
-	r.insert("unit", QString::fromStdString(unit));
-	r.insert("defaultUnit", QString::fromStdString(defaultUnit));
-	QStringList uList;
-    for (int i = 0; i < (int)unitsList.size(); i++)
-		uList.push_back(QString::fromStdString(unitsList[i]));
-	r.insert("UnitsList", uList);
-	r.insert("error", error);
-	data << r;
-
-	QList<QVariant> tList;
-    for (int i = 0; i < (int)t.size(); i++)
-		tList.append(t[i]);
-	data << tList;
-
-	QList<QVariant> CList;
-    for (int i = 0; i < (int)C.size(); i++)
-		tList.append(C[i]);
-	data << CList;
-
-	QList<QVariant> DList;
-    for (unsigned int i = 0; i < D.size(); i++)
-		tList.append(D[i]);
-	data << DList;
-
-	return;
-}
-
-CTimeSeries CTimeSeries::unCompact(QDataStream &data)
-{
-	QMap<QString, QVariant> r;
-	data >> r;
-
-	CTimeSeries b;
-	b.n = r["n"].toInt();
-	b.structured = r["structured"].toBool();
-	b.name = r["name"].toString().toStdString();
-	b.unit = r["unit"].toString().toStdString();
-	b.defaultUnit = r["defaultUnit"].toString().toStdString();
-	QStringList uList = r["UnitsList"].toStringList();
-	for (int i = 0; i < uList.size(); i++)
-		b.unitsList.push_back(uList[i].toStdString());
-	b.error = r["error"].toBool();
-
-	//int tSize, CSize, DSize;
-
-	//tSize = r["t"];
-	//CSize = r["C"];
-	//DSize = r["D"];
-
-	QList<QVariant> tList, CList, DList;
-
-	data >> tList;
-	data >> CList;
-	data >> DList;
-
-
-	for (int i = 0; i < tList.size(); i++)
-		b.t.push_back(tList[i].toDouble());
-
-
-	for (int i = 0; i < DList.size(); i++)
-		b.D.push_back(DList[i].toDouble());
-
-	for (int i = 0; i < CList.size(); i++)
-		b.C.push_back(CList[i].toDouble());
-
-	return b;
-}
-#endif // QT_version
-
 template<class T>
 bool CTimeSeries<T>::resize(unsigned int _size)
 {
@@ -1716,54 +1514,6 @@ CTimeSeries<T> CTimeSeries<T>::inverse_cumulative_uniform(int ninitervals)
 }
 
 
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, double smoothing_span, int limit)
-{
-    CTimeSeries<T> out(n_bins+2);
-
-    CVector C1(C.size()-limit);
-    for (int i=0; i<C1.num; i++)
-            C1[i] = C[i+limit];
-
-    double p_start = C1.min();
-    double p_end = C1.max()*1.001;
-    double dp = abs(p_end - p_start)/n_bins;
-    //cout << "low limit: " << p_start << " up limit: " << p_end << " increment: " << dp << std::endl;
-    if (dp == 0) return out;
-    out.t[0] = p_start - dp/2;
-    out.C[0] = 0;
-    for (int i=0; i<n_bins+1; i++)
-    {
-        out.t[i+1] = out.t[i] + dp;
-        out.C[i+1] = out.C[i];
-    }
-
-    if (smoothing_span==0)
-    {
-       for (int i=0; i<C1.num; i++)
-            out.C[int((C1[i]-p_start)/dp)+1] += 1.0/C1.num/dp;
-       return out/out.integrate();
-    }
-    else
-    {
-       int span_count = smoothing_span/dp;
-
-       for (int i=0; i<C1.num; i++)
-       {
-            int center = int((C1[i]-p_start)/dp)+1;
-            for (int j=max(0,center-3*span_count); j<=min(n_bins,center+3*span_count); j++)
-            {
-                double l_bracket = p_start + (j-1)*dp;
-                double r_bracket = p_start + (j)*dp;
-                double eff_smoothing_span = max(min(min(C[i]-p_start,smoothing_span),p_end-C[i]),dp/10.0);
-                double portion = (exp((C1[i]-l_bracket)/eff_smoothing_span)/(1+exp((C1[i]-l_bracket)/eff_smoothing_span)) - exp((C1[i]-r_bracket)/eff_smoothing_span)/(1+exp((C1[i]-r_bracket)/eff_smoothing_span)));
-                out.C[j] += 1.0/C1.num/dp*portion;
-            }
-        }
-        return out/out.integrate();
-
-    }
-}
 
 template<class T>
 CTimeSeries<T> CTimeSeries<T>::derivative()
@@ -1777,112 +1527,6 @@ CTimeSeries<T> CTimeSeries<T>::derivative()
     }
 
     return out;
-}
-
-/*
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist,int span)
-{
-	CTimeSeries<T> smoothed_ts;
-	
-	for (int i = 0; i < n; i++)
-	{
-		double sum = 0; 
-		double integral = 0; 
-		for (int j = std::max(0, i - span / 2); j < std::min(i + span / 2, n); j++)
-		{
-			sum += GetC(j) * dist->evaluate(GetT(i) - GetT(j));
-			integral += dist->evaluate(GetT(i) - GetT(j));
-		}
-		smoothed_ts.append(GetT(i), sum/integral);
-	}
-	return smoothed_ts;
-}
-
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist, const double &span)
-{
-	CTimeSeries<T> smoothed_ts;
-
-	for (int i = 0; i < n; i++)
-	{
-		double sum = 0;
-		double integral = 0;
-		for (double t_prime = std::max(0.0, GetT(i)-span/2); t_prime < std::min(GetT(i) + span / 2, lastt()); t_prime+=span/100)
-		{
-			sum += interpol(t_prime) * dist->evaluate(GetT(i) - t_prime);
-			integral += dist->evaluate(GetT(i) - t_prime);
-		}
-		smoothed_ts.append(GetT(i), sum / integral);
-	}
-	return smoothed_ts;
-}
-*/
-
-template<class T>
-RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> othertimeseries)
-{
-	RegressionParameters parameters;
-	CTimeSeries<T> othertimeseries_mapped = othertimeseries.interpol(this);
-	T sum_y = othertimeseries_mapped.sum();
-	T sum_x2 = sum_squared(); 
-	T sum_x = sum(); 
-	T sum_xy = 0; 
-	for (int i = 0; i < n; i++)
-	{
-		sum_xy += C[i] * othertimeseries_mapped.GetC(i);
-	}
-	
-	//intercept
-	parameters.parameters.push_back((sum_y * sum_x2 - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x));
-	//slope
-	parameters.parameters.push_back((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x));
-	parameters.regress_type = RegressionParameters::_regress_type::linear;
-	CTimeSeries<T> predicted = Predict(parameters);
-	parameters.R2 = R2(&othertimeseries, &predicted);
-	parameters.MSE = diff2(&othertimeseries, &predicted);
-	return parameters;
-	
-}
-
-template<class T>
-RegressionParameters CTimeSeries<T>::PowerRegress(const CTimeSeries<T> othertimeseries)
-{
-	RegressionParameters parameters;
-	CTimeSeries<T> othertimeseries_mapped = othertimeseries.interpol(this).Log();
-	CTimeSeries<T> thistimeseries_mapped = Log();
-	T sum_y = othertimeseries_mapped.sum();
-	T sum_x2 = thistimeseries_mapped.sum_squared();
-	T sum_x = thistimeseries_mapped.sum();
-	T sum_xy = 0;
-	for (int i = 0; i < n; i++)
-	{
-		sum_xy += thistimeseries_mapped.GetC(i) * othertimeseries_mapped.GetC(i);
-	}
-
-	//intercept
-	parameters.parameters.push_back((sum_y * sum_x2 - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x));
-	//slope
-	parameters.parameters.push_back((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x));
-	parameters.regress_type = RegressionParameters::_regress_type::power;
-	CTimeSeries<T> predicted = Predict(parameters);
-	parameters.R2 = R2(&othertimeseries, &predicted);
-	parameters.MSE = diff2(&othertimeseries, &predicted);
-	return parameters;
-}
-
-template<class T>
-CTimeSeries<T> CTimeSeries<T>::Predict(const RegressionParameters& regression_parameters)
-{
-	CTimeSeries<T> predicted;
-	for (int i = 0; i < n; i++)
-	{
-		if (regression_parameters.regress_type==RegressionParameters::_regress_type::linear)
-			predicted.append(t[i], regression_parameters.parameters[0] + regression_parameters.parameters[1] * C[i]);
-		else if (regression_parameters.regress_type == RegressionParameters::_regress_type::power)
-			predicted.append(t[i], exp(regression_parameters.parameters[0]) *pow(C[i], regression_parameters.parameters[1]));
-	}
-	return predicted;
 }
 
 template<class T>
