@@ -1,16 +1,8 @@
-#include "BTCSet.h"
+#include "TimeSeriesSet_s.h"
 #include "string.h"
 #include <fstream>
 #include "Utilities.h"
-#include "DistributionNUnif.h"
 #include <iostream>
-#include "Vector.h"
-#include "Matrix.h"
-#include <omp.h>
-#ifdef QT_version
-#include "qdebug.h"
-#include "qdatastream.h"
-#endif // QT_version
 
 using namespace std;
 
@@ -361,11 +353,9 @@ void CTimeSeriesSet<T>::getfromfile(string _filename, bool varytime)
 			s = aquiutils::getline(file);
 			if (s.size()>0)
 			{
-                if (s[0] == "names")
+				if (s[0] == "names")
 					for (unsigned int i = 1; i < s.size(); i++) names.push_back(s[i]);
-                if (s[0].substr(0, 2) == "//")
-                    for (unsigned int i = 1; i < s.size(); i+=2) names.push_back(s[i]);
-                if (s[0] == "units")
+				if (s[0] == "units")
 					for (unsigned int i = 1; i < s.size(); i++) units.push_back(s[i]);
 				if ((s[0].substr(0, 2) != "//") && (s[0] != "names") && (s[0] != "units"))
 				{
@@ -373,10 +363,10 @@ void CTimeSeriesSet<T>::getfromfile(string _filename, bool varytime)
 					if (int(s.size())==nvars+1)
 						for (int i=0; i<nvars; i++)
 						{
-                            BTC[i].append(atof(s[0].c_str()),atof(s[i+1].c_str()));
+                                                        BTC[i].append(atof(s[0].c_str()),atof(s[i+1].c_str()));
 							if (BTC[i].n>2)
-                            if ((BTC[i].GetT(BTC[i].n-1)-BTC[i].GetT(BTC[i].n-2)) != (BTC[i].GetT(BTC[i].n-2)-BTC[i].GetT(BTC[i].n-3)))
-                            BTC[i].structured = false;
+                                                        if ((BTC[i].GetT(BTC[i].n-1)-BTC[i].GetT(BTC[i].n-2)) != (BTC[i].GetT(BTC[i].n-2)-BTC[i].GetT(BTC[i].n-3)))
+                                                                BTC[i].structured = false;
 						}
 
 				}
@@ -390,9 +380,7 @@ void CTimeSeriesSet<T>::getfromfile(string _filename, bool varytime)
 			{
 				if (s[0] == "names")
 					for (unsigned int i = 1; i < s.size(); i++) names.push_back(s[i]);
-                if (s[0].substr(0, 2) == "//")
-                    for (unsigned int i = 1; i < s.size(); i+=2) names.push_back(s[i]);
-                if (s[0] == "units")
+				if (s[0] == "units")
 					for (unsigned int i = 1; i < s.size(); i++) units.push_back(s[i]);
 				if ((s[0].substr(0, 2) != "//") && (s[0] != "names") && (s[0] != "units"))
 				{
@@ -535,19 +523,6 @@ vector<T> CTimeSeriesSet<T>::std(int limit, vector<int> index)
 	for (unsigned int i = 0; i<index.size(); i++)
 		v.push_back(BTC[index[i]].std(limit));
 	return v;
-
-}
-
-template <class T>
-CMatrix CTimeSeriesSet<T>::correlation(int limit, int n)
-{
-	CMatrix r_xy(n);
-
-	for (int i=0; i<n; i++)
-		for (int j=0; j<=i; j++)
-			r_xy[i][j] = R(BTC[i], BTC[j], limit);
-
-	return r_xy;
 
 }
 
@@ -1165,5 +1140,4 @@ CTimeSeriesSet CTimeSeriesSet<T>::unCompact(QDataStream &data)
 
 	return c;
 }
-
 #endif
