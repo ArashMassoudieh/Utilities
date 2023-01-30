@@ -28,6 +28,8 @@ public:
 	void getfromfile(string filename, bool varytime);
     T maxtime();
     T mintime();
+    T maxval();
+    T minval();
     vector<T> getrandom();
     vector<T> percentile(T x);
     vector<T> mean(int limit);
