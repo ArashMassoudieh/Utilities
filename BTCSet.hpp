@@ -57,6 +57,14 @@ CTimeSeriesSet<T>::CTimeSeriesSet(int numberofBTCs, int sizeofBTCvector)
 }
 
 template <class T>
+void CTimeSeriesSet<T>::SetNumberofColumns(int numberofBTCs)
+{
+    nvars = numberofBTCs;
+    BTC.resize(nvars);
+    names.resize(nvars);
+}
+
+template <class T>
 CTimeSeriesSet<T> merge(CTimeSeriesSet<T> A, CTimeSeriesSet<T> &B)
 {
     CTimeSeriesSet<T> C = A;

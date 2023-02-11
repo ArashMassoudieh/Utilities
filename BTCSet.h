@@ -13,7 +13,8 @@ public:
     CTimeSeriesSet(const CTimeSeriesSet<T> &BTC);
     CTimeSeriesSet(const CTimeSeries<T> &BTC);
 	CTimeSeriesSet(string filename, bool varytime);
-	int nvars;
+    void SetNumberofColumns(int numberofBTCs);
+    int nvars;
     string filename;
     vector<CTimeSeries<T>> BTC;
 	void writetofile(char outputfile[]);
