@@ -33,6 +33,8 @@ public:
     double operator[](int) const;
     double at(int i) const;
 	virtual ~CVector();
+    CVector Extract(int start, int end);
+    static CVector Extract(const vector<double> &x, int start, int end);
 	int num;
 	int range(int);
 	CVector& operator=(const CVector&);

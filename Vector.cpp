@@ -803,3 +803,25 @@ vector<int> CVector::negative_elements()
 
 }
 
+CVector CVector::Extract(int start, int end)
+{
+    if (start<0) start = 0;
+    if (end>num-1) end = num-1;
+    CVector out(end-start+1);
+    for (int i=start; i<=end; i++)
+        out[i-start] = vec[i];
+
+    return out;
+}
+
+CVector CVector::Extract(const vector<double> &x, int start, int end)
+{
+    if (start<0) start = 0;
+    if (end>x.size()-1) end = x.size()-1;
+    CVector out(end-start+1);
+    for (int i=start; i<=end; i++)
+        out[i-start] = x[i];
+
+    return out;
+}
+
