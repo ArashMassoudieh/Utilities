@@ -670,11 +670,12 @@ template <class T>
 CTimeSeriesSet<T> CTimeSeriesSet<T>::distribution(int n_bins, int n_columns, int limit)
 {
 	//qDebug() << "Distribution bins, columns, limit" << n_bins << n_columns << limit;
-	CTimeSeriesSet A(n_columns);
+    if (n_columns == 0) n_columns = nvars;
+    CTimeSeriesSet A(n_columns);
 	for (int i = 0; i < n_columns; i++)
 	{
 		A.BTC[i] = BTC[i].distribution(n_bins, limit);
-		//qDebug() << "BTC[" << i << "] done";
+        A.setname(i,names[i]);
 	}
 
 	return A;
