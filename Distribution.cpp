@@ -92,6 +92,8 @@ double CDistribution::evaluate(double x)
     return out;
 }
 
+
+
 double Gammapdf(double x, double k, double theta)
 {
 	return 1 / pow(theta, k)*pow(x, k - 1)*exp(-x / theta) / gamma(k);

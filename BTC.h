@@ -55,6 +55,7 @@ public:
     CTimeSeries(arma::mat &x, arma::mat &y); //build timeseries from arma::mat
 #endif
 	CTimeSeries& operator = (const CTimeSeries &C);
+    CTimeSeries& operator = (const double &value);
     bool readfile(string); //read the values from a text file
     bool writefile(const string &Filename); //writes the BTC contets into a fild
     T maxC(); //returns the maximum value

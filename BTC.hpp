@@ -230,6 +230,16 @@ CTimeSeries<T>& CTimeSeries<T>::operator = (const CTimeSeries<T> &CC)
 }
 
 template<class T>
+CTimeSeries<T>& CTimeSeries<T>::operator = (const double &value)
+{
+    for (int i=0; i<n; i++)
+    {
+        C[i] = value;
+    }
+    return *this;
+}
+
+template<class T>
 CTimeSeries<T> CTimeSeries<T>::Log()
 {
 	CTimeSeries BTC = CTimeSeries(n);
