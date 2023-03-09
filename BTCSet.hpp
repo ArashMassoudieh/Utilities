@@ -709,6 +709,16 @@ void CTimeSeriesSet<T>::append(T t, vector<T> c)
 }
 
 template <class T>
+void CTimeSeriesSet<T>::SetRow(int i, const T &t, const vector<T> &c)
+{
+    for (int j=0; j<min(int(c.size()), nvars); j++)
+    {
+        BTC[j].SetRow(i, t,c[i]);
+    }
+}
+
+
+template <class T>
 CTimeSeries<T> CTimeSeriesSet<T>::add(vector<int> ii)
 {
     CTimeSeries<T> A = BTC[ii[0]];
@@ -1111,6 +1121,8 @@ void CTimeSeriesSet<T>::append(const CTimeSeries<T> &TS, string name)
 	pushBackName(name);
 	nvars = this->BTC.size();
 }
+
+
 
 template <class T>
 void CTimeSeriesSet<T>::setname(int index, string name)

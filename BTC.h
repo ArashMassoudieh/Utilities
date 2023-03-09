@@ -51,6 +51,17 @@ public:
     CTimeSeries interpol(CTimeSeries *x) const; //interpolate at times in the time axis of x
 	CTimeSeries(const CTimeSeries &C);
 	CTimeSeries(string Filename); //create BTC based on the filename
+    bool SetRow(int i, const double &_t, const double &value)
+    {
+        if (i<n)
+        {
+            t[i] = _t;
+            C[i] = value;
+            return true;
+        }
+        else
+            return false;
+    }
 #ifdef _arma
     CTimeSeries(arma::mat &x, arma::mat &y); //build timeseries from arma::mat
 #endif
