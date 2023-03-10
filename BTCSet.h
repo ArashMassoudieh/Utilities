@@ -69,7 +69,7 @@ public:
     CTimeSeries<T> &operator[](int index);
     CTimeSeries<T> &operator[](string BTCName);
     bool Contains(string BTCName);
-    void SetRow(int i, const T &t, const vector<T> &c);
+    bool SetRow(int i, const T &t, const vector<T> &c);
 #ifdef QT_version
 	CTimeSeries &operator[](QString BTCName) {
 		return operator[](BTCName.toStdString());}

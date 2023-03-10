@@ -709,12 +709,14 @@ void CTimeSeriesSet<T>::append(T t, vector<T> c)
 }
 
 template <class T>
-void CTimeSeriesSet<T>::SetRow(int i, const T &t, const vector<T> &c)
+bool CTimeSeriesSet<T>::SetRow(int i, const T &t, const vector<T> &c)
 {
+    bool res = true;
     for (int j=0; j<min(int(c.size()), nvars); j++)
     {
-        BTC[j].SetRow(i, t,c[i]);
+        res &= BTC[j].SetRow(i, t,c[j]);
     }
+    return res;
 }
 
 
