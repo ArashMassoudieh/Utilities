@@ -1655,6 +1655,7 @@ bool CTimeSeries<T>::resize(unsigned int _size)
     C.resize(_size);
     t.resize(_size);
     D.resize(_size);
+    n = _size;
     return true;
 }
 
