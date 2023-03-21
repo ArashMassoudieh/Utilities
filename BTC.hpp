@@ -1287,6 +1287,7 @@ CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, int limit)
 
     T p_start = C1.min();
     T p_end = C1.max()*1.001;
+	if (C1.max() < 0) p_end = C1.max() * 0.99; 
     T dp = abs(p_end - p_start)/n_bins;
 	if (dp == 0) return out;
 	out.t[0] = p_start - dp/2;
