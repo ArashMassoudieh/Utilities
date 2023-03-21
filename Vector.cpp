@@ -163,6 +163,13 @@ CVector& CVector::operator=(const double &v)
 	return *this;
 }
 
+void CVector::SetAllValues(const double &v)
+{
+    for (int i=0; i<num; ++i)
+        vec[i] = v;
+}
+
+
 CVector& CVector::operator+()
 {return *this;}
 

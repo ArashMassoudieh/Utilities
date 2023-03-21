@@ -45,7 +45,7 @@ public:
     CVector(const CVector_arma&);
 #endif
 	CVector& operator=(const double &v);
-
+    void SetAllValues(const double &v);
 	//mat CVector::operator=(const CVector&);
     CVector& operator+();
     void swap(int , int );
