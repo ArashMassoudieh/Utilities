@@ -16,7 +16,7 @@ class CPointSet:public vector<T>
 public:
     CPointSet();
     CPointSet(const CPointSet &RHS);
-    CPointSet(const string &fileName);
+    CPointSet(const string &fileName, int val_column=4);
     CPointSet<T>&  operator = (const CPointSet &RHS);
     void SetDimentions(dims _dim) {dimentions=_dim;}
     void WriteToVtp2D(const string &filename);

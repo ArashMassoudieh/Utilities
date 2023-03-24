@@ -28,7 +28,7 @@ CPointSet<T>& CPointSet<T>::operator = (const CPointSet &RHS)
 }
 
 template<class T>
-CPointSet<T>::CPointSet(const string &fileName)
+CPointSet<T>::CPointSet(const string &fileName,int val_column)
 {
     ifstream file(fileName);
     if (!file.good()) return;
@@ -41,7 +41,7 @@ CPointSet<T>::CPointSet(const string &fileName)
             {
                 vector<double> vals_d = aquiutils::ATOF(vals);
                 CPoint3d P(vals_d[1],vals_d[2],vals_d[3]);
-                P.AppendValue(vals_d[4]);
+                P.AppendValue(vals_d[val_column]);
                 vector<T>::push_back(P);
             }
             counter++;
