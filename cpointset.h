@@ -9,6 +9,7 @@
 using namespace std;
 
 enum class dims {d2, d3};
+enum class ECvsMC {EC, MC};
 
 template<class T>
 class CPointSet:public vector<T>
@@ -16,6 +17,7 @@ class CPointSet:public vector<T>
 public:
     CPointSet();
     CPointSet(const CPointSet &RHS);
+    CPointSet(const string &fileName, ECvsMC ecvmc);
     CPointSet(const string &fileName, int val_column=4);
     CPointSet<T>&  operator = (const CPointSet &RHS);
     void SetDimentions(dims _dim) {dimentions=_dim;}
@@ -29,6 +31,7 @@ public:
     double x(int i);
     double y(int i);
     double Value(int i);
+    double hrs = 0;
 private:
     dims dimentions = dims::d3;
 };

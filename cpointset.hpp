@@ -17,6 +17,7 @@ template<class T>
 CPointSet<T>::CPointSet(const CPointSet &RHS):vector<T> (RHS)
 {
     dimentions = RHS.dimentions;
+    hrs = RHS.hrs;
 }
 
 template<class T>
@@ -24,15 +25,17 @@ CPointSet<T>& CPointSet<T>::operator = (const CPointSet &RHS)
 {
     vector<T>::operator = (RHS);
     dimentions = RHS.dimentions;
+    hrs = RHS.hrs;
     return *this;
 }
 
 template<class T>
-CPointSet<T>::CPointSet(const string &fileName,int val_column)
+CPointSet<T>::CPointSet(const string &fileName, ECvsMC ecvmc)
 {
     ifstream file(fileName);
     if (!file.good()) return;
     int counter=0;
+    bool time_read = false; 
     if (dimentions == dims::d3)
     {
         while (!file.eof())
@@ -40,9 +43,29 @@ CPointSet<T>::CPointSet(const string &fileName,int val_column)
             if (counter>0 && vals.size()>=5)
             {
                 vector<double> vals_d = aquiutils::ATOF(vals);
-                CPoint3d P(vals_d[1],vals_d[2],vals_d[3]);
-                P.AppendValue(vals_d[val_column]);
-                vector<T>::push_back(P);
+                if (ecvmc == ECvsMC::MC)
+                {
+                    CPoint3d P(vals_d[1], vals_d[2], vals_d[3]);
+                    P.AppendValue(vals_d[4]);
+                    if (!time_read)
+                    {
+                        hrs = vals_d[0];
+                        time_read = true;
+                    }
+                    vector<T>::push_back(P);
+                }
+                else if (ecvmc == ECvsMC::EC)
+                {
+                    CPoint3d P(vals_d[2], vals_d[3], vals_d[4]);
+                    if (!time_read)
+                    {
+                        hrs = vals_d[0];
+                        time_read = true;
+                    }
+                    P.AppendValue(vals_d[6]);
+                    vector<T>::push_back(P);
+
+                }
             }
             counter++;
         }
@@ -302,6 +325,7 @@ CPointSet<CPoint> CPointSet<T>::MapToCylindrical(const double &_x, const double 
 {
     CPointSet<CPoint> out;
     out.SetDimentions(dims::d2);
+    out.hrs = hrs; 
     for (int i=0; i<vector<T>::size(); i++)
     {
         CPoint P(sqrt(pow(vector<T>::at(i).x()-_x,2.0)+pow(vector<T>::at(i).y()-_y,2.0)),vector<T>::at(i).z());
@@ -358,6 +382,7 @@ CPointSet<CPoint> CPointSet<T>::MapToGrid(const double &_dx, const double &_dy, 
 {
     CPointSet<CPoint> out;
     out.SetDimentions(dims::d2);
+    out.hrs = hrs; 
     CPointSet range = Range();
     for (double x = range[0].x(); x<=range[1].x(); x+=_dx)
     {
@@ -398,7 +423,7 @@ double CPointSet<T>::x(int i)
 template<class T>
 double CPointSet<T>::y(int i)
 {
-    vector<T>::at(i).y();
+    return vector<T>::at(i).y();
 }
 
 template<class T>

@@ -12,6 +12,7 @@ public:
     CPoint3d(const double &x,const double &y, const double &z);
     double z() const;
     void setz(const double &val);
+    
 
 };
 
