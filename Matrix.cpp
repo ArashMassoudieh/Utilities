@@ -699,8 +699,29 @@ void CMatrix::writetofile(string filename)
 	fclose(f);
 }
 
-//MM
-//void CMatrix::writetofile(string filename)
+double CMatrix::min()
+{
+    double out = 1e16;
+    for (int i=0; i<numrows; i++)
+    {	for (int j=0; j<numcols; j++)
+            if (matr[i].vec[j]<out)
+                out = matr[i].vec[j];
+    }
+    return out;
+}
+
+double CMatrix::max()
+{
+    double out = -1e16;
+    for (int i=0; i<numrows; i++)
+    {	for (int j=0; j<numcols; j++)
+            if (matr[i].vec[j]>out)
+                out = matr[i].vec[j];
+    }
+    return out;
+}
+
+
 void CMatrix::writetofile_app(string filename)
 {
 	FILE *f = fopen(filename.c_str(),"a");
@@ -964,7 +985,7 @@ CVector maxelements(const CMatrix &m)
     for (int i=0; i<m.getnumcols(); ++i)
     {   double maxval = -1e36;
         for (int j=0; j<m.getnumrows(); ++j)
-            maxval = max(fabs(m.matr[i].at(j)),maxval);
+            maxval = std::max(fabs(m.matr[i].at(j)),maxval);
         v[i] = maxval;
     }
     return v;
@@ -976,11 +997,24 @@ CVector CMatrix::maxelements() const
     for (int i=0; i<getnumcols(); ++i)
     {   double maxval = -1e36;
         for (int j=0; j<getnumrows(); ++j)
-            maxval = max(fabs(matr[i].at(j)),maxval);
+            maxval = std::max(fabs(matr[i].at(j)),maxval);
         v[i] = maxval;
     }
     return v;
 }
+
+CMatrix CMatrix::abs() const
+{
+    CMatrix m(*this);
+    for (int i=0; i<getnumcols(); ++i)
+    {
+        for (int j=0; j<getnumrows(); ++j)
+            m[j][i]=fabs(matr[j][i]);
+
+    }
+    return m;
+}
+
 #endif
 
 CVector normalize_diag(const CVector &V, const CVector&D)

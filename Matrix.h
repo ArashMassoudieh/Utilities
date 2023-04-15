@@ -76,6 +76,10 @@ public:
     void setvaldiag(double a);
     void writetofile(FILE *f);
     void writetofile(string filename);
+    double min();
+    double max();
+    CMatrix abs() const;
+
     void writetofile_app(string filename);
 	friend void write_to_file(vector<CMatrix> M, string filename);
 	friend CMatrix Average(vector<CMatrix> M);
