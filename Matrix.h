@@ -34,9 +34,10 @@ private:
 	int range(int);
 public:
 	vector<CVector> matr;
-	CMatrix(int, int);
+    CMatrix(int numrows, int numcolumns);
 	CMatrix(int);
     static CMatrix Diag(int n);
+    void Resize(int numrows, int numcolumns);
 	CMatrix();
 	CMatrix(string filename);
 	CMatrix(const CMatrix&);

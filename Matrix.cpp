@@ -43,6 +43,21 @@ CMatrix::CMatrix(int m, int n)
 
 }
 
+void CMatrix::Resize(int m, int n)
+{
+    numrows = m;
+    numcols = n;
+    matr.resize(numrows);
+
+    for (int i = 0;i<numrows; ++i)
+    {
+        matr[i].vec.resize(numcols);
+        matr[i].num = numcols;
+    }
+
+}
+
+
 CMatrix::CMatrix()
 {
 	numrows = 0;
