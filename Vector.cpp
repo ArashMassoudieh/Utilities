@@ -26,6 +26,13 @@ CVector::CVector(int n)
 	vec.resize(num);
 }
 
+static CVector CreateVector(int n,double value)
+{
+    CVector out = CVector(n);
+    out=value;
+
+}
+
 CVector::CVector(const vector<double> a, int n)
 {
 	num = n;

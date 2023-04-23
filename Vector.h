@@ -27,6 +27,7 @@ public:
 	CVector(const vector<int> &v);
 	CVector(const string &filename);
 	CVector(const double x, int n);
+    static CVector CreateVector(int n,double value=0);
     CVector(const double x_min, const double x_max, int n);  //cvector:: is redundant. However, works fine here.
 	CVector(const CVector&);
     double& operator[](int);
