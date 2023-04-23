@@ -74,6 +74,41 @@ CPointSet<T>::CPointSet(const string &fileName, ECvsMC ecvmc)
 }
 
 template<class T>
+CPointSet<T>::CPointSet(const string &fileName, const vector<int> &xyzval)
+{
+    ifstream file(fileName);
+    if (!file.good()) return;
+
+    int counter=0;
+    bool time_read = false;
+    if (dimentions == dims::d3)
+    {
+        while (!file.eof())
+        {   vector<string> vals = aquiutils::getline(file);
+            if (counter>0 && vals.size()>=5)
+            {
+                vector<double> vals_d = aquiutils::ATOF(vals);
+
+                CPoint3d P(vals_d[xyzval[0]], vals_d[xyzval[1]], vals_d[xyzval[2]]);
+                P.AppendValue(vals_d[xyzval[3]]);
+                if (!time_read)
+                {
+                    hrs = vals_d[0];
+                    time_read = true;
+                }
+                vector<T>::push_back(P);
+
+                P.AppendValue(vals_d[6]);
+                vector<T>::push_back(P);
+
+            }
+            counter++;
+        }
+    }
+
+}
+
+template<class T>
 void CPointSet<T>::WriteToVtp3D(const string &filename)
 {
     if (dimentions==dims::d2) return;
@@ -86,7 +121,7 @@ void CPointSet<T>::WriteToVtp3D(const string &filename)
 
     values->SetNumberOfComponents(1);
 
-    values->SetName("Moisture Content");
+    values->SetName("EC");
 
     for (unsigned int i = 0; i < vector<CPoint3d>::size(); i++)
     {
@@ -138,7 +173,7 @@ void CPointSet<T>::WriteToVtp2D(const string &filename)
 
     values->SetNumberOfComponents(1);
 
-    values->SetName("Moisture Content");
+    values->SetName("EC");
 
     for (unsigned int i = 0; i < this->size(); i++)
     {
@@ -232,7 +267,7 @@ void CPointSet<T>::WriteToPointsVtp(const string &filename, vector<double> limit
 
     values->SetNumberOfComponents(1);
 
-    values->SetName("Moisture Content");
+    values->SetName("EC");
 
     vtkNew<vtkPoints> points;
 
@@ -337,6 +372,30 @@ CPointSet<CPoint> CPointSet<T>::MapToCylindrical(const double &_x, const double 
 }
 
 template<class T>
+CPointSet<CPoint> CPointSet<T>::MapTo2DV(bool _long)
+{
+    CPointSet<CPoint> out;
+    out.SetDimentions(dims::d2);
+    out.hrs = hrs;
+    for (int i=0; i<vector<T>::size(); i++)
+    {
+        if (!_long)
+        {   CPoint P(vector<T>::at(i).y(),vector<T>::at(i).z());
+            P.AppendValue(vector<T>::at(i).Value(0));
+            out.push_back(P);
+        }
+        else
+        {
+            CPoint P(vector<T>::at(i).x(),vector<T>::at(i).z());
+            P.AppendValue(vector<T>::at(i).Value(0));
+            out.push_back(P);
+        }
+
+    }
+    return out;
+}
+
+template<class T>
 CPointSet<T> CPointSet<T>::Range() //Range
 {
     CPointSet<T> out;
@@ -378,7 +437,7 @@ CPointSet<T> CPointSet<T>::Range() //Range
 }
 
 template<class T>
-CPointSet<CPoint> CPointSet<T>::MapToGrid(const double &_dx, const double &_dy, vector<double> span)
+CPointSet<CPoint> CPointSet<T>::MapToGrid(const double &_dx, const double &_dy, vector<double> span, bool addlaterals)
 {
     CPointSet<CPoint> out;
     out.SetDimentions(dims::d2);
@@ -393,8 +452,23 @@ CPointSet<CPoint> CPointSet<T>::MapToGrid(const double &_dx, const double &_dy, 
             out.push_back(P);
         }
     }
+    if (addlaterals)
+    {
+        for (double y = range[0].y(); y<=range[1].y(); y+=_dy)
+        {   CPoint P(range[0].x()-_dx,y);
+            P.AppendValue(KernelSmoothValue(P,span));
+            out.push_back(P);
+        }
+        for (double y = range[0].y(); y<=range[1].y(); y+=_dy)
+        {   CPoint P(range[0].x()+_dx,y);
+            P.AppendValue(KernelSmoothValue(P,span));
+            out.push_back(P);
+        }
+    }
     return out;
 }
+
+
 
 template<class T>
 double CPointSet<T>::KernelSmoothValue(const T &point, vector<double> span)
