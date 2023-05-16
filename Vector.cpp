@@ -270,7 +270,7 @@ CVector operator*(const CVector &v1, const CVector &v2)
     CVector vout(v1.num);
     for (int i=0; i<v1.num; i++)
         vout[i] = v1.at(i)*v2.at(i);
-    return v1;
+    return vout;
 }
 
 double norm(CVector v)
