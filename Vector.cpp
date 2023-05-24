@@ -481,7 +481,7 @@ double CVector::norm2()
 
 }
 
-double CVector::sum()
+double CVector::sum() const
 {
 		double a = 0;
 	for (int i=0;i<num; i++)
@@ -491,7 +491,7 @@ double CVector::sum()
 	return a;
 }
 
-double CVector::mean()
+double CVector::mean() const
 {
     return sum()/double(num);
 }
@@ -837,5 +837,16 @@ CVector CVector::Extract(const vector<double> &x, int start, int end)
         out[i-start] = x[i];
 
     return out;
+}
+
+double CVector::stdev() const
+{
+    double avg = mean();
+    double sum=0;
+    for (int i=0; i<getsize(); i++)
+    {
+        sum+=pow(vec[i]-avg,2);
+    }
+    return sqrt(sum/double(getsize()-1));
 }
 

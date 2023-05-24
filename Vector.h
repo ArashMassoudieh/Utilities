@@ -66,8 +66,9 @@ public:
     double max() const;
     double min() const;
 	double norm2();
-	double sum();
-    double mean();
+    double sum() const;
+    double mean() const;
+    double stdev() const;
 	double abs_max();
     int abs_max_elems();
 	vector<int> maxelements();
