@@ -13,6 +13,7 @@ public:
     CTimeSeriesSet(const CTimeSeriesSet<T> &BTC);
     CTimeSeriesSet(const CTimeSeries<T> &BTC);
 	CTimeSeriesSet(string filename, bool varytime);
+    bool ReadFromFile(string _filename, bool varytime);
     void SetNumberofColumns(int numberofBTCs);
     int nvars;
     string filename;

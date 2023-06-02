@@ -281,7 +281,7 @@ CTimeSeriesSet<T>::CTimeSeriesSet(string _filename, bool varytime)
 					for (unsigned int i = 1; i < s.size(); i++) names.push_back(s[i]);
 				if (aquiutils::tail(s[0],5) == "units" || aquiutils::tail(s[0], 4) == "unit")
 					for (unsigned int i = 1; i < s.size(); i++) units.push_back(s[i]);
-				if ((s[0].substr(0, 2) != "//") && (aquiutils::tail(s[0],5) != "names") && (aquiutils::tail(s[0],5) != "units"))
+                if ((s[0].substr(0, 2) != "//") && (aquiutils::tail(s[0],5) != "names") && (aquiutils::tail(s[0],5) != "units") && (aquiutils::tail(s[0],5) != "\t"))
 				{
 					if (nvars == 0) { nvars = s.size() - 1; BTC.resize(nvars); }
 					if (int(s.size()) == nvars + 1)
@@ -350,6 +350,101 @@ CTimeSeriesSet<T>::CTimeSeriesSet(string _filename, bool varytime)
 		for (int i = 0; i < nvars; i++)
 			if (names[i] == "")
 				names[i] = "Data (" + aquiutils::numbertostring(i) + ")";
+}
+
+
+template <class T>
+bool CTimeSeriesSet<T>::ReadFromFile(string _filename, bool varytime)
+{
+    unif = false;
+    vector<string> units;
+    filename = _filename;
+    ifstream file(filename);
+    vector<string> s;
+    nvars = 0;
+
+    if (file.good() == false)
+    {
+        file_not_found = true;
+        return false;
+    }
+    if (varytime == false)
+        while (file.eof() == false)
+        {
+            s = aquiutils::getline(file);
+            if (s.size())
+            {
+                if (aquiutils::tail(s[0],5) == "names" || aquiutils::tail(s[0], 4) == "name")
+                    for (unsigned int i = 1; i < s.size(); i++) names.push_back(s[i]);
+                if (aquiutils::tail(s[0],5) == "units" || aquiutils::tail(s[0], 4) == "unit")
+                    for (unsigned int i = 1; i < s.size(); i++) units.push_back(s[i]);
+                if ((s[0].substr(0, 2) != "//") && (aquiutils::tail(s[0],5) != "names") && (aquiutils::tail(s[0],5) != "units") && (aquiutils::tail(s[0],5) != "\t"))
+                {
+                    if (nvars == 0) { nvars = s.size() - 1; BTC.resize(nvars); }
+                    if (int(s.size()) == nvars + 1)
+                        for (int i = 0; i < nvars; i++)
+                        {
+                            BTC[i].append(atof(s[0].c_str()),atof(s[i + 1].c_str()));
+
+                            if (BTC[i].n >2)
+                                if ((BTC[i].GetT(BTC[i].tSize() - 1) - BTC[i].GetT(BTC[i].tSize() - 2)) != (BTC[i].GetT(BTC[i].tSize() - 2) - BTC[i].GetT(BTC[i].tSize() - 3)))
+                                    BTC[i].structured = false;
+
+                        }
+
+                }
+            }
+        }
+    else
+        while (file.eof() == false)
+        {
+            s = aquiutils::getline(file);
+            if (s.size() > 0)
+            {
+                if (aquiutils::tail(s[0],5) == "names" || aquiutils::tail(s[0], 4) == "name")
+                    for (unsigned int i = 1; i < s.size(); i++) if (aquiutils::trim(s[i])!="") names.push_back(s[i]);
+                if (aquiutils::tail(s[0],5) == "units" || aquiutils::tail(s[0], 4) == "unit")
+                    for (unsigned int i = 1; i < s.size(); i++) units.push_back(s[i]);
+                if ((s[0].substr(0, 2) != "//") && (aquiutils::tail(s[0],5) != "names") && (aquiutils::tail(s[0],5) != "units") && (s[0].substr(0, 1) != "\t"))
+                {
+                    if (nvars == 0) { nvars = s.size() / 2; BTC.resize(nvars); }
+
+                    for (int i = 0; i < nvars; i++)
+                    {
+                        if (int(s.size()) >= 2 * (i + 1))
+                            if ((aquiutils::trim(s[2 * i]) != "") && (aquiutils::trim(s[2 * i + 1]) != ""))
+                            {
+                                BTC[i].append(atof(s[2 * i].c_str()),atof(s[2 * i + 1].c_str()));
+                                if (BTC[i].n>2)
+                                    if ((BTC[i].GetT(BTC[i].n - 1) - BTC[i].GetT(BTC[i].n - 2)) != (BTC[i].GetT(BTC[i].n - 2) - BTC[i].GetT(BTC[i].n - 3)))
+                                        BTC[i].structured = false;
+                            }
+                    }
+                }
+            }
+        }
+    file.close();
+
+    for (int i = 0; i < min(int(names.size()), nvars); i++)
+        BTC[i].name = names[i];
+
+    for (int i = 0; i < min(int(units.size()), nvars); i++)
+        BTC[i].unit = units[i];
+
+    //for (int i=0; i<nvars; i++)
+    //	BTC[i].assign_D();
+
+    if (int(names.size()) < nvars)
+    {
+        names.resize(nvars);
+    }
+    if (nvars == 1 && names[0] == "")
+        names[0] = "Data";
+    if (nvars > 1)
+        for (int i = 0; i < nvars; i++)
+            if (names[i] == "")
+                names[i] = "Data (" + aquiutils::numbertostring(i) + ")";
+    return true;
 }
 
 
