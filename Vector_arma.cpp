@@ -95,6 +95,14 @@ double& CVector_arma::operator[](int i)
 		return *p;
 }
 
+double CVector_arma::operator[](int i) const
+{
+    if ((i<num) & (i>-1))
+        return vect(i);
+    else
+        return -999;
+}
+
 int CVector_arma::range(int i)
 {
 	return i;

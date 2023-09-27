@@ -413,6 +413,7 @@ CMatrix Sqrt(const CMatrix &M1)
 
 
 #ifdef _arma
+/*
 CMatrix Invert(CMatrix M1)
 {
 	CMatrix InvM(M1.getnumcols(), M1.getnumcols());
@@ -423,6 +424,18 @@ CMatrix Invert(CMatrix M1)
 		InvM[i] = V/M1;
 	}
 	return Transpose(InvM);
+}*/
+
+CMatrix Invert(const CMatrix &M1)
+{
+    CMatrix InvM(M1.getnumcols(), M1.getnumcols());
+    for (int i=0; i<M1.getnumcols(); i++)
+    {
+        CVector V(M1.getnumcols());
+        V[i] = 1;
+        InvM[i] = V/M1;
+    }
+    return Transpose(InvM);
 }
 #endif
 CMatrix Cholesky_factor(CMatrix &M)

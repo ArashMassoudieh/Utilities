@@ -99,6 +99,7 @@ CVector_arma operator/(CVector_arma&, CMatrix_arma&);
 CVector_arma operator/(const CVector_arma &V, const CMatrix_arma &M);
 CMatrix_arma Transpose(CMatrix_arma &M1);
 CMatrix_arma Invert(CMatrix_arma M1);
+CMatrix_arma Invert(const CMatrix_arma &M1);
 CVector_arma SpareSolve(CMatrix_arma, CVector_arma);
 CMatrix_arma oneoneprod(CMatrix_arma &m1, CMatrix_arma &m2);
 CVector_arma solve_ar(CMatrix_arma&, CVector_arma&);

@@ -319,6 +319,13 @@ CMatrix_arma Invert(CMatrix_arma M1)
 	return InvM;
 }
 
+CMatrix_arma Invert(const CMatrix_arma &M1)
+{
+    CMatrix_arma InvM(M1.getnumcols(), M1.getnumcols());
+    InvM.matr = inv(M1.matr);
+    return InvM;
+}
+
 
 /*double det(CMatrix_arma &A)
 {
