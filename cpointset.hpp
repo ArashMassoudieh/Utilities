@@ -98,7 +98,7 @@ CPointSet<T>::CPointSet(const string &fileName, const vector<int> &xyzval)
                 }
                 vector<T>::push_back(P);
 
-                P.AppendValue(vals_d[6]);
+                //P.AppendValue(vals_d[6]);
                 vector<T>::push_back(P);
 
             }
