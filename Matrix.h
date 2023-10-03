@@ -94,6 +94,8 @@ public:
 	void ScaleDiagonal(double x);
     void setcol(int i,  const CVector &V);
     void setrow(int j,  const CVector &V);
+    double& get(int i, int j);
+
 #ifdef QT_version
     QMap<QString, QVariant> compact() const;
     static CMatrix unCompact(QMap<QString, QVariant>);
