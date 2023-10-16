@@ -4,6 +4,8 @@
 #include "cpoint3d.h"
 #include "cpoint.h"
 #include "VTK.h"
+#include "vtkDelaunay3D.h"
+#include "vtkXMLUnstructuredGridWriter.h"
 #include "vtkUnstructuredGrid.h"
 #include "math.h"
 
