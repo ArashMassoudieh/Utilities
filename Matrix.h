@@ -47,7 +47,8 @@ public:
     CMatrix& operator=(mat&);
 #endif
 	CMatrix(const CVector&);
-	CVector& operator[](int);
+    CVector& operator [](int);
+    CVector operator[](int) const;
     double & operator()(int i, int j);
     double & operator()(unsigned int i, unsigned int j);
 	int getnumrows() const;

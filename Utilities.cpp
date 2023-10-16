@@ -666,36 +666,6 @@ namespace aquiutils
         }
         return out;
     }
-    template<typename T, typename T1>
-    int CountLessThanEq(const vector<T> &v, const T1 &x, T1 boundary)
-    {
-        int out = 1;
-        if (boundary==0)
-        {
-            boundary = v.size();
-        }
-        for (unsigned int i=0; i<boundary; i++)
-        {
-            if (v[i]<x)
-                out++;
-        }
-        return out;
-    }
-    template<typename T, typename T1>
-    int CountGreaterThan(const vector<T> &v, const T1 &x,  T1 boundary)
-    {
-        int out = 0;
-        if (boundary==0)
-        {
-            boundary = v.size();
-        }
-        for (unsigned int i=0; i<boundary; i++)
-        {
-            if (v[i]>x)
-                out++;
-        }
-        return out;
-    }
 
 }
 

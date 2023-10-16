@@ -108,10 +108,37 @@ namespace aquiutils
             return false;
     }
     vector<unsigned int> Rank(const vector<double> &v);
-    template<typename T, typename T1>
-    int CountLessThanEq(const vector<T> &v, const T1 &x, T1 boundary=0);
-    template<typename T, typename T1>
-    int CountGreaterThan(const vector<T> &v, const T1 &x, T1 boundary=0);
+    template<typename T, typename T1, typename T2>
+    int CountLessThan(const vector<T> &v, const T1 &x, T2 boundary=0)
+    {
+        int out = 1;
+        if (boundary==0)
+        {
+            boundary = v.size();
+        }
+        for (unsigned int i=0; i<boundary; i++)
+        {
+            if (v[i]<x)
+                out++;
+        }
+        return out;
+    }
+    template<typename T, typename T1, typename T2>
+    int CountGreaterThan(const vector<T> &v, const T1 &x, T2 boundary=0)
+    {
+        int out = 0;
+        if (boundary==0)
+        {
+            boundary = v.size();
+        }
+        for (unsigned int i=0; i<boundary; i++)
+        {
+            if (v[i]>x)
+                out++;
+        }
+        return out;
+    }
+
 
 
 }

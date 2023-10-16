@@ -168,6 +168,12 @@ CVector& CMatrix::operator[](int i)
 	return matr[i];
 }
 
+CVector CMatrix::operator[](int i) const
+{
+    return matr[i];
+}
+
+
 CMatrix::~CMatrix()
 {
 	matr.clear();
