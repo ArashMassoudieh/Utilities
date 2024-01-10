@@ -768,10 +768,7 @@ bool CTimeSeries<T>::writefile(const string &Filename)
             file << setprecision(10) << t[i] << ", " << C[i] << std::endl;
         file.close();
     }
-    else return false;
-
-
-}
+    else return false;}
 
 template<class T>
 CTimeSeries<T> operator*(T alpha, CTimeSeries<T> &CTimeSeries_T)

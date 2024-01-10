@@ -69,6 +69,7 @@ namespace aquiutils
     string numbertostring(vector<double> &x, bool scientific=false);
     string numbertostring(int x);
     string numbertostring(unsigned int x);
+    string numbertostring(unsigned int x, int number_of_digits);
     string numbertostring(vector<int> &x, bool scientific=false);
     string tail(std::string const& source, size_t const length);
     string tabs(int i);

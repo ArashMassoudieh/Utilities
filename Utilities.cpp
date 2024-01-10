@@ -550,6 +550,21 @@ namespace aquiutils
         return Result;
     }
 
+    string numbertostring(unsigned int x, int number_of_digits)
+    {
+        string Result;          // string which will contain the result
+        ostringstream convert;   // stream used for the conversion
+        convert << x;      // insert the textual representation of 'Number' in the characters in the stream
+
+        Result = convert.str();
+        if (Result.size()<number_of_digits)
+        {
+            for (int i=0; i<Result.size()-number_of_digits; i++)
+                Result = "0" + Result;
+        }
+        return Result;
+    }
+
     string numbertostring(vector<int> &x, bool scientific)
     {
         string Result = "[";
