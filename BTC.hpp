@@ -768,7 +768,10 @@ bool CTimeSeries<T>::writefile(const string &Filename)
             file << setprecision(10) << t[i] << ", " << C[i] << std::endl;
         file.close();
     }
-    else return false;}
+    else return false;
+
+
+}
 
 template<class T>
 CTimeSeries<T> operator*(T alpha, CTimeSeries<T> &CTimeSeries_T)
@@ -1200,27 +1203,11 @@ CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment)
 {
     CTimeSeries<T> out;
 	assign_D();
-	if (t.size() >1 && C.size() > 1)
-	{
-		out.append(t[0], C[0]);
-		for (int i = 0; i < n - 1; i++)
-		{
-			int i1 = int((t[i] - t[0]) / increment);
-			int i2 = int((t[i + 1] - t[0]) / increment);
-			for (int j = i1 + 1; j <= i2; j++)
-			{
-                T x = j*increment + t[0];
-                T CC = (x - t[i]) / (t[i + 1] - t[i])*(C[i + 1] - C[i]) + C[i];
-                T DD = (x - t[i]) / (t[i + 1] - t[i])*(D[i + 1] - D[i]) + D[i];
-                if (x>out.GetLastItemTime())
-                {
-                    out.append(x, CC);
-                    out.lastD() = DD;
-                }
-
-			}
-		}
-	}
+    for (double tt=t[0]; tt<=t[n-1]; tt+=increment)
+    {
+        cout<<tt<<endl;
+        out.append(tt,interpol(tt));
+    }
 	out.structured = true;
 
 	return out;
@@ -1710,15 +1697,29 @@ T &CTimeSeries<T>::lastt()
 
 
 template<class T>
-CTimeSeries<T> CTimeSeries<T>::inverse_cumulative_uniform(int ninitervals)
+CTimeSeries<T> CTimeSeries<T>::inverse_cumulative_uniform(int nintervals)
 {
     CTimeSeries<T> out;
     out.t = C;
     out.C = t;
     out.n = n;
+    out.structured=false;
+    return out.make_uniform((out.t[n-1]-out.t[0])/double(nintervals));
 
-    return out.make_uniform(ninitervals);
+}
 
+template<class T>
+CTimeSeries<T> CTimeSeries<T>::LogTransformX()
+{
+    CTimeSeries<T> out(n);
+    out.C = C;
+    out.n = n;
+    for (int i=0; i<t.size(); i++)
+    {
+        out.SetT(i,log(t[i]));
+    }
+
+    return out;
 }
 
 

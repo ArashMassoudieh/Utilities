@@ -142,6 +142,7 @@ public:
     unsigned int DSize() {return D.size(); }
     void AppendD(const T &value) { D.push_back(value); }
     CTimeSeries<T> inverse_cumulative_uniform(int ninitervals=100);
+    CTimeSeries<T> LogTransformX();
     CTimeSeries<T> distribution(int n_bins = 40, double smoothing_span=0, int limit=0);
     CTimeSeries<T> derivative();
     vector<double> tToStdVector() {return t;}
