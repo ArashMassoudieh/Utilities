@@ -767,6 +767,7 @@ bool CTimeSeries<T>::writefile(const string &Filename)
         for (int i=0; i<n; i++)
             file << setprecision(10) << t[i] << ", " << C[i] << std::endl;
         file.close();
+        return true;
     }
     else return false;
 
@@ -1711,12 +1712,12 @@ CTimeSeries<T> CTimeSeries<T>::inverse_cumulative_uniform(int nintervals)
 template<class T>
 CTimeSeries<T> CTimeSeries<T>::LogTransformX()
 {
-    CTimeSeries<T> out(n);
-    out.C = C;
-    out.n = n;
+    CTimeSeries<T> out;
+
     for (int i=0; i<t.size(); i++)
     {
-        out.SetT(i,log(t[i]));
+        if (t[i]>0)
+            out.append(log(t[i]),C[i]);
     }
 
     return out;
