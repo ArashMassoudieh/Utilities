@@ -12,6 +12,22 @@
 #define SMALLNUMBER 1e-23
 #define PI 3.14159265359
 
+/*#ifdef  _WINDOWS
+struct timezone
+{
+    int  tz_minuteswest; 
+    int  tz_dsttime;     
+};
+#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
+#define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+#else
+#define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
+#endif
+
+#endif //  _WINDOWS
+*/
+
+
 using namespace std;
 
 namespace aquiutils
@@ -74,8 +90,8 @@ namespace aquiutils
     string tail(std::string const& source, size_t const length);
     string tabs(int i);
     bool And(vector<bool> x);
-    //double max(vector<double> x);
-    //int max(vector<int> x);
+    // max(const vector<double> &x);
+    //int max(const vector<int> &x);
     double Max(const vector<double>&);
     double Min(const vector<double>&);
     int MaxElement(const vector<double> &x);
@@ -153,7 +169,9 @@ namespace aquiutils
             }
         return out;
     }
-
+//#ifdef _WINDOWS
+//    int gettimeofday(struct timeval* tv, struct timezone* tz);
+//#endif
 
 
 }
