@@ -213,9 +213,12 @@ CVector_arma& CVector_arma::operator*=(const CVector_arma& v)
 }
 
 
-CVector_arma operator*(CVector_arma v1, CVector_arma v2)
+CVector_arma operator*(const CVector_arma &v1, const CVector_arma &v2)
 {
-	return v1 *= v2;
+	CVector_arma out(v1.getsize());
+	for (int i = 0; i < out.num; ++i)
+		out[i] = v1[i] * v2[i];
+	return out; 
 }
 
 double norm(CVector_arma v)
@@ -226,18 +229,31 @@ double norm(CVector_arma v)
 	return sqrt(sum/v.num);
 }
 
-CVector_arma operator*(double a, CVector_arma v)
+CVector_arma operator*(const double &a, const CVector_arma &v)
 {
-	return v*=a;
-
+	CVector_arma out(v.getsize());
+	for (int i = 0; i < out.num; ++i)
+		out[i] = v[i] * a;
+	return out;
 }
 
-CVector_arma operator/(CVector_arma v, double a)
+CVector_arma operator*(const CVector_arma& v, const double &a)
 {
-	return v*=(1/a);
+	CVector_arma out(v.getsize());
+	for (int i = 0; i < out.num; ++i)
+		out[i] = v[i] * a;
+	return out;
 }
 
-CVector_arma operator+(CVector_arma v, double a)
+CVector_arma operator/(const CVector_arma &v, const double &a)
+{
+	CVector_arma out(v.getsize());
+	for (int i = 0; i < out.num; ++i)
+		out[i] = v[i] / a;
+	return out;
+}
+
+CVector_arma operator+(const CVector_arma &v, const double &a)
 {
 	CVector_arma v1(v.num);
 	for (int i=0; i<v.num; i++)
@@ -245,7 +261,7 @@ CVector_arma operator+(CVector_arma v, double a)
 	return v1;
 }
 
-CVector_arma operator+(double a, CVector_arma v)
+CVector_arma operator+(const double &a, const CVector_arma &v)
 {
 	CVector_arma v1(v.num);
 	for (int i=0; i<v.num; i++)
@@ -253,7 +269,7 @@ CVector_arma operator+(double a, CVector_arma v)
 	return v1;
 }
 
-CVector_arma operator-(double a, CVector_arma &v)
+CVector_arma operator-(const double &a, const CVector_arma &v)
 {
 	CVector_arma v1(v.num);
 	for (int i=0; i<v.num; i++)
@@ -263,7 +279,7 @@ CVector_arma operator-(double a, CVector_arma &v)
 }
 
 
-CVector_arma operator/(CVector_arma v1, CVector_arma v2)
+CVector_arma operator/(const CVector_arma &v1, const CVector_arma &v2)
 {
 	CVector_arma x(v1.getsize());
 	for (int i = 0; i<v1.getsize(); ++i)
@@ -271,7 +287,7 @@ CVector_arma operator/(CVector_arma v1, CVector_arma v2)
 	return x;
 }
 
-CVector_arma operator/(double a, CVector_arma v2)
+CVector_arma operator/(const double &a, const CVector_arma &v2)
 {
 	CVector_arma x(v2.getsize());
 	for (int i = 0; i<v2.getsize(); ++i)
@@ -581,7 +597,7 @@ CVector_arma H(CVector_arma &V)
 	return x;
 }
 
-CVector_arma operator*(CVector_arma &v, double d)
+CVector_arma operator*(CVector_arma &v, const double &d)
 {
 	return d*v;
 

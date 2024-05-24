@@ -767,6 +767,7 @@ bool CTimeSeries<T>::writefile(const string &Filename)
         for (int i=0; i<n; i++)
             file << setprecision(10) << t[i] << ", " << C[i] << std::endl;
         file.close();
+        return true;
     }
     else return false;
 
