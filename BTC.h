@@ -113,7 +113,7 @@ public:
     void knock_out(T t);
     T AutoCor1(int i=0);
 	bool file_not_found = false;
-	CTimeSeries getcummulative();
+    CTimeSeries getcummulative();
 	CTimeSeries Exp();
 	CTimeSeries fabs();
     void adjust_size();
