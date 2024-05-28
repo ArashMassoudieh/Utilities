@@ -24,7 +24,7 @@
 
 
 
-using namespace std;
+//using namespace std;
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -88,13 +88,13 @@ CMatrix CMatrix::Diag(int n)
     return M;
 }
 
-CMatrix::CMatrix(string filename)
+CMatrix::CMatrix(std::string filename)
 {
 
     bool file_not_found;
 
-	ifstream file(filename);
-	vector<string> s;
+	std::ifstream file(filename);
+	std::vector<std::string> s;
 	if (file.good() == false)
 	{
 		file_not_found = true;
@@ -722,7 +722,7 @@ void CMatrix::writetofile(FILE *f)
 	}
 }
 
-void CMatrix::writetofile(string filename)
+void CMatrix::writetofile(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"w");
 	for (int i=0; i<numrows; i++)
@@ -756,7 +756,7 @@ double CMatrix::max()
 }
 
 
-void CMatrix::writetofile_app(string filename)
+void CMatrix::writetofile_app(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"a");
 	for (int i=0; i<numrows; i++)
@@ -776,10 +776,10 @@ CMatrix Transpose(CMatrix &M1)	//Works only when M1.getnumcols()=M1.getnumrows()
 	return TrM;
 }
 
-void CMatrix::print(string s)
+void CMatrix::print(std::string s)
 {
 
-	ofstream Afile;
+	std::ofstream Afile;
 	Afile.open(s+".txt");
 	cout<<s+"\="<<std::endl;
 
@@ -921,9 +921,9 @@ CMatrix& CMatrix::operator=(mat &A)
 }
 #endif
 
-void write_to_file(vector<CMatrix> M, string filename)
+void write_to_file(std::vector<CMatrix> M, std::string filename)
 {
-	ofstream Afile;
+	std::ofstream Afile;
 	Afile.open(filename);
 	M.push_back(Average(M));
 	for (unsigned int k = 0; k<M.size(); k++)
@@ -941,7 +941,7 @@ void write_to_file(vector<CMatrix> M, string filename)
 
 }
 
-CMatrix Average(vector<CMatrix> M)
+CMatrix Average(std::vector<CMatrix> M)
 {
 	CMatrix AVG(M[0].numrows, M[0].numcols);
 	int n = M.size();
@@ -1098,9 +1098,9 @@ CVector normalize_max( const CVector &V, const CVector &D)
     return M;
 }
 
-vector<vector<bool>> CMatrix::non_posdef_elems(double tol)
+std::vector<std::vector<bool>> CMatrix::non_posdef_elems(double tol)
 {
-	vector<vector<bool>> M;
+	std::vector<std::vector<bool>> M;
 	M.resize(getnumcols());
 
 	for (int i = 0; i < getnumcols(); i++)
@@ -1146,9 +1146,9 @@ CMatrix CMatrix::Preconditioner(double tol)
 
 	return M;
 }
-vector<string> CMatrix::toString(string format, vector<string> columnHeaders, vector<string> rowHeaders) const
+std::vector<std::string> CMatrix::toString(std::string format, std::vector<std::string> columnHeaders, std::vector<std::string> rowHeaders) const
 {
-	vector<string> r;
+	std::vector<std::string> r;
 	bool rowH = false, colH = false;
 	int rowOffset = 0, colOffset=0;
 	if (columnHeaders.size() && int(columnHeaders.size()) == numcols)
@@ -1194,10 +1194,10 @@ vector<string> CMatrix::toString(string format, vector<string> columnHeaders, ve
 }
 
 #ifdef QT_version
-vector<string> CMatrix::toHtml(string format, vector<string> columnHeaders, vector<string> rowHeaders)
+std::vector<std::string> CMatrix::toHtml(std::string format, std::vector<std::string> columnHeaders, std::vector<std::string> rowHeaders)
 {
-	vector<string> html, csv = toString(format, columnHeaders, rowHeaders);
-	QString line;
+	std::vector<std::string> html, csv = toString(format, columnHeaders, rowHeaders);
+	Qstd::string line;
 	html.push_back("<!DOCTYPE html>");
 	html.push_back("<html>");
 	html.push_back("<body>");
@@ -1228,9 +1228,9 @@ void CMatrix::setnumcolrows()
 }
 
 #ifdef QT_version
-QMap<QString, QVariant> CMatrix::compact() const
+Qstd::map<QString, QVariant> CMatrix::compact() const
 {
-	QMap<QString, QVariant> r;
+	Qstd::map<QString, QVariant> r;
 	r["nrows"] = numrows;
 	r["ncols"] = numcols;
 	for (int i = 0; i<numrows; ++i)
@@ -1240,12 +1240,12 @@ QMap<QString, QVariant> CMatrix::compact() const
 		{
 			rowList.append(QString::number(matr[i].vec[j]));
 		}
-		QString code = QString("row %1").arg(i);
+		Qstd::string code = QString("row %1").arg(i);
 		r[code] = rowList;
 	}
 	return r;
 }
-CMatrix CMatrix::unCompact(QMap<QString, QVariant> r)
+CMatrix CMatrix::unCompact(Qstd::map<QString, QVariant> r)
 {
 	CMatrix m;
 	m.numrows = r["nrows"].toInt();
@@ -1259,7 +1259,7 @@ CMatrix CMatrix::unCompact(QMap<QString, QVariant> r)
 	}
 	for (int i = 0; i < m.numrows; ++i)
 	{
-		QString code = QString("row %1").arg(i);
+		Qstd::string code = QString("row %1").arg(i);
 		QStringList rowList = r[code].toStringList();
 		for (int j = 0; j < rowList.count(); j++)
 		{

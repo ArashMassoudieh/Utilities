@@ -21,13 +21,13 @@
 class CDistribution;
 
 struct RegressionParameters {
-    vector<double> parameters; 
+    std::vector<double> parameters; 
     double MSE = 0; 
     double R2 = 0; 
     enum class _regress_type {linear, power, exponential} regress_type;
 };
 
-using namespace std;
+//using namespace std;
 
 template<class T>
 class CTimeSeries
@@ -38,19 +38,19 @@ public:
 	CTimeSeries(int n);
 	virtual ~CTimeSeries();
 	int n;
-    string filename;
-	string name = "";
-	string unit = "";
-	string defaultUnit = "";
-	vector<string> unitsList;
+    std::string filename;
+	std::string name = "";
+	std::string unit = "";
+	std::string defaultUnit = "";
+	std::vector<std::string> unitsList;
     T interpol(const T &x) const; //interpolate at location x
 	CTimeSeries MA_smooth(int span); //Moving average smoothing with span of 1+2*span
     T interpol_D(const T &x); //interpolate the distance to the next non-zero data point
-    CTimeSeries interpol(vector<T> x); //interpolate at each value in vector x
+    CTimeSeries interpol(std::vector<T> x); //interpolate at each value in vector x
     CTimeSeries interpol(CTimeSeries &x) const; //interpolate at times in the time axis of x
     CTimeSeries interpol(CTimeSeries *x) const; //interpolate at times in the time axis of x
 	CTimeSeries(const CTimeSeries &C);
-	CTimeSeries(string Filename); //create BTC based on the filename
+	CTimeSeries(std::string Filename); //create BTC based on the filename
     bool SetRow(int i, const double &_t, const double &value)
     {
         if (i<n)
@@ -67,8 +67,8 @@ public:
 #endif
 	CTimeSeries& operator = (const CTimeSeries &C);
     CTimeSeries& operator = (const double &value);
-    bool readfile(string); //read the values from a text file
-    bool writefile(const string &Filename); //writes the BTC contets into a fild
+    bool readfile(std::string); //read the values from a text file
+    bool writefile(const std::string &Filename); //writes the BTC contets into a fild
     T maxC(); //returns the maximum value
     T minC(); //returns the minimum value
     T maxt();
@@ -100,7 +100,7 @@ public:
 	CTimeSeries& operator%=(CTimeSeries &v); //adds another time-series by corresponding indexes
     CTimeSeries make_uniform(T increment); //create a new time-series with uniformly distributed time-axis
     CTimeSeries extract(T t1, T t2); //extracts a sub time-series from t1 to t2.
-    vector<T> trend(); //calculate the slope based on regression
+    std::vector<T> trend(); //calculate the slope based on regression
     T mean_t(); //mean of t values of data point
     CTimeSeries add_noise(T std, bool); //adds Gaussian noise to values
 	void assign_D(); //Assign distances to the next non-zero values
@@ -121,10 +121,10 @@ public:
 	//QList <QMap <QVariant, QVariant>> compact() const;
     bool resize(unsigned int _size);
     unsigned int Capacity();
-    CTimeSeries(T a, T b, const vector<T>&x);
+    CTimeSeries(T a, T b, const std::vector<T>&x);
     CTimeSeries(T a, T b, const CTimeSeries &btc);
-    CTimeSeries(const vector<T> &t, const vector<T> &C);
-    CTimeSeries(vector<T>&, int writeInterval = 1);
+    CTimeSeries(const std::vector<T> &t, const std::vector<T> &C);
+    CTimeSeries(std::vector<T>&, int writeInterval = 1);
 	bool error = false;
     T GetLastItemValue();
     T GetLastItemTime();
@@ -145,8 +145,8 @@ public:
     CTimeSeries<T> LogTransformX();
     CTimeSeries<T> distribution(int n_bins = 40, double smoothing_span=0, int limit=0);
     CTimeSeries<T> derivative();
-    vector<double> tToStdVector() {return t;}
-    vector<double> ValuesToStdVector() {return C;}
+    std::vector<double> tToStdVector() {return t;}
+    std::vector<double> ValuesToStdVector() {return C;}
     CTimeSeries<T> KernelSmooth(CDistribution *dist, int span=100);
     CTimeSeries<T> KernelSmooth(CDistribution* dist, const double &span = 1);
     RegressionParameters LinearRegress(const CTimeSeries<T> othertimeseries);
@@ -155,9 +155,9 @@ public:
     T sum(); 
     T sum_squared(); 
 private:
-    vector<T> t;
-    vector<T> C;
-    vector<T> D;
+    std::vector<T> t;
+    std::vector<T> C;
+    std::vector<T> D;
 #ifdef QT_version
 	CTimeSeries(QList <QMap <QVariant, QVariant>> data);
 	void compact(QDataStream &data) const;
@@ -198,14 +198,14 @@ template<class T> T Y2bar(CTimeSeries<T>& BTC_p, CTimeSeries<T> &BTC_d);
 template<class T> T Ybar(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d);
 template<class T> T Xbar(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d);
 template<class T> CTimeSeries<T> operator+(CTimeSeries<T> &v1, CTimeSeries<T> &v2);
-template<class T> T prcntl(vector<T> C, T x);
-template<class T> vector<T> prcntl(vector<T> &C, vector<T> &x);
+template<class T> T prcntl(std::vector<T> C, T x);
+template<class T> std::vector<T> prcntl(std::vector<T> &C, std::vector<T> &x);
 template<class T> T sgn(T val);
-template<class T> T sum_interpolate(vector<CTimeSeries<T>>, double t);
+template<class T> T sum_interpolate(std::vector<CTimeSeries<T>>, double t);
 template<class T> T R2_c(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d);
 template<class T> T norm2(CTimeSeries<T> BTC1);
 template<class T> CTimeSeries<T> max(CTimeSeries<T> A, T b);
 //GUI
-template<class T> map<string, T> regression(vector<T> &x, vector<T> &y);
+template<class T> std::map<std::string, T> regression(std::vector<T> &x, std::vector<T> &y);
 
 #include "BTC.hpp"

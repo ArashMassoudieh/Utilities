@@ -21,7 +21,7 @@
 #include <qdebug.h>
 #endif
 
-using namespace std;
+//using namespace std;
 
 template<class T>
 CTimeSeries<T>::CTimeSeries()
@@ -42,7 +42,7 @@ CTimeSeries<T>::CTimeSeries(int n1)
 }
 
 template<class T>
-CTimeSeries<T>::CTimeSeries(vector<T> &data, int writeInterval)
+CTimeSeries<T>::CTimeSeries(std::vector<T> &data, int writeInterval)
 {
 	n = 0;
 	structured = 0;
@@ -162,14 +162,14 @@ CTimeSeries<T>::CTimeSeries(arma::mat &x, arma::mat &y)
 
 
 template<class T>
-CTimeSeries<T>::CTimeSeries(string Filename)
+CTimeSeries<T>::CTimeSeries(std::string Filename)
 {
 	n = 0;
 	t.clear();
 	C.clear();
 	D.clear();
     filename = Filename;
-	ifstream file(Filename);
+	std::ifstream file(Filename);
 	if (file.good() == false)
 	{
 		file_not_found = true;
@@ -177,7 +177,7 @@ CTimeSeries<T>::CTimeSeries(string Filename)
 		return;
 	}
 
-	vector<string> s;
+	std::vector<std::string> s;
 	structured = true;
 	if (file.good())
 	while (file.eof()== false)
@@ -304,8 +304,8 @@ CTimeSeries<T> CTimeSeries<T>::MA_smooth(int span)
 	for (int i = 0; i < n; i++)
 	{
 		double sum = 0;
-		int span_1 = min(span, i);
-		span_1 = min(span_1, n - i - 1);
+		int span_1 = std::min(span, i);
+		span_1 = std::min(span_1, n - i - 1);
 		for (int j = i - span_1; j <= i + span_1; j++)
 		{
 			sum += C[j] / double(1 + 2 * span_1);
@@ -349,7 +349,7 @@ T CTimeSeries<T>::interpol_D(const T &x)
 }
 
 template<class T>
-CTimeSeries<T> CTimeSeries<T>::interpol(vector<T> x)
+CTimeSeries<T> CTimeSeries<T>::interpol(std::vector<T> x)
 {
     CTimeSeries<T> BTCout;
 	for (unsigned int i=0; i<x.size(); i++)
@@ -714,12 +714,12 @@ T diff(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, CTimeSeries<T> Q)
 }
 
 template<class T>
-bool CTimeSeries<T>::readfile(string Filename)
+bool CTimeSeries<T>::readfile(std::string Filename)
 {
     clear();
     filename = Filename;
-    ifstream file(Filename);
-	vector<string> s;
+    std::ifstream file(Filename);
+	std::vector<std::string> s;
 	if (file.good() == false)
 	{
 		file_not_found = true;
@@ -757,15 +757,15 @@ bool CTimeSeries<T>::readfile(string Filename)
 }
 
 template<class T>
-bool CTimeSeries<T>::writefile(const string &Filename)
+bool CTimeSeries<T>::writefile(const std::string &Filename)
 {
-    ofstream file(Filename);
+    std::ofstream file(Filename);
     
 	if (file.good())
     {
         file<< "n " << n <<", BTC size " << C.size() << std::endl;
         for (int i=0; i<n; i++)
-            file << setprecision(10) << t[i] << ", " << C[i] << std::endl;
+            file << std::setprecision(10) << t[i] << ", " << C[i] << std::endl;
         file.close();
         return true;
     }
@@ -1064,7 +1064,7 @@ T CTimeSeries<T>::slope()
 template<class T>
 T CTimeSeries<T>::percentile(T x)
 {
-    vector<T> X = QSort(C);
+    std::vector<T> X = QSort(C);
 	int i = int(x*X.size());
 	return X[i];
 
@@ -1073,12 +1073,12 @@ T CTimeSeries<T>::percentile(T x)
 template<class T>
 T CTimeSeries<T>::percentile(T x, int limit)
 {
-    vector<T> C1(C.size()-limit);
+    std::vector<T> C1(C.size()-limit);
 	for (unsigned int i=0; i<C1.size(); i++)
 		C1[i] = C[i+limit];
-    vector<T> X = bubbleSort(C1);
-	//vector<double> X = bubbleSort(C1);
-//	vector<double> X = C1;
+    std::vector<T> X = bubbleSort(C1);
+	//std::vector<double> X = bubbleSort(C1);
+//	std::vector<double> X = C1;
 	int ii = int(x*double(X.size()));
 	return X[ii];
 
@@ -1146,7 +1146,7 @@ bool CTimeSeries<T>::append(T tt, T xx)
     if (n>2)
 		if (t[n-1]-t[n-2]!=t[n-2]-t[n-3])
 			structured = false;
-	max_fabs = max(max_fabs,std::fabs(xx));
+	max_fabs = std::max(max_fabs,std::fabs(xx));
 
     return increase;
 }
@@ -1255,19 +1255,19 @@ T CTimeSeries<T>::GetLastItemTime()
 }
 
 template<class T>
-T prcntl(vector<T> C, T x)
+T prcntl(std::vector<T> C, T x)
 {
-    vector<T> X = QSort(C);
+    std::vector<T> X = QSort(C);
 	int ii = int(x*double(X.size()));
 	return X[ii];
 
 }
 
 template<class T>
-vector<T> prcntl(vector<T> &C, vector<T> &x)
+std::vector<T> prcntl(std::vector<T> &C, std::vector<T> &x)
 {
-    vector<T> X = QSort(C);
-    vector<T> Xout = x;
+    std::vector<T> X = QSort(C);
+    std::vector<T> Xout = x;
 	for(unsigned int j =0; j< x.size(); j++)
 	{
 		int ii = int(x[j]*double(X.size()));
@@ -1318,7 +1318,7 @@ CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, int limit)
 }
 
 template<class T>
-vector<T> CTimeSeries<T>::trend()
+std::vector<T> CTimeSeries<T>::trend()
 {
     T x_bar = mean_t();
     T y_bar = mean();
@@ -1329,7 +1329,7 @@ vector<T> CTimeSeries<T>::trend()
 		sum_num+=(t[i]-x_bar)*(C[i]-y_bar);
 		sum_denom+=(t[i]-x_bar)*(t[i]-x_bar);
 	}
-    vector<T> out(2);
+    std::vector<T> out(2);
 	out[1] = sum_num/sum_denom;
 	out[0] = y_bar-out[1]*x_bar;
 	return out;
@@ -1368,7 +1368,7 @@ CTimeSeries<T> CTimeSeries<T>::add_noise(T std, bool logd)
 }
 
 template<class T>
-T sum_interpolate(vector<T> BTC, T t)
+T sum_interpolate(std::vector<T> BTC, T t)
 {
     T sum=0;
 	for (unsigned int i=0; i<BTC.size(); i++)
@@ -1585,7 +1585,7 @@ CTimeSeries<T> operator>(CTimeSeries<T> BTC1, CTimeSeries<T> BTC2)
 template<class T>
 void CTimeSeries<T>::compact(QDataStream &data) const
 {
-	QMap<QString, QVariant> r;
+	Qstd::map<QString, QVariant> r;
 	r.insert("n", n);
 	//r.insert("t", t.size());
 	//r.insert("C", C.size());
@@ -1621,7 +1621,7 @@ void CTimeSeries<T>::compact(QDataStream &data) const
 
 CTimeSeries CTimeSeries::unCompact(QDataStream &data)
 {
-	QMap<QString, QVariant> r;
+	Qstd::map<QString, QVariant> r;
 	data >> r;
 
 	CTimeSeries b;
@@ -1680,10 +1680,10 @@ unsigned int CTimeSeries<T>::Capacity()
 }
 
 template<class T>
-CTimeSeries<T>::CTimeSeries(T a, T b, const vector<T> &x)
+CTimeSeries<T>::CTimeSeries(T a, T b, const std::vector<T> &x)
 {
     int n = x.size();
-    vector<T> y(n);
+    std::vector<T> y(n);
     for (int i = 0; i < n; i++)
         y[i] = a + b*x[i];
     *this = CTimeSeries<T>(x,y);
@@ -1695,7 +1695,7 @@ CTimeSeries<T>::CTimeSeries(T a, T b, const CTimeSeries<T> &btc)
 }
 
 template<class T>
-CTimeSeries<T>::CTimeSeries(const vector<T> &t, const vector<T> &C)
+CTimeSeries<T>::CTimeSeries(const std::vector<T> &t, const std::vector<T> &C)
 {
     if (t.size() != C.size()) return;
     n = t.size();

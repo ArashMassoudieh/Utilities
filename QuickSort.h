@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 
-using namespace std;
+//using namespace std;
 class CQuickSort
 {
 public:
@@ -9,11 +9,11 @@ public:
 	~CQuickSort(void);
 };
 
-vector<double> QSort(const vector<double> &V);
-vector<double> QbSort(const vector<double> &V);
-vector<int> QSort(const vector<int> &V);
-vector<int> QbSort(const vector<int> &V);
-vector<double> reverse_order(const vector<double> &V);
-vector<int> reverse_order(const vector<int> &V);
-vector<double> bubbleSort(const vector<double> &V);
-vector<int> bubbleSort(const vector<int> &V);
+std::vector<double> QSort(const std::vector<double> &V);
+std::vector<double> QbSort(const std::vector<double> &V);
+std::vector<int> QSort(const std::vector<int> &V);
+std::vector<int> QbSort(const std::vector<int> &V);
+std::vector<double> reverse_order(const std::vector<double> &V);
+std::vector<int> reverse_order(const std::vector<int> &V);
+std::vector<double> bubbleSort(const std::vector<double> &V);
+std::vector<int> bubbleSort(const std::vector<int> &V);

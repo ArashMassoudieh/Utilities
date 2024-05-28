@@ -26,7 +26,7 @@ CVector_arma::CVector_arma(int n)
 	vect = vec(num,fill::zeros);
 }
 
-CVector_arma::CVector_arma(const vector<double> a, int n)
+CVector_arma::CVector_arma(const std::vector<double> a, int n)
 {
 	num = n;
 	vect = a;
@@ -53,7 +53,7 @@ CVector_arma::CVector_arma(const CVector_arma &v)
 	vect = v.vect;
 }
 
-CVector_arma::CVector_arma(const vector<double> &v)
+CVector_arma::CVector_arma(const std::vector<double> &v)
 {
 	num = v.size();
 	vect = v;
@@ -73,7 +73,7 @@ CVector_arma::CVector_arma(CVector & v)
 		vect(i) = v[i];
 }
 
-CVector_arma::CVector_arma(const vector<int> &v)
+CVector_arma::CVector_arma(const std::vector<int> &v)
 {
 	num = v.size();
 	vect.set_size(num);
@@ -122,7 +122,7 @@ CVector_arma & CVector_arma::operator=(const CVector &v)
 	return *this;
 }
 
-CVector_arma& CVector_arma::operator=(const vector<double> &v)
+CVector_arma& CVector_arma::operator=(const std::vector<double> &v)
 {
 	num = v.size();
 	vect = v;
@@ -331,9 +331,9 @@ bool CVector_arma::is_finite()
 	return r;
 }
 
-vector<int> CVector_arma::get_nan_elements()
+std::vector<int> CVector_arma::get_nan_elements()
 {
-	vector<int> out;
+	std::vector<int> out;
 	for (int i = 0; i < num; i++)
 	{
         if ((vect[i] == vect[i]) != true || !aquiutils::isfinite(vect[i]))
@@ -448,9 +448,9 @@ CVector_arma CVector_arma::Exp()
 	return x;
 }
 
-vector<int> CVector_arma::Int()
+std::vector<int> CVector_arma::Int()
 {
-	vector<int> x(getsize());
+	std::vector<int> x(getsize());
 	for (int i = 0; i<getsize(); i++)
 		x[i] = int(vect(i));
 	return x;
@@ -483,7 +483,7 @@ void CVector_arma::writetofile(FILE *f)
 	fprintf(f, "\n");
 }
 
-void CVector_arma::writetofile(ofstream &f)
+void CVector_arma::writetofile(std::ofstream &f)
 {
 	for (int i=0; i<num-1; i++)
 		f<<vect(i)<<",";
@@ -491,14 +491,14 @@ void CVector_arma::writetofile(ofstream &f)
 
 }
 
-void CVector_arma::writetofile(string filename)
+void CVector_arma::writetofile(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"w");
 	writetofile(f);
 	fclose(f);
 }
 
-void CVector_arma::writetofile_app(string filename)
+void CVector_arma::writetofile_app(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"a");
 	writetofile(f);
@@ -580,9 +580,9 @@ CVector_arma CVector_arma::append(double d)
 }*/
 
 
-vector<int> CVector_arma::lookup(double val)
+std::vector<int> CVector_arma::lookup(double val)
 {
-	vector<int> res;
+	std::vector<int> res;
 	for (int i=0; i<num; i++)
 		if (vect(i) == val)
 			res.push_back(i);
@@ -603,9 +603,9 @@ CVector_arma operator*(CVector_arma &v, const double &d)
 
 }
 
-void CVector_arma::print(string s)
+void CVector_arma::print(std::string s)
 {
-	ofstream Afile;
+	std::ofstream Afile;
 	Afile.open(s);
 
 	for (int i=0; i<num; ++i)
@@ -636,9 +636,9 @@ CVector_arma CVector_arma::sub(int i, int j)
 
 }
 
-string CVector_arma::toString() const
+std::string CVector_arma::toString() const
 {
-    string s = "[" + aquiutils::numbertostring(int(vect(0)));
+    std::string s = "[" + aquiutils::numbertostring(int(vect(0)));
     for (int i=1; i<num; i++)
         s += "," + aquiutils::numbertostring(int(vect(i)));
     s+= "]";
@@ -646,9 +646,9 @@ string CVector_arma::toString() const
 
 }
 
-vector<int> CVector_arma::negative_elements()
+std::vector<int> CVector_arma::negative_elements()
 {
-    vector<int> out;
+    std::vector<int> out;
     for (int i=0; i<num; i++)
         if (vect(i)<0)
             out.push_back(i);

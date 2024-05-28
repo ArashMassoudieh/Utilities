@@ -7,12 +7,12 @@
 #endif // _WINDOWS
 
 
-using namespace std;
+//using namespace std;
 
 namespace aquiutils
 {
 
-    int lookup(const vector<string>& s, const string& s1)
+    int lookup(const std::vector<std::string>& s, const std::string& s1)
     {
         for (unsigned int i = 0; i < s.size(); i++)
             if (s[i] == s1)
@@ -20,7 +20,7 @@ namespace aquiutils
         return -1;
     }
 
-    int lookup(const vector<int>& s, const int& s1)
+    int lookup(const std::vector<int>& s, const int& s1)
     {
         for (unsigned int i = 0; i < s.size(); i++)
             if (s[i] == s1)
@@ -28,7 +28,7 @@ namespace aquiutils
         return -1;
     }
 
-    int lookup(const vector<vector<int> >& s, const vector<int>& s1)
+    int lookup(const std::vector<std::vector<int> >& s, const std::vector<int>& s1)
     {
         for (unsigned int i = 0; i < s.size(); i++)
             if (s[i] == s1)
@@ -36,9 +36,9 @@ namespace aquiutils
         return -1;
     }
 
-    int corresponding_parenthesis(string S, int i)
+    int corresponding_parenthesis(std::string S, int i)
     {
-        string s = S;
+        std::string s = S;
         if (S.at(i) == '(')
         {
             int paranthesis_level = 1;
@@ -74,7 +74,7 @@ namespace aquiutils
         return -1;
     }
 
-    int count(const string& s, const string& s1)
+    int count(const std::string& s, const std::string& s1)
     {
         int out = 0;
         for (unsigned int i = 0; i < s.size() - s1.size() + 1; i++)
@@ -83,7 +83,7 @@ namespace aquiutils
         return out;
     }
 
-    bool parantheses_balance(string S)
+    bool parantheses_balance(std::string S)
     {
         if (count(S, "(") == count(S, ")"))
             return true;
@@ -91,7 +91,7 @@ namespace aquiutils
             return false;
     }
 
-    bool contains(const string& s, const string& s1)
+    bool contains(const std::string& s, const std::string& s1)
     {
         for (unsigned int i = 0; i < s.size() - s1.size() + 1; i++)
             if (s.substr(i, s1.size()) == s1)
@@ -99,27 +99,27 @@ namespace aquiutils
         return false;
     }
 
-    string left(const string& s, int i)
+    std::string left(const std::string& s, int i)
     {
         return s.substr(0, i);
     }
-    string right(const string& s, int i)
+    std::string right(const std::string& s, int i)
     {
         return s.substr(s.size() - i, i);
     }
 
-    void remove(string& s, unsigned int i)
+    void remove(std::string& s, unsigned int i)
     {
-        string S;
+        std::string S;
         for (unsigned int j = 0; j < s.size(); j++)
             if (i != j)
                 S = S + s[j];
         s = S;
     }
 
-    void replace(string& s, unsigned int i, string p)
+    void replace(std::string& s, unsigned int i, std::string p)
     {
-        string S;
+        std::string S;
         for (unsigned int j = 0; j < s.size(); j++)
             if (i != j)
                 S = S + s[j];
@@ -128,14 +128,14 @@ namespace aquiutils
         s = S;
     }
 
-    void remove(string& s, unsigned int pos, unsigned int len)
+    void remove(std::string& s, unsigned int pos, unsigned int len)
     {
         for (unsigned int i = pos; i < pos + len; i++)
             remove(s, pos);
     }
 
 
-    bool remove(string& s, string s1)
+    bool remove(std::string& s, std::string s1)
     {
         bool found = false;
         for (unsigned int j = 0; j < s.size() - s1.size() + 1; j++)
@@ -147,9 +147,9 @@ namespace aquiutils
         return found;
     }
 
-    void insert(string& s, unsigned int pos, string s1)
+    void insert(std::string& s, unsigned int pos, std::string s1)
     {
-        string S;
+        std::string S;
 
         for (unsigned int i = 0; i < s.size(); i++)
         {
@@ -162,11 +162,11 @@ namespace aquiutils
     }
 
 
-    bool replace(string& s, string s1, string s2)
+    bool replace(std::string& s, std::string s1, std::string s2)
     {
 
         bool found = false;
-        vector<int> pos;
+        std::vector<int> pos;
         unsigned int j = 0;
         while (j < s.size() - s1.size() + 1)
         {
@@ -189,9 +189,9 @@ namespace aquiutils
 
 
 
-    void replace(string& s, unsigned int i, unsigned int j, string p)
+    void replace(std::string& s, unsigned int i, unsigned int j, std::string p)
     {
-        string S;
+        std::string S;
         for (unsigned int k = 0; k < s.size(); k++)
             if (k == i)
                 S = S + p;
@@ -211,7 +211,7 @@ namespace aquiutils
             return false;
     }
 
-    bool isnumber(string S)
+    bool isnumber(std::string S)
     {
         bool res = true;
         for (unsigned int i = 0; i < S.size(); i++)
@@ -222,7 +222,7 @@ namespace aquiutils
     }
 
 
-    bool isintegernumber(string S)
+    bool isintegernumber(std::string S)
     {
         bool out = true;
         for (unsigned int i = 0; i < S.size(); i++)
@@ -233,23 +233,23 @@ namespace aquiutils
         return out;
     }
 
-    double atof(const string& S)
+    double atof(const std::string& S)
     {
         return std::atof(S.c_str());
     }
-    double atoi(const string& S)
+    double atoi(const std::string& S)
     {
         return std::atoi(S.c_str());
     }
 
-    string trim(const string& s)
+    std::string trim(const std::string& s)
     {
-        if (s.find_first_not_of(' ') == string::npos) return "";
+        if (s.find_first_not_of(' ') == std::string::npos) return "";
 
         return s.substr(s.find_first_not_of(' '), s.find_last_not_of(' ') + 1);
     }
 
-    void push_back(vector<string>& s, const vector<string>& s1)
+    void push_back(std::vector<std::string>& s, const std::vector<std::string>& s1)
     {
         for (unsigned int i = 0; i < s1.size(); i++)
             s.push_back(s1[i]);
@@ -281,10 +281,10 @@ namespace aquiutils
 
 
 
-    vector<string> split(const string& s, char del)
+    std::vector<std::string> split(const std::string& s, char del)
     {
         unsigned int lastdel = 0;
-        vector<string> strings;
+        std::vector<std::string> strings;
         for (unsigned int i = 0; i < s.size(); i++)
         {
             if (s[i] == del)
@@ -302,37 +302,37 @@ namespace aquiutils
 
     }
 
-    vector<string> getline(ifstream& file)
+    std::vector<std::string> getline(std::ifstream& file)
     {
-        string line;
+        std::string line;
 
         while (!file.eof())
         {
             std::getline(file, line);
             return split(line, ',');
         }
-        vector<string> x;
+        std::vector<std::string> x;
         return x;
     }
 
-    vector<string> getline(ifstream& file, char del1)
+    std::vector<std::string> getline(std::ifstream& file, char del1)
     {
-        string line;
+        std::string line;
 
         while (!file.eof())
         {
             std::getline(file, line);
             return split(line, del1);
         }
-        vector<string> x;
+        std::vector<std::string> x;
         return x;
     }
 
-    vector<vector<string>> getline_op(ifstream& file, char del1)
+    std::vector<std::vector<std::string>> getline_op(std::ifstream& file, char del1)
     {
-        string line;
-        vector<vector<string>> s;
-        vector<string> ss;
+        std::string line;
+        std::vector<std::vector<std::string>> s;
+        std::vector<std::string> ss;
         while (file.good())
         {
             getline(file, line);
@@ -344,11 +344,11 @@ namespace aquiutils
 
     }
 
-    vector<string> split(const string& s, const vector<char>& del)
+    std::vector<std::string> split(const std::string& s, const std::vector<char>& del)
     {
         unsigned int lastdel = 0;
         unsigned int j = 0;
-        vector<string> strings;
+        std::vector<std::string> strings;
         for (unsigned int i = 0; i < s.size(); i++)
         {
             for (unsigned int jj = 0; jj < del.size(); jj++)
@@ -365,11 +365,11 @@ namespace aquiutils
 
     }
 
-    vector<vector<string>> getline_op(ifstream& file, vector<char> del1)
+    std::vector<std::vector<std::string>> getline_op(std::ifstream& file, std::vector<char> del1)
     {
-        string line;
-        vector<vector<string>> s;
-        vector<string> ss;
+        std::string line;
+        std::vector<std::vector<std::string>> s;
+        std::vector<std::string> ss;
         while (file.good())
         {
             getline(file, line);
@@ -383,14 +383,14 @@ namespace aquiutils
 
 
 
-    vector<vector<string>> getline_op_eqplus(ifstream& file)
+    std::vector<std::vector<std::string>> getline_op_eqplus(std::ifstream& file)
     {
-        vector<char> del1;
+        std::vector<char> del1;
         del1.push_back('=');
         del1.push_back('+');
-        string line;
-        vector<vector<string>> s;
-        vector<string> ss;
+        std::string line;
+        std::vector<std::vector<std::string>> s;
+        std::vector<std::string> ss;
         while (file.good())
         {
             getline(file, line);
@@ -404,15 +404,15 @@ namespace aquiutils
     }
 
 
-    vector<string> split_curly_semicolon(string s)
+    std::vector<std::string> split_curly_semicolon(std::string s)
     {
-        vector<char> del2; del2.push_back('{'); del2.push_back('}'); del2.push_back(';');
+        std::vector<char> del2; del2.push_back('{'); del2.push_back('}'); del2.push_back(';');
         return split(s, del2);
     }
 
-    vector<int> look_up(string s, char del)  //Returns a vector with indices of "del"
+    std::vector<int> look_up(std::string s, char del)  //Returns a vector with indices of "del"
     {
-        vector<int> out;
+        std::vector<int> out;
         for (unsigned int i = 0; i < s.size(); i++)
             if (s[i] == del)
                 out.push_back(i);
@@ -421,18 +421,18 @@ namespace aquiutils
 
     }
 
-    vector<int> ATOI(vector<string> ii)
+    std::vector<int> ATOI(std::vector<std::string> ii)
     {
-        vector<int> res;
+        std::vector<int> res;
         for (unsigned int i = 0; i < ii.size(); i++)
             res.push_back(atoi(ii[i].c_str()));
 
         return res;
     }
 
-    vector<double> ATOF(vector<string> ii)
+    std::vector<double> ATOF(std::vector<std::string> ii)
     {
-        vector<double> res;
+        std::vector<double> res;
         for (unsigned int i = 0; i < ii.size(); i++)
             res.push_back(atof(ii[i].c_str()));
 
@@ -440,9 +440,9 @@ namespace aquiutils
     }
 
 
-    string tolower(const string& S)
+    std::string tolower(const std::string& S)
     {
-        string SS = S;
+        std::string SS = S;
         for (unsigned int i = 0; i < S.size(); i++)
         {
             SS[i] = std::tolower(S[i]);
@@ -450,9 +450,9 @@ namespace aquiutils
         return SS;
     }
 
-    vector<string> tolower(const vector<string>& S)
+    std::vector<std::string> tolower(const std::vector<std::string>& S)
     {
-        vector<string> SS = S;
+        std::vector<std::string> SS = S;
         for (unsigned int i = 0; i < S.size(); i++)
         {
             SS[i] = tolower(S[i]);
@@ -460,14 +460,14 @@ namespace aquiutils
         return SS;
     }
 
-    void writeline(ofstream& f, vector<string> s, string del)
+    void writeline(std::ofstream& f, std::vector<std::string> s, std::string del)
     {
         for (unsigned int i = 0; i < s.size() - 1; i++)
             f << s[i] << del;
         f << s[s.size() - 1] << std::endl;
     }
 
-    void writeline(ofstream& f, vector<vector<string>> s, string del, string del2)
+    void writeline(std::ofstream& f, std::vector<std::vector<std::string>> s, std::string del, std::string del2)
     {
         for (unsigned int i = 0; i < s.size() - 1; i++)
         {
@@ -477,24 +477,24 @@ namespace aquiutils
         }
         f << s[s.size() - 1][s[s.size() - 1].size() - 1] << std::endl;
     }
-    void writestring(ofstream& f, string s)
+    void writestring(std::ofstream& f, std::string s)
     {
         f << s;
     }
 
-    void writestring(string filename, string s)
+    void writestring(std::string filename, std::string s)
     {
-        ofstream file(filename);
+        std::ofstream file(filename);
         file << s + "\n";
         file.close();
 
     }
-    void writenumber(ofstream& f, double s)
+    void writenumber(std::ofstream& f, double s)
     {
         f << s;
     }
 
-    void writeendl(ofstream& f)
+    void writeendl(std::ofstream& f)
     {
         f << std::endl;
     }
@@ -515,10 +515,10 @@ namespace aquiutils
     }
 
 
-    string numbertostring(const double& x, bool scientific)
+    std::string numbertostring(const double& x, bool scientific)
     {
-        string Result;          // string which will contain the result
-        ostringstream convert;   // stream used for the conversion
+        std::string Result;          // std::string which will contain the result
+        std::ostringstream convert;   // stream used for the conversion
         if (scientific)
             convert << std::scientific;
         convert << x;      // insert the textual representation of 'Number' in the characters in the stream
@@ -526,37 +526,37 @@ namespace aquiutils
         return Result;
     }
 
-    string numbertostring(vector<double>& x, bool scientific)
+    std::string numbertostring(std::vector<double>& x, bool scientific)
     {
-        string Result = "[";
+        std::string Result = "[";
         for (int i = 0; i < x.size() - 1; i++)
             Result += numbertostring(x[i], scientific) + ",";
         Result += numbertostring(x[x.size() - 1], scientific) + "]";
         return Result;
     }
 
-    string numbertostring(int x)
+    std::string numbertostring(int x)
     {
-        string Result;          // string which will contain the result
-        ostringstream convert;   // stream used for the conversion
+        std::string Result;          // std::string which will contain the result
+        std::ostringstream convert;   // stream used for the conversion
         convert << x;      // insert the textual representation of 'Number' in the characters in the stream
         Result = convert.str();
         return Result;
     }
 
-    string numbertostring(unsigned int x)
+    std::string numbertostring(unsigned int x)
     {
-        string Result;          // string which will contain the result
-        ostringstream convert;   // stream used for the conversion
+        std::string Result;          // std::string which will contain the result
+        std::ostringstream convert;   // stream used for the conversion
         convert << x;      // insert the textual representation of 'Number' in the characters in the stream
         Result = convert.str();
         return Result;
     }
 
-    string numbertostring(unsigned int x, int number_of_digits)
+    std::string numbertostring(unsigned int x, int number_of_digits)
     {
-        string Result;          // string which will contain the result
-        ostringstream convert;   // stream used for the conversion
+        std::string Result;          // std::string which will contain the result
+        std::ostringstream convert;   // stream used for the conversion
         convert << x;      // insert the textual representation of 'Number' in the characters in the stream
 
         Result = convert.str();
@@ -568,9 +568,9 @@ namespace aquiutils
         return Result;
     }
 
-    string numbertostring(vector<int>& x, bool scientific)
+    std::string numbertostring(std::vector<int>& x, bool scientific)
     {
-        string Result = "[";
+        std::string Result = "[";
         if (x.size() > 0)
         {
             for (int i = 0; i < x.size() - 1; i++)
@@ -582,31 +582,31 @@ namespace aquiutils
         return Result;
     }
 
-    string tail(std::string const& source, size_t const length) {
+    std::string tail(std::string const& source, size_t const length) {
         if (length >= source.size()) { return source; }
         return source.substr(source.size() - length);
     } // tail
 
-    string tabs(int i)
+    std::string tabs(int i)
     {
-        string out;
+        std::string out;
         for (int j = 0; j < i; j++)
             out += "\t";
         return out;
     }
 
-    bool And(vector<bool> x) { bool out = true;  for (int i = 0; i < x.size(); i++) out &= x[i]; return out; }
-    //double max(const vector<double> &x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out=std::max(out, x[i]); return out; }
-    /*int max(const vector<int>& x)
+    bool And(std::vector<bool> x) { bool out = true;  for (int i = 0; i < x.size(); i++) out &= x[i]; return out; }
+    //double max(const std::vector<double> &x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out=std::max(out, x[i]); return out; }
+    /*int max(const std::vector<int>& x)
     {	int out = -37000;
         for (int i = 0; i < x.size(); i++)
             out=std::max(out, x[i]);
         return out;
 
     }*/
-    double Max(const vector<double>& x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out = max(out, x[i]); return out; }
-    double Min(const vector<double>& x) { double out = 1e+24;  for (int i = 0; i < x.size(); i++) out = min(out, x[i]); return out; }
-    int MaxElement(const vector<double>& x)
+    double Max(const std::vector<double>& x) { double out = -1e+24;  for (int i = 0; i < x.size(); i++) out = max(out, x[i]); return out; }
+    double Min(const std::vector<double>& x) { double out = 1e+24;  for (int i = 0; i < x.size(); i++) out = min(out, x[i]); return out; }
+    int MaxElement(const std::vector<double>& x)
     {
         double out = -1e+24;
         int max_elem = -1;
@@ -620,7 +620,7 @@ namespace aquiutils
         }
         return max_elem;
     }
-    int MinElement(const vector<double>& x)
+    int MinElement(const std::vector<double>& x)
     {
         double out = 1e+24;
         int min_elem = -1;
@@ -635,7 +635,7 @@ namespace aquiutils
         return min_elem;
     }
 
-    int Max(vector<int> x)
+    int Max(std::vector<int> x)
     {
         int out = -37000;
         for (int i = 0; i < x.size(); i++)
@@ -644,26 +644,26 @@ namespace aquiutils
 
     }
 
-    string remove_backslash_r(const string& ss)
+    std::string remove_backslash_r(const std::string& ss)
     {
-        string s = ss;
+        std::string s = ss;
         if (!s.empty() && s[s.size() - 1] == '\r')
             s.erase(s.size() - 1);
         return s;
 
     }
 
-    string GetOnlyFileName(const string& fullfilename)
+    std::string GetOnlyFileName(const std::string& fullfilename)
     {
-        vector<char> del;
+        std::vector<char> del;
         del.push_back('/');
         del.push_back('\\');
-        vector<string> splittedbyslash = split(fullfilename, del);
+        std::vector<std::string> splittedbyslash = split(fullfilename, del);
         return splittedbyslash[splittedbyslash.size() - 1];
 
     }
 
-    double avg(double x, double y, string type)
+    double avg(double x, double y, std::string type)
     {
         if (type == "arithmetic")
             return 0.5 * (x + y);
@@ -675,9 +675,9 @@ namespace aquiutils
             return 0.5 * (x + y);
     }
 
-    vector<unsigned int> Rank(const vector<double>& v)
+    std::vector<unsigned int> Rank(const std::vector<double>& v)
     {
-        vector<unsigned int> out(v.size());
+        std::vector<unsigned int> out(v.size());
         for (unsigned int i = 0; i < v.size(); i++)
         {
             for (unsigned int j = 0; j < v.size(); j++)

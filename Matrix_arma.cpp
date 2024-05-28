@@ -20,7 +20,7 @@
 using namespace arma;
 
 
-using namespace std;
+//using namespace std;
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -104,9 +104,9 @@ double & CMatrix_arma::operator()(int i, int j)
 	return get(i, j);
 }
 
-vector<double*> CMatrix_arma::get(int i)
+std::vector<double*> CMatrix_arma::get(int i)
 {
-	vector<double*> v;
+	std::vector<double*> v;
 	for (int j = 0; j < numrows; j++)
 		v[j] = &matr(i, j);
 
@@ -359,7 +359,7 @@ CVector_arma maxelements(const CMatrix_arma &m)
     for (int i=0; i<m.getnumcols(); ++i)
     {   double maxval = -1e36;
         for (int j=0; j<m.getnumrows(); ++j)
-            maxval = max(fabs(m.matr(i,j)),maxval);
+            maxval = std::max(fabs(m.matr(i,j)),maxval);
         v[i] = maxval;
     }
     return v;
@@ -372,7 +372,7 @@ CVector CMatrix_arma::maxelements() const
     for (int i=0; i<getnumcols(); ++i)
     {   double maxval = -1e36;
         for (int j=0; j<getnumrows(); ++j)
-            maxval = max(fabs(matr(i,j)),maxval);
+            maxval = std::max(fabs(matr(i,j)),maxval);
         v[i] = maxval;
     }
     return v;
@@ -420,7 +420,7 @@ void CMatrix_arma::writetofile(FILE *f)
 	}
 }
 
-void CMatrix_arma::writetofile(string filename)
+void CMatrix_arma::writetofile(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"w");
 	for (int i=0; i<numrows; i++)
@@ -432,8 +432,8 @@ void CMatrix_arma::writetofile(string filename)
 }
 
 //MM
-//void CMatrix_arma::writetofile(string filename)
-void CMatrix_arma::writetofile_app(string filename)
+//void CMatrix_arma::writetofile(std::string filename)
+void CMatrix_arma::writetofile_app(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"a");
 	for (int i=0; i<numrows; i++)
@@ -451,10 +451,10 @@ CMatrix_arma Transpose(CMatrix_arma &M1)	//Works only when M1.getnumcols()=M1.ge
 	return TrM;
 }
 
-void CMatrix_arma::print(string s)
+void CMatrix_arma::print(std::string s)
 {
 
-	ofstream Afile;
+	std::ofstream Afile;
 	Afile.open(s+".txt");
 
 	for (int i = 0; i<numrows; ++i)
@@ -499,9 +499,9 @@ CMatrix_arma& CMatrix_arma::operator=(mat &A)
 	return *this;
 }
 
-void write_to_file(vector<CMatrix_arma> M, string filename)
+void write_to_file(std::vector<CMatrix_arma> M, std::string filename)
 {
-	ofstream Afile;
+	std::ofstream Afile;
 	Afile.open(filename);
 	M.push_back(Average(M));
     for (unsigned int k = 0; k<M.size(); k++)
@@ -519,7 +519,7 @@ void write_to_file(vector<CMatrix_arma> M, string filename)
 
 }
 
-CMatrix_arma Average(vector<CMatrix_arma> M)
+CMatrix_arma Average(std::vector<CMatrix_arma> M)
 {
 	CMatrix_arma AVG(M[0].numrows, M[0].numcols);
 	int n = M.size();
@@ -542,9 +542,9 @@ CVector_arma CMatrix_arma::diag_ratio()
 	return X;
 }
 
-vector<vector<bool>> CMatrix_arma::non_posdef_elems(double tol)
+std::vector<std::vector<bool>> CMatrix_arma::non_posdef_elems(double tol)
 {
-	vector<vector<bool>> M;
+	std::vector<std::vector<bool>> M;
 	M.resize(getnumcols());
 
 	for (int i = 0; i < getnumcols(); i++)
@@ -590,9 +590,9 @@ CMatrix_arma CMatrix_arma::Preconditioner(double tol)
 
 	return M;
 }
-vector<string> CMatrix_arma::toString(string format, vector<string> columnHeaders, vector<string> rowHeaders) const
+std::vector<std::string> CMatrix_arma::toString(std::string format, std::vector<std::string> columnHeaders, std::vector<std::string> rowHeaders) const
 {
-	vector<string> r;
+	std::vector<std::string> r;
 	bool rowH = false, colH = false;
 	int rowOffset = 0, colOffset = 0;
 	if (columnHeaders.size() && columnHeaders.size() == numcols)

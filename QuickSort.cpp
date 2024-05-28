@@ -6,7 +6,7 @@
 #ifdef QT_version
 #include "qdebug.h"
 #endif // QT_version
-using namespace std;
+//using namespace std;
 
 CQuickSort::CQuickSort(void)
 {
@@ -18,14 +18,14 @@ CQuickSort::~CQuickSort(void)
 
 }
 
-vector<double> QSort(const vector<double> &V1)
+std::vector<double> QSort(const std::vector<double> &V1)
 {
 
 	if (V1.size() <= 1) return V1;
-	vector<double> V = V1;
+	std::vector<double> V = V1;
 	int end = V.size();
 	if (V[end - 1]<V[0]) V = reverse_order(V);
-	vector<double> less, greater;
+	std::vector<double> less, greater;
 	greater.push_back(V[end - 1]);
 	for (int i = 0; i<end - 1; i++)
 		if (V[i]<V[end - 1]) less.push_back(V[i]);
@@ -34,8 +34,8 @@ vector<double> QSort(const vector<double> &V1)
 
 		if ((V == greater) && (less.size() == 0))
 			return greater;
-		vector<double> res = QSort(less);
-		vector<double> x2 = QSort(greater);
+		std::vector<double> res = QSort(less);
+		std::vector<double> x2 = QSort(greater);
 
 		res.insert(res.end(), x2.begin(), x2.end());
 		less.clear();
@@ -45,15 +45,15 @@ vector<double> QSort(const vector<double> &V1)
 
 }
 
-vector<double> QbSort(const vector<double> &V1)
+std::vector<double> QbSort(const std::vector<double> &V1)
 {
 
 	if (V1.size() < 100) return bubbleSort(V1);
 	if (V1.size() <= 1) return V1;
-	vector<double> V = V1;
+	std::vector<double> V = V1;
 	int end = V.size();
 	if (V[end - 1]<V[0]) V = reverse_order(V);
-	vector<double> less, greater;
+	std::vector<double> less, greater;
 	greater.push_back(V[end - 1]);
 	for (int i = 0; i<end - 1; i++)
 		if (V[i]<V[end - 1]) less.push_back(V[i]);
@@ -62,8 +62,8 @@ vector<double> QbSort(const vector<double> &V1)
 
 		if ((V == greater) && (less.size() == 0))
 			return greater;
-		vector<double> res = QSort(less);
-		vector<double> x2 = QSort(greater);
+		std::vector<double> res = QSort(less);
+		std::vector<double> x2 = QSort(greater);
 
 		res.insert(res.end(), x2.begin(), x2.end());
 		less.clear();
@@ -73,22 +73,22 @@ vector<double> QbSort(const vector<double> &V1)
 
 }
 
-vector<int> QSort(const vector<int> &V1)
+std::vector<int> QSort(const std::vector<int> &V1)
 {
 	if (V1.size() <= 1) return V1;
-	vector<int> V = V1;
+	std::vector<int> V = V1;
 	int end = V.size();
 	if (V[end - 1]<V[0]) V = reverse_order(V);
-	vector<int> less, greater;
+	std::vector<int> less, greater;
 	greater.push_back(V[end - 1]);
 	for (int i = 0; i<end - 1; i++)
 		if (V[i]<V[end - 1]) less.push_back(V[i]);
 		else greater.push_back(V[i]);
 
 
-		vector<int> res = QSort(less);
+		std::vector<int> res = QSort(less);
 		if ((V == greater) && (less.size() == 0)) return greater;
-		vector<int> x2 = QSort(greater);
+		std::vector<int> x2 = QSort(greater);
 
 		res.insert(res.end(), x2.begin(), x2.end());
 		less.clear();
@@ -98,23 +98,23 @@ vector<int> QSort(const vector<int> &V1)
 
 }
 
-vector<int> QbSort(const vector<int> &V1)
+std::vector<int> QbSort(const std::vector<int> &V1)
 {
 	if (V1.size() < 100) return bubbleSort(V1);
 	if (V1.size() <= 1) return V1;
-	vector<int> V = V1;
+	std::vector<int> V = V1;
 	int end = V.size();
 	if (V[end - 1]<V[0]) V = reverse_order(V);
-	vector<int> less, greater;
+	std::vector<int> less, greater;
 	greater.push_back(V[end - 1]);
 	for (int i = 0; i<end - 1; i++)
 		if (V[i]<V[end - 1]) less.push_back(V[i]);
 		else greater.push_back(V[i]);
 
 
-		vector<int> res = QSort(less);
+		std::vector<int> res = QSort(less);
 		if ((V == greater) && (less.size() == 0)) return greater;
-		vector<int> x2 = QSort(greater);
+		std::vector<int> x2 = QSort(greater);
 
 		res.insert(res.end(), x2.begin(), x2.end());
 		less.clear();
@@ -124,29 +124,29 @@ vector<int> QbSort(const vector<int> &V1)
 
 }
 
-vector<double> reverse_order(const vector<double> &V)
+std::vector<double> reverse_order(const std::vector<double> &V)
 {
-	vector<double> A;
+	std::vector<double> A;
 	for (int i = V.size() - 1; i >= 0; i--)
 		A.push_back(V[i]);
 
 	return A;
 }
 
-vector<int> reverse_order(const vector<int> &V)
+std::vector<int> reverse_order(const std::vector<int> &V)
 {
-	vector<int> A;
+	std::vector<int> A;
 	for (int i = V.size() - 1; i >= 0; i--)
 		A.push_back(V[i]);
 
 	return A;
 }
 
-vector<double> bubbleSort(const vector<double> &V)
+std::vector<double> bubbleSort(const std::vector<double> &V)
 {
 
 	if (V.size() <= 1) return V;
-	vector<double> A;
+	std::vector<double> A;
 	if (V[V.size() - 1] < V[0])
 		A = reverse_order(V);
 	else
@@ -165,7 +165,7 @@ vector<double> bubbleSort(const vector<double> &V)
 				//temp = A[i - 1];
 				//A[i - 1] = A[i];
 				//A[i] = temp;
-				swap(A[i], A[i - 1]);
+				std::swap(A[i], A[i - 1]);
 				swapped = true;
 			}
 		}
@@ -175,10 +175,10 @@ vector<double> bubbleSort(const vector<double> &V)
 	//qDebug() << "sorting finished in" << run_time << " sec";
 	return A;
 }
-vector<int> bubbleSort(const vector<int> &V)
+std::vector<int> bubbleSort(const std::vector<int> &V)
 {
 	if (V.size() <= 1) return V;
-	vector<int> A;
+	std::vector<int> A;
 	if (V[V.size() - 1] < V[0])
 		A = reverse_order(V);
 	else
@@ -196,7 +196,7 @@ vector<int> bubbleSort(const vector<int> &V)
 				//temp = A[i - 1];
 				//A[i - 1] = A[i];
 				//A[i] = temp;
-				swap(A[i], A[i - 1]);
+				std::swap(A[i], A[i - 1]);
 				swapped = true;
 			}
 		}

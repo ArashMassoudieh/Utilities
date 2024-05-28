@@ -8,7 +8,7 @@ using namespace arma;
 
 
 using namespace arma;
-using namespace std;
+//using namespace std;
 
 class CMatrix_arma;
 class CVector;
@@ -22,11 +22,11 @@ public:
 	vec vect;
 	CVector_arma();
 	CVector_arma(int);
-	CVector_arma(const vector<double>, int);
-	CVector_arma(const vector<double> &v);
+	CVector_arma(const std::vector<double>, int);
+	CVector_arma(const std::vector<double> &v);
 	CVector_arma(const vec &v);
 	CVector_arma(CVector &v);
-	CVector_arma(const vector<int> &v);
+	CVector_arma(const std::vector<int> &v);
 	CVector_arma(const double x, int n);
     CVector_arma(const double x_min, const double x_max, int n);  //CVector_arma:: is redundant. However, works fine here.
 	CVector_arma(const CVector_arma&);
@@ -37,7 +37,7 @@ public:
     int range(int);
 	CVector_arma& operator=(const CVector_arma&);
 	CVector_arma& operator=(const CVector&);
-	CVector_arma& operator=(const vector<double>&);
+	CVector_arma& operator=(const std::vector<double>&);
 	CVector_arma& operator=(const double &v);
 	CVector_arma operator=(mat);
 	CVector_arma& operator+();
@@ -66,22 +66,22 @@ public:
 	CVector_arma abs();
 	CVector_arma H();
 	void writetofile(FILE *f);
-	void writetofile(string filename);
-	void writetofile(ofstream &f);
-	void writetofile_app(string filename);
+	void writetofile(std::string filename);
+	void writetofile(std::ofstream &f);
+	void writetofile_app(std::string filename);
 	CVector_arma Exp();
-	vector<int> Int();
+	std::vector<int> Int();
 	CMatrix_arma diagmat();
 	CVector_arma append(const CVector_arma& V1);
 	CVector_arma append(double d);
 	CVector_arma sort();
-	vector<int> lookup(double val);
-	void print(string s);
+	std::vector<int> lookup(double val);
+	void print(std::string s);
 	CVector_arma sub(int i, int j);
 	bool is_finite();
-	vector<int> get_nan_elements();
-    string toString() const;
-    vector<int> negative_elements();
+	std::vector<int> get_nan_elements();
+    std::string toString() const;
+    std::vector<int> negative_elements();
 };
 
 CVector_arma Log(CVector_arma &);

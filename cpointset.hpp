@@ -7,6 +7,8 @@
 #include "vtkDelaunay3D.h"
 #include "vtkXMLUnstructuredGridWriter.h"
 #include "vtkUnstructuredGrid.h"
+#include "vtkDelaunay3D.h"
+#include "vtkXMLUnstructuredGridWriter.h"
 #include "math.h"
 
 template<class T>

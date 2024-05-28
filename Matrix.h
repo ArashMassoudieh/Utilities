@@ -22,7 +22,7 @@ class QVariant;
 #include <QMap>
 #endif // QT_version
 
-using namespace std;
+//using namespace std;
 
 class CVector;
 class CMatrix
@@ -33,13 +33,13 @@ private:
 	int numcols;
 	int range(int);
 public:
-	vector<CVector> matr;
+	std::vector<CVector> matr;
     CMatrix(int numrows, int numcolumns);
 	CMatrix(int);
     static CMatrix Diag(int n);
     void Resize(int numrows, int numcolumns);
 	CMatrix();
-	CMatrix(string filename);
+	CMatrix(std::string filename);
 	CMatrix(const CMatrix&);
 #ifdef _arma
     CMatrix(CMatrix_arma_sp&);
@@ -73,24 +73,24 @@ public:
     CMatrix Cholesky_factor();
     double det();
     void Print(FILE *FIL);
-    void print(string s);
+    void print(std::string s);
     void setval(double a);
     void setvaldiag(double a);
     void writetofile(FILE *f);
-    void writetofile(string filename);
+    void writetofile(std::string filename);
     double min();
     double max();
     CMatrix abs() const;
 
-    void writetofile_app(string filename);
-	friend void write_to_file(vector<CMatrix> M, string filename);
-	friend CMatrix Average(vector<CMatrix> M);
+    void writetofile_app(std::string filename);
+	friend void write_to_file(std::vector<CMatrix> M, std::string filename);
+	friend CMatrix Average(std::vector<CMatrix> M);
     CVector diag_ratio();
-    vector<vector<bool> > non_posdef_elems(double tol = 1);
+    std::vector<std::vector<bool> > non_posdef_elems(double tol = 1);
     CMatrix non_posdef_elems_m(double tol = 1);
     CMatrix Preconditioner(double tol = 1);
-    vector<string> toString(string format = "", vector<string> columnHeaders = vector<string>(), vector<string> rowHeaders = vector<string>()) const;
-	vector<string> toHtml(string format = "", vector<string> columnHeaders = vector<string>(), vector<string> rowHeaders = vector<string>());
+    std::vector<std::string> toString(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>()) const;
+	std::vector<std::string> toHtml(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>());
     void setnumcolrows();
 	void ScaleDiagonal(double x);
     void setcol(int i,  const CVector &V);
@@ -98,8 +98,8 @@ public:
     double& get(int i, int j);
 
 #ifdef QT_version
-    QMap<QString, QVariant> compact() const;
-    static CMatrix unCompact(QMap<QString, QVariant>);
+    Qstd::map<QString, QVariant> compact() const;
+    static CMatrix unCompact(Qstd::map<QString, QVariant>);
 #endif // QT_version
 
 };

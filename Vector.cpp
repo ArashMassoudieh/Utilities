@@ -33,7 +33,7 @@ static CVector CreateVector(int n,double value)
 
 }
 
-CVector::CVector(const vector<double> a, int n)
+CVector::CVector(const std::vector<double> a, int n)
 {
 	num = n;
 	vec = a;
@@ -46,13 +46,13 @@ CVector::CVector(const double x, int n)
 	for (int i=0; i<num; i++) vec[i] = x;
 }
 
-CVector::CVector(const string &filename)
+CVector::CVector(const std::string &filename)
 {
-    ifstream file(filename);
+    std::ifstream file(filename);
 
     if (file.good())
     {
-    vector<double> s = aquiutils::ATOF(aquiutils::getline(file));
+    std::vector<double> s = aquiutils::ATOF(aquiutils::getline(file));
         if (s.size() > 1)
         {
             append(s[0]);
@@ -78,7 +78,7 @@ CVector::CVector(const CVector &v)
 	vec = v.vec;
 }
 
-CVector::CVector(const vector<double> &v)
+CVector::CVector(const std::vector<double> &v)
 {
 	num = v.size();
 	vec = v;
@@ -93,7 +93,7 @@ CVector::CVector(const CVector_arma &v)
         vec[i] = v.vect[i];
 }
 #endif
-CVector::CVector(const vector<int> &v)
+CVector::CVector(const std::vector<int> &v)
 {
 	num = v.size();
 	vec.resize(num);
@@ -145,7 +145,7 @@ CVector& CVector::operator=(const CVector &v)
 	return *this;
 }
 
-CVector& CVector::operator=(const vector<double> &v)
+CVector& CVector::operator=(const std::vector<double> &v)
 {
 	num = v.size();
 	vec = v;
@@ -380,9 +380,9 @@ bool CVector::is_finite()
 	return r;
 }
 
-string CVector::toString()
+std::string CVector::toString()
 {
-	string s;
+	std::string s;
     s += aquiutils::numbertostring(vec);
 	return s; 
 }
@@ -399,10 +399,10 @@ double CVector::max() const
 
 }
 
-vector<int> CVector::maxelements()
+std::vector<int> CVector::maxelements()
 {
     double a = -1E14;
-    vector<int> max_elements;
+    std::vector<int> max_elements;
 	for (int i=0;i<num; i++)
 	{
 		if (vec[i]>a)
@@ -548,9 +548,9 @@ CVector CVector::Exp() const
 	return x;
 }
 
-vector<int> CVector::Int()
+std::vector<int> CVector::Int()
 {
-	vector<int> x(getsize());
+	std::vector<int> x(getsize());
 	for (int i = 0; i<getsize(); i++)
 		x[i] = int(vec[i]);
 	return x;
@@ -583,7 +583,7 @@ void CVector::writetofile(FILE *f)
 	fprintf(f, "\n");
 }
 
-void CVector::writetofile(ofstream &f)
+void CVector::writetofile(std::ofstream &f)
 {
 	for (int i=0; i<num-1; i++)
 		f<<vec[i]<<",";
@@ -591,14 +591,14 @@ void CVector::writetofile(ofstream &f)
 
 }
 
-void CVector::writetofile(string filename)
+void CVector::writetofile(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"w");
 	writetofile(f);
 	fclose(f);
 }
 
-void CVector::writetofile_app(string filename)
+void CVector::writetofile_app(std::string filename)
 {
 	FILE *f = fopen(filename.c_str(),"a");
 	writetofile(f);
@@ -682,7 +682,7 @@ CVector combinesort_s(const CVector V1, const CVector V2)
 
 }
 
-int lookup(vector<int> v, int val)
+int lookup(std::vector<int> v, int val)
 {
 	int res = -1;
 	for (unsigned int i=0; i<v.size(); i++)
@@ -693,7 +693,7 @@ int lookup(vector<int> v, int val)
 
 }
 
-int lookup(vector<string> v, string val)
+int lookup(std::vector<std::string> v, std::string val)
 {
 	int res = -1;
 	for (unsigned int i=0; i<v.size(); i++)
@@ -704,7 +704,7 @@ int lookup(vector<string> v, string val)
 
 }
 
-int lookup(vector<double> v, double val)
+int lookup(std::vector<double> v, double val)
 {
 	int res = -1;
 	for (unsigned int i=0; i<v.size(); i++)
@@ -713,9 +713,9 @@ int lookup(vector<double> v, double val)
 	return res;
 }
 
-vector<int> CVector::lookup(double val)
+std::vector<int> CVector::lookup(double val)
 {
-	vector<int> res;
+	std::vector<int> res;
 	for (int i=0; i<num; i++)
 		if (vec[i] == val)
 			res.push_back(i);
@@ -737,18 +737,18 @@ double H(double x)
 
 }
 
-vector<double> H(vector<double> x)
+std::vector<double> H(std::vector<double> x)
 {
-	vector<double> X(x.size());
+	std::vector<double> X(x.size());
 	for (unsigned int i=0; i<x.size(); i++)
 		X[i] = H(x[i]);
 
 	return X;
 }
 
-void CVector::print(string s)
+void CVector::print(std::string s)
 {
-	ofstream Afile;
+	std::ofstream Afile;
 	Afile.open(s);
 
 	for (int i=0; i<num; ++i)
@@ -790,16 +790,16 @@ CVector CVector::sub(int i, int j)
 //	return A;
 //}
 
-vector<double> create_vector(int i)
+std::vector<double> create_vector(int i)
 {
-	vector<double> X(i);
+	std::vector<double> X(i);
 	return X;
 
 }
 
-vector<vector<double>> create_vector(int i, int j)
+std::vector<std::vector<double>> create_vector(int i, int j)
 {
-	vector<vector<double>> X(i);
+	std::vector<std::vector<double>> X(i);
 	for (int ii=0; ii<i; i++)
 		X[i].resize(j);
 
@@ -807,9 +807,9 @@ vector<vector<double>> create_vector(int i, int j)
 
 }
 
-vector<int> CVector::negative_elements()
+std::vector<int> CVector::negative_elements()
 {
-    vector<int> out;
+    std::vector<int> out;
     for (int i=0; i<num; i++)
         if (vec[i]<0)
             out.push_back(i);
@@ -828,7 +828,7 @@ CVector CVector::Extract(int start, int end)
     return out;
 }
 
-CVector CVector::Extract(const vector<double> &x, int start, int end)
+CVector CVector::Extract(const std::vector<double> &x, int start, int end)
 {
     if (start<0) start = 0;
     if (end>x.size()-1) end = x.size()-1;

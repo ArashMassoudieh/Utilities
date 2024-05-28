@@ -8,7 +8,7 @@
 #ifdef _arma
 #include "armadillo"
 using namespace arma;
-using namespace std;
+//using namespace std;
 class CVector_arma;
 #endif
 class CMatrix;
@@ -19,13 +19,13 @@ private:
 
 
 public:
-    vector<double> vec;
+    std::vector<double> vec;
 	CVector();
 	CVector(int);
-	CVector(const vector<double>, int);
-	CVector(const vector<double> &v);
-	CVector(const vector<int> &v);
-	CVector(const string &filename);
+	CVector(const std::vector<double>, int);
+	CVector(const std::vector<double> &v);
+	CVector(const std::vector<int> &v);
+	CVector(const std::string &filename);
 	CVector(const double x, int n);
     static CVector CreateVector(int n,double value=0);
     CVector(const double x_min, const double x_max, int n);  //cvector:: is redundant. However, works fine here.
@@ -35,11 +35,11 @@ public:
     double at(int i) const;
 	virtual ~CVector();
     CVector Extract(int start, int end);
-    static CVector Extract(const vector<double> &x, int start, int end);
+    static CVector Extract(const std::vector<double> &x, int start, int end);
 	int num;
 	int range(int);
 	CVector& operator=(const CVector&);
-	CVector& operator=(const vector<double>&);
+	CVector& operator=(const std::vector<double>&);
 #ifdef _arma
     CVector& operator=(CVector_arma&);
     CVector operator=(mat);
@@ -71,27 +71,27 @@ public:
     double stdev() const;
 	double abs_max();
     int abs_max_elems();
-	vector<int> maxelements();
+	std::vector<int> maxelements();
 	CMatrix T();
     CVector Log() const;
 	CVector abs();
 	CVector H();
 	void writetofile(FILE *f);
-	void writetofile(string filename);
-	void writetofile(ofstream &f);
-	void writetofile_app(string filename);
+	void writetofile(std::string filename);
+	void writetofile(std::ofstream &f);
+	void writetofile_app(std::string filename);
     CVector Exp() const;
-	vector<int> Int();
+	std::vector<int> Int();
 	CMatrix diagmat();
 	CVector append(const CVector& V1);
 	CVector append(double d);
 	CVector sort();
-	vector<int> lookup(double val);
-	void print(string s);
+	std::vector<int> lookup(double val);
+	void print(std::string s);
 	CVector sub(int i, int j);
 	bool is_finite();
-    string toString();
-    vector<int> negative_elements();
+    std::string toString();
+    std::vector<int> negative_elements();
 
 
 };
@@ -118,14 +118,14 @@ CVector operator/(double, const CVector&);
 CVector zeros(int i);
 CVector combinesort(const CVector& V1, const CVector &V2);
 CVector combinesort_s(const CVector& V1, const CVector &V2);
-int lookup(vector<int> v, int val);
-int lookup(vector<double> v, double val);
-int lookup(vector<string> v, string val);
+int lookup(std::vector<int> v, int val);
+int lookup(std::vector<double> v, double val);
+int lookup(std::vector<std::string> v, std::string val);
 double avg(CVector &);
 double stdev(CVector &V);
 CVector NormalizetoGaussian(CVector &V);
-vector<double> create_vector(int i);
-vector<vector<double> > create_vector(int i, int j);
+std::vector<double> create_vector(int i);
+std::vector<std::vector<double> > create_vector(int i, int j);
 template<typename T> bool isfinite(T arg);
 
 
