@@ -587,7 +587,7 @@ void CVector::writetofile(ofstream &f)
 {
 	for (int i=0; i<num-1; i++)
 		f<<vec[i]<<",";
-	f<<vec[num-1]<<endl;
+	f<<vec[num-1]<<std::endl;
 
 }
 

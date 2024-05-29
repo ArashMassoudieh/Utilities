@@ -781,7 +781,7 @@ void CMatrix::print(string s)
 
 	ofstream Afile;
 	Afile.open(s+".txt");
-	cout<<s+"\="<<endl;
+	cout<<s+"\="<<std::endl;
 
 	for (int i = 0; i<numrows; ++i)
 	{

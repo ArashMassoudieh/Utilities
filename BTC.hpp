@@ -697,7 +697,7 @@ T diff_norm(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d)
 		sumvar1 += BTC_d.C[i]*BTC_d.C[i]/BTC_d.n;
 		sumvar2 += pow(a,2)/BTC_d.n;
 	}
-	//cout<<sum<<endl;
+	//cout<<sum<<std::endl;
 	return sum/sqrt(sumvar1*sumvar2);
 
 }

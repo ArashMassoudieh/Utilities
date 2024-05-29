@@ -487,7 +487,7 @@ void CVector_arma::writetofile(ofstream &f)
 {
 	for (int i=0; i<num-1; i++)
 		f<<vect(i)<<",";
-	f<<vect(num-1)<<endl;
+	f<<vect(num-1)<<std::endl;
 
 }
 
