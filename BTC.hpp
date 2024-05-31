@@ -1784,7 +1784,7 @@ CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, double smoothing_span, i
        for (int i=0; i<C1.num; i++)
        {
             int center = int((C1[i]-p_start)/dp)+1;
-            for (int j=max(0,center-3*span_count); j<=min(n_bins,center+3*span_count); j++)
+            for (int j=std::max(0,center-3*span_count); j<=std::min(n_bins,center+3*span_count); j++)
             {
                 double l_bracket = p_start + (j-1)*dp;
                 double r_bracket = p_start + (j)*dp;
