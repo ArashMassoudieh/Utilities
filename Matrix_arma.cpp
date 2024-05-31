@@ -743,3 +743,12 @@ void CMatrix_arma::ScaleDiagonal(double x)
 		matr(i, i) *= x;
 	}
 }
+
+CMatrix_arma CMatrix_arma::Identity(int rows)
+{
+    CMatrix M(rows, rows);
+    for (int i = 0; i < rows; i++)
+        M[i][i] = 1;
+
+    return M;
+}

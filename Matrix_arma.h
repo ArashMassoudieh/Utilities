@@ -74,7 +74,7 @@ public:
     void setcol(int i, CVector V);
 
 	void ScaleDiagonal(double x);
-
+    static CMatrix_arma Identity(int rows);
 
 };
 
