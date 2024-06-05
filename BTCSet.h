@@ -75,7 +75,7 @@ public:
 	CTimeSeries &operator[](Qstd::string BTCName) {
 		return operator[](BTCName.toStdString());}
 #endif // QT_version
-    CTimeSeriesSet(vector < std::vector<T>> &, int writeInterval = 1);
+    CTimeSeriesSet(std::vector < std::vector<T>> &, int writeInterval = 1);
 	int indexOf(const std::string& name) const;
 	void pushBackName(std::string name);
     void append(const CTimeSeries<T> &BTC, std::string name = "");
