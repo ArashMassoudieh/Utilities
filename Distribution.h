@@ -14,7 +14,7 @@
 
 using namespace std;
 
-enum class distribution_type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
+enum class distribution__type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
 
 #ifdef interface
 class CDistribution : public Interface
@@ -41,7 +41,7 @@ public:
 	vector<double> e;
     CTimeSeries<double> inverse_cumulative;
     CTimeSeries<double> density;
-    distribution_type DistributionType;
+    distribution__type DistributionType;
     CDistribution(int nn);
 	CDistribution(const CDistribution &C);
     bool SetInverseCumulative(const map<string,string> &arguments);

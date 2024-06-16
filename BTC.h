@@ -108,7 +108,7 @@ public:
     T wiggle(); //calculate oscillation
     T wiggle_corr(int _n=10);
     bool wiggle_sl(T tol);
-    T maxfabs();
+    T maxfabs() const;
     T max_fabs;
     void knock_out(T t);
     T AutoCor1(int i=0);
@@ -154,6 +154,10 @@ public:
     CTimeSeries<T> Predict(const RegressionParameters& regression_parameters);
     T sum(); 
     T sum_squared(); 
+    T maxC() const;
+    T minC() const;
+    T maxt() const;
+    T mint() const;
 private:
     std::vector<T> t;
     std::vector<T> C;

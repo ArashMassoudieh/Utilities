@@ -37,13 +37,13 @@ CDistribution::CDistribution(string _name)
 {
 	pi = 4 * atan(1.0);
 	name = _name;
-    if (name == "normal") {DistributionType=distribution_type::normal;}
-    if (name == "lognormal") {DistributionType=distribution_type::lognormal;}
-    if (name == "levy") {DistributionType=distribution_type::levy;}
-    if (name == "exp") {DistributionType=distribution_type::exponential;}
-    if (name == "invgaussian") {DistributionType=distribution_type::inverse_gaussian;}
-    if (name == "gamma") {DistributionType=distribution_type::gamma;}
-    if (name == "nonparametric") {DistributionType=distribution_type::nonparameteric;}
+    if (name == "normal") {DistributionType=distribution__type::normal;}
+    if (name == "lognormal") {DistributionType=distribution__type::lognormal;}
+    if (name == "levy") {DistributionType=distribution__type::levy;}
+    if (name == "exp") {DistributionType=distribution__type::exponential;}
+    if (name == "invgaussian") {DistributionType=distribution__type::inverse_gaussian;}
+    if (name == "gamma") {DistributionType=distribution__type::gamma;}
+    if (name == "nonparametric") {DistributionType=distribution__type::nonparameteric;}
     params.resize(NumberOfCoreParameters(name)+1);
 
 }
@@ -651,7 +651,7 @@ double stdnormal_cdf(double u)
         1.00000000000000000e00,2.56852019228982242e00,1.87295284992346047e00,
         5.27905102951428412e-1,6.05183413124413191e-2,2.33520497626869185e-3
     };
-    register double y, z;
+    double y, z;
 
     if (std::isnan(u))
         return NAN;
@@ -710,7 +710,7 @@ double stdnormal_inv(double p)
         2.445134137142996e+00,  3.754408661907416e+00
     };
 
-    register double q, t, u;
+    double q, t, u;
 
     if (std::isnan(p) || p > 1.0 || p < 0.0)
         return NAN;

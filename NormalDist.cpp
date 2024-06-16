@@ -242,7 +242,7 @@ double stdnormal_cdf(double u)
         1.00000000000000000e00,2.56852019228982242e00,1.87295284992346047e00,
         5.27905102951428412e-1,6.05183413124413191e-2,2.33520497626869185e-3
     };
-    register double y, z;
+    double y, z;
 
     if (std::isnan(u))
         return NAN;
@@ -301,7 +301,7 @@ double stdnormal_inv(double p)
         2.445134137142996e+00,  3.754408661907416e+00
     };
 
-    register double q, t, u;
+    double q, t, u;
 
     if (std::isnan(p) || p > 1.0 || p < 0.0)
         return NAN;
