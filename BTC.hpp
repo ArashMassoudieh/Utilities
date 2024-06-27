@@ -15,7 +15,7 @@
 #ifndef _NO_GSL
 #include "gsl/gsl_fit.h"
 #endif
-#include "distribution.h"
+#include "Distribution.h"
 #ifdef Q_version
 #include "qfile.h"
 #include "qdatastream.h"
@@ -1130,7 +1130,7 @@ bool CTimeSeries<T>::append(T tt, T xx)
     bool increase = false;
     if (C.size()==n-1) increase = true;
 	if (D.size() != t.size())
-		cout << "D size not equal to t size" << std::endl;
+        std::cout << "D size not equal to t size" << std::endl;
 
 	if (C.size()<n+1)
     {

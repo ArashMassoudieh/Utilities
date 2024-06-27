@@ -69,10 +69,10 @@ public:
     CTimeSeries& operator = (const double &value);
     bool readfile(std::string); //read the values from a text file
     bool writefile(const std::string &Filename); //writes the BTC contets into a fild
-    T maxC(); //returns the maximum value
-    T minC(); //returns the minimum value
-    T maxt();
-    T mint();
+    T maxC() const; //returns the maximum value
+    T minC() const; //returns the minimum value
+    T maxt() const;
+    T mint() const;
 	void setnumpoints(int); //resize the timeseries
 	CTimeSeries Log(); //take the log of all the data points
     CTimeSeries Log(T min); //log(min(min,C))
@@ -154,10 +154,7 @@ public:
     CTimeSeries<T> Predict(const RegressionParameters& regression_parameters);
     T sum(); 
     T sum_squared(); 
-    T maxC() const;
-    T minC() const;
-    T maxt() const;
-    T mint() const;
+
 private:
     std::vector<T> t;
     std::vector<T> C;
