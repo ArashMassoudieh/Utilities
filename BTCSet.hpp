@@ -528,7 +528,7 @@ void CTimeSeriesSet<T>::getfromfile(std::string _filename, bool varytime)
 }
 
 template <class T>
-T CTimeSeriesSet<T>::maxtime()
+T CTimeSeriesSet<T>::maxtime() const
 {
     double _maxtime = -1e12;
     for (int i=0; i<nvars; i++)
@@ -537,7 +537,7 @@ T CTimeSeriesSet<T>::maxtime()
 }
 
 template <class T>
-T CTimeSeriesSet<T>::maxval()
+T CTimeSeriesSet<T>::maxval() const
 {
     double _maxval = -1e12;
     for (int i=0; i<nvars; i++)
@@ -545,7 +545,7 @@ T CTimeSeriesSet<T>::maxval()
     return _maxval;
 }
 template <class T>
-T CTimeSeriesSet<T>::minval()
+T CTimeSeriesSet<T>::minval() const
 {
     double _minval = 1e12;
     for (int i=0; i<nvars; i++)
@@ -554,7 +554,7 @@ T CTimeSeriesSet<T>::minval()
 }
 
 template <class T>
-T CTimeSeriesSet<T>::mintime()
+T CTimeSeriesSet<T>::mintime() const
 {
     double _mintime = 1e12;
     for (int i=0; i<nvars; i++)

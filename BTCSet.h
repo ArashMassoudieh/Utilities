@@ -28,10 +28,10 @@ public:
     std::vector<T> interpolate(T t);
     std::vector<T> interpolate(T t, int fnvars);
 	void getfromfile(std::string filename, bool varytime);
-    T maxtime();
-    T mintime();
-    T maxval();
-    T minval();
+    T maxtime() const;
+    T mintime() const;
+    T maxval() const;
+    T minval() const;
     std::vector<T> getrandom();
     std::vector<T> percentile(T x);
     std::vector<T> mean(int limit);
