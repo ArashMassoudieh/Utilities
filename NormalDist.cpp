@@ -309,7 +309,7 @@ double stdnormal_inv(double p)
         return -1e303;
     if (p == 1.0)
         return  1e303;
-    q = min(p, 1 - p);
+    q = std::min(p, 1 - p);
     if (q > 0.02425) {
         /* Rational approximation for central region. */
         u = q - 0.5;
