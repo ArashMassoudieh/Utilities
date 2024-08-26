@@ -8,7 +8,7 @@
 #include "BTC.h"
 #ifdef interface
 #include "interface.h"
-#include "Structs.h"
+//#include "Structs.h"
 #endif
 
 
@@ -60,7 +60,7 @@ public:
     static double getstdnormalrand();
     static double getnormalrand(double mu, double std);
 
-#ifdef interface
+#ifdef _interface
     FunctionOutPut Execute(const string &cmd, const map<string,string> &arguments);
 #endif
 

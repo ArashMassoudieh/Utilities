@@ -781,17 +781,17 @@ void CMatrix::print(std::string s)
 
 	std::ofstream Afile;
 	Afile.open(s+".txt");
-	cout<<s+"\="<<std::endl;
+	std::cout<<s+"\="<<std::endl;
 
 	for (int i = 0; i<numrows; ++i)
 	{
 		for (int j = 0; j<numcols; ++j)
 		{
 			Afile << matr[i][j] << "\, ";
-			cout<< matr[i][j] << "\, ";
+			std::cout<< matr[i][j] << "\, ";
 		}
 		Afile << "\n";
-		cout<< "\n";
+		std::cout<< "\n";
 	}
 }
 
@@ -932,7 +932,7 @@ void write_to_file(std::vector<CMatrix> M, std::string filename)
 			for (int j = 0; j<M[k].numcols; ++j)
 			{
 				Afile << M[k][i][j] << "\, ";
-				cout<< M[k][i][j] << "\, ";
+				std::cout<< M[k][i][j] << "\, ";
 			}
 			Afile << "\n";
 		}

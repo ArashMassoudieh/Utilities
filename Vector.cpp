@@ -752,7 +752,7 @@ void CVector::print(std::string s)
 	Afile.open(s);
 
 	for (int i=0; i<num; ++i)
-		Afile << vec[i] << endl;
+		Afile << vec[i] << std::endl;
 
 	Afile.close();
 
