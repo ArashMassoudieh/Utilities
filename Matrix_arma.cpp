@@ -78,6 +78,13 @@ CMatrix_arma::CMatrix_arma(const CMatrix& m)
 
 }
 
+CMatrix_arma::CMatrix_arma(const mat& m)
+{
+    matr = m;
+    setnumcolrows();
+}
+
+
 
 CMatrix_arma::CMatrix_arma(const CVector_arma &v)
 {

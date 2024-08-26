@@ -24,11 +24,11 @@ public:
 	CVector_arma(int);
 	CVector_arma(const std::vector<double>, int);
 	CVector_arma(const std::vector<double> &v);
-	CVector_arma(const vec &v);
+    CVector_arma(const vec &v);
 	CVector_arma(CVector &v);
 	CVector_arma(const std::vector<int> &v);
 	CVector_arma(const double x, int n);
-    CVector_arma(const double x_min, const double x_max, int n);  //CVector_arma:: is redundant. However, works fine here.
+    CVector_arma(const double x_min, const double x_max, int n);
 	CVector_arma(const CVector_arma&);
 	double& operator[](int);
     double operator[](int) const;
