@@ -80,8 +80,11 @@ public:
 	std::vector<int> get_nan_elements();
     std::string toString() const;
     std::vector<int> negative_elements();
+
 };
 
+CVector_arma GetReal(const arma::cx_vec &vx);
+CVector_arma GetImg(const arma::cx_vec &vx);
 CVector_arma Log(CVector_arma &);
 CVector_arma Exp(CVector_arma &);
 CVector_arma abs(CVector_arma &);  //works w/o reference. if const included means read only

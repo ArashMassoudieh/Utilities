@@ -656,6 +656,23 @@ std::vector<int> CVector_arma::negative_elements()
 
 }
 
+CVector_arma GetReal(const arma::cx_vec &vx)
+{
+    CVector_arma out(vx.size());
+    for (int i=0; i<vx.size(); i++)
+        out[i] = vx[i].real();
+
+    return out;
+}
+CVector_arma GetImg(const arma::cx_vec &vx)
+{
+    CVector_arma out(vx.size());
+    for (int i=0; i<vx.size(); i++)
+        out[i] = vx[i].imag();
+
+    return out;
+}
+
 //mat CVector_arma::operator=(const CVector_arma&V)
 //{
 //	mat A(num,1);

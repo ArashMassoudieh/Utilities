@@ -73,12 +73,16 @@ public:
     void setrow(int i, CVector V);
     void setcol(int i, CVector_arma V);
     void setcol(int i, CVector V);
+    CVector_arma getcol(int i);
+    CVector_arma getrow(int i);
 
 	void ScaleDiagonal(double x);
     static CMatrix_arma Identity(int rows);
 
 };
 
+CMatrix_arma GetReal(const arma::cx_mat &vx);
+CMatrix_arma GetImg(const arma::cx_mat &vx);
 double det(CMatrix_arma &);
 CMatrix_arma Log(CMatrix_arma &M1);
 CMatrix_arma Exp(CMatrix_arma &M1);
@@ -99,7 +103,6 @@ CMatrix_arma operator*(double, CMatrix_arma);
 CVector_arma operator/(CVector_arma&, CMatrix_arma&);
 CVector_arma operator/(const CVector_arma &V, const CMatrix_arma &M);
 CMatrix_arma Transpose(CMatrix_arma &M1);
-CMatrix_arma Invert(CMatrix_arma M1);
 CMatrix_arma Invert(const CMatrix_arma &M1);
 CVector_arma SpareSolve(CMatrix_arma, CVector_arma);
 CMatrix_arma oneoneprod(CMatrix_arma &m1, CMatrix_arma &m2);

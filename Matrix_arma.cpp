@@ -319,12 +319,6 @@ CMatrix_arma Sqrt(CMatrix_arma &M1)
 
 
 
-CMatrix_arma Invert(CMatrix_arma M1)
-{
-	CMatrix_arma InvM(M1.getnumcols(), M1.getnumcols());
-	InvM.matr = inv(M1.matr);
-	return InvM;
-}
 
 CMatrix_arma Invert(const CMatrix_arma &M1)
 {
@@ -673,6 +667,25 @@ void CMatrix_arma::setcol(int i,  CVector V)
 		matr(j, i) = V[j];
 }
 
+CVector_arma CMatrix_arma::getcol(int i)
+{
+    CVector_arma out(getnumrows());
+    for (int j = 0; j < getnumrows(); j++)
+        out[j] = matr(j, i);
+
+    return out;
+}
+
+CVector_arma CMatrix_arma::getrow(int i)
+{
+    CVector_arma out(getnumcols());
+    for (int j = 0; j < getnumcols(); j++)
+        out[j] = matr(i, j);
+
+    return out;
+}
+
+
 CMatrix_arma normalize_diag( const CMatrix_arma &M1, const CMatrix_arma &M2)
 {
 	CMatrix_arma M(M1);
@@ -758,4 +771,23 @@ CMatrix_arma CMatrix_arma::Identity(int rows)
         M[i][i] = 1;
 
     return M;
+}
+
+CMatrix_arma GetReal(const arma::cx_mat &vx)
+{
+    CMatrix_arma out(vx.n_rows,vx.n_rows );
+    for (int i=0; i<vx.n_rows; i++)
+        for (int j=0; j<vx.n_cols; j++)
+        out(i,j) = vx(i,j).real();
+
+    return out;
+}
+CMatrix_arma GetImg(const arma::cx_mat &vx)
+{
+    CMatrix_arma out(vx.n_rows,vx.n_rows );
+    for (int i=0; i<vx.n_rows; i++)
+        for (int j=0; j<vx.n_cols; j++)
+        out(i,j) = vx(i,j).imag();
+
+    return out;
 }
