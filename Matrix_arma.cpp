@@ -192,7 +192,7 @@ CVector_arma mult(const CMatrix_arma &m1, const CVector_arma &v1)
 {
 	int nr = m1.getnumrows();
 	CVector_arma vt(nr);
-	vt.vect = m1.matr*v1.vect;
+    vt = m1.matr*v1;
 	vt.num = nr;
 	return vt;
 }
@@ -277,7 +277,7 @@ CVector_arma operator*(const CMatrix_arma &m, const CVector_arma &v)
 CVector_arma operator/(CVector_arma &V, CMatrix_arma &M)
 {
 	CVector_arma X(M.getnumcols());
-	bool status = solve( X.vect, M.matr, V.vect);
+    bool status = solve( X, M.matr, V);
 	if (status == false) X.num = 0;
 	return X;
 }
@@ -285,7 +285,7 @@ CVector_arma operator/(CVector_arma &V, CMatrix_arma &M)
 CVector_arma operator/(const CVector_arma &V, const CMatrix_arma &M)
 {
     CVector_arma X(M.getnumcols());
-    bool status = solve( X.vect, M.matr, V.vect);
+    bool status = solve( X, M.matr, V);
     if (status == false) X.num = 0;
     return X;
 }
@@ -472,8 +472,8 @@ CVector_arma solve_ar(CMatrix_arma &M, CVector_arma &V)
 {
 
 	CVector_arma ansr;
-	solve(ansr.vect, M.matr,V.vect);
-	if (ansr.vect.n_rows > 0) ansr.num = ansr.vect.n_rows;
+    solve(ansr, M.matr,V);
+    if (ansr.n_rows > 0) ansr.num = ansr.n_rows;
 	return ansr;
 }
 
@@ -705,7 +705,7 @@ CVector_arma normalize_diag( const CVector_arma &V, const CMatrix_arma &M2)
 
 	for (int i = 0; i<V.getsize(); i++)
 	{
-        M[i] = V.vect[i] / M2.matr(i,i);
+        M[i] = V[i] / M2.matr(i,i);
 	}
 	return M;
 }
@@ -716,7 +716,7 @@ CVector_arma normalize_diag( const CVector_arma &V, const CVector_arma &D)
 
     for (int i = 0; i<V.getsize(); i++)
     {
-        M[i] = V.vect[i] / D.vect[i];
+        M[i] = V[i] / D[i];
     }
     return M;
 }
@@ -740,7 +740,7 @@ CVector_arma normalize_max( const CVector_arma &V, const CMatrix_arma &M2)
     CVector_arma D = maxelements(M2);
     for (int i = 0; i<V.getsize(); i++)
     {
-        M[i] = V.vect[i] / D[i];
+        M[i] = V[i] / D[i];
     }
     return M;
 }
@@ -751,7 +751,7 @@ CVector_arma normalize_max( const CVector_arma &V, const CVector_arma &D)
 
     for (int i = 0; i<V.getsize(); i++)
     {
-        M[i] = V.vect[i] / D.vect[i];
+        M[i] = V[i] / D[i];
     }
     return M;
 }

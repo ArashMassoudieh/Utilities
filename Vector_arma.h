@@ -11,13 +11,12 @@ using namespace arma;
 class CMatrix_arma;
 class CVector;
 class SizeDist;
-class CVector_arma
+class CVector_arma: public arma::vec
 {
 private:
 
 
 public:
-	vec vect;
 	CVector_arma();
 	CVector_arma(int);
 	CVector_arma(const std::vector<double>, int);
@@ -28,6 +27,9 @@ public:
 	CVector_arma(const double x, int n);
     CVector_arma(const double x_min, const double x_max, int n);
 	CVector_arma(const CVector_arma&);
+    arma::vec &vect();
+    double &vect(int i);
+    double const &vect(int i) const;
 	double& operator[](int);
     double operator[](int) const;
 	virtual ~CVector_arma();
@@ -47,7 +49,7 @@ public:
 	CVector_arma& operator+=(const CVector_arma&);
 	CVector_arma& operator-=(const CVector_arma&);
 	CVector_arma& operator*=(const CVector_arma&);
-	friend double dotproduct(CVector_arma, CVector_arma);
+    friend double dotproduct(const CVector_arma&, const CVector_arma&);
 	friend CVector_arma mult(CMatrix_arma&, CVector_arma&);
 	friend double norm(CVector_arma);			//Friend can be deleted. we don't have any private or protected variable in this class  //
 	friend double dotproduct(CVector_arma v1, CVector_arma v2);

@@ -20,77 +20,76 @@ CVector_arma::CVector_arma()
 	num=0;
 }
 
-CVector_arma::CVector_arma(int n)
+CVector_arma::CVector_arma(int n):arma::vec(n,fill::zeros)
 {
 	num = n;
-	vect = vec(num,fill::zeros);
 }
 
 CVector_arma::CVector_arma(const std::vector<double> a, int n)
 {
 	num = n;
-	vect = a;
+    arma::vec::operator=(a);
 }
 
 CVector_arma::CVector_arma(const double x, int n)
 {
 	num = n;
-	vect.set_size(num);
-	for (int i=0; i<num; i++) vect(i) = x;
+    set_size(num);
+    for (int i=0; i<num; i++)
+        at(i) = x;
 }
 
-CVector_arma::CVector_arma(const double x_min, const double x_max, int n)
+CVector_arma::CVector_arma(const double x_min, const double x_max, int n):arma::vec(n)
 {
 	num = n+1;
-	vect.set_size(num);
-	for (int i=0; i<num; i++) vect(i) = x_min+(x_max-x_min)/double(n)*i;
+    for (int i=0; i<num; i++)
+        at(i) = x_min+(x_max-x_min)/double(n)*i;
 }
 
-CVector_arma::CVector_arma(const CVector_arma &v)
+CVector_arma::CVector_arma(const CVector_arma &v):arma::vec(v)
 
 {
 	num = v.num;
-	vect = v.vect;
+
 }
 
 CVector_arma::CVector_arma(const std::vector<double> &v)
 {
 	num = v.size();
-	vect = v;
+    *this = v;
 }
 
-CVector_arma::CVector_arma(const vec & v)
+CVector_arma::CVector_arma(const vec & v):arma::vec(v)
 {
-	vect = v;
 	num = v.size();
 }
 
 CVector_arma::CVector_arma(CVector & v)
 {
 	num = v.num;
-	vect.set_size(num);
+    set_size(num);
 	for (int i = 0; i<num; i++)
-		vect(i) = v[i];
+        at(i) = v[i];
 }
 
 CVector_arma::CVector_arma(const std::vector<int> &v)
 {
 	num = v.size();
-	vect.set_size(num);
+    set_size(num);
 	for (int i=0; i<num; i++)
-		vect(i) = v[i];
+        at(i) = v[i];
 }
 
 CVector_arma::~CVector_arma()
 {
-	vect.clear();
+    clear();
 }
 
 double& CVector_arma::operator[](int i)
 {
 	double *p = 0;
 	if ((i<num) & (i>-1))
-		return vect(i);
+        return at(i);
 	else
 		return *p;
 }
@@ -98,7 +97,7 @@ double& CVector_arma::operator[](int i)
 double CVector_arma::operator[](int i) const
 {
     if ((i<num) & (i>-1))
-        return vect(i);
+        return at(i);
     else
         return -999;
 }
@@ -111,28 +110,28 @@ int CVector_arma::range(int i)
 CVector_arma& CVector_arma::operator=(const CVector_arma &v)
 {
 	num = v.num;
-	vect = v.vect;
+    arma::vec::operator=(v);
 	return *this;
 }
 
 CVector_arma & CVector_arma::operator=(const CVector &v)
 {
 	num = v.num;
-	vect = v.vec;
+    arma::vec::operator=(v.vec);
 	return *this;
 }
 
 CVector_arma& CVector_arma::operator=(const std::vector<double> &v)
 {
 	num = v.size();
-	vect = v;
+    arma::vec::operator=(v);
 	return *this;
 }
 
 CVector_arma& CVector_arma::operator=(const double &v)
 {
 	for (int i=0; i<num; ++i)
-		vect(i) = v;
+        at(i) = v;
 	return *this;
 }
 
@@ -140,9 +139,9 @@ CVector_arma& CVector_arma::operator+()
 {return *this;}
 
 void CVector_arma::swap(int i, int j)
-{	double tmp = vect[range(i)];
-	vect(i) = vect(range(j));
-	vect(j) = tmp;
+{	double tmp = this->at(range(i));
+    at(i) = at(range(j));
+    at(j) = tmp;
 
 }
 
@@ -151,7 +150,7 @@ int CVector_arma::getsize() const {return num;}
 CVector_arma& CVector_arma::operator*=(double x)
 {
 	for (int i=0; i<num; ++i)
-		vect(i) *= x;
+        at(i) *= x;
 	return *this;
 
 }
@@ -160,14 +159,14 @@ bool CVector_arma::haszeros() const
 {
     bool out = false;
     for (int i=0; i<num; ++i)
-        if (vect(i) == 0) out = true;
+        if (at(i) == 0) out = true;
     return out;
 }
 
 CVector_arma& CVector_arma::operator/=(double x)
 {
 	for (int i=0; i<num; ++i)
-		vect(i) /= x;
+        at(i) /= x;
 	return *this;
 
 }
@@ -175,49 +174,52 @@ CVector_arma& CVector_arma::operator/=(double x)
 CVector_arma& CVector_arma::operator+=(const CVector_arma &v)
 {
 	for (int i=0; i<num; ++i)
-		vect(i) += v.vect(i);
+        at(i) += v.at(i);
 	return *this;
 }
 
 CVector_arma& CVector_arma::operator-=(const CVector_arma &v)
 {
-	vect -= v.vect;
+    operator-=(v);
 	return *this;
 }
 
 CVector_arma operator+(const CVector_arma &v1, const CVector_arma &v2)
 {
 	CVector_arma v=v1;
-	v.vect=v1.vect+v2.vect;
+    v=v1+v2;
 	return v;
 }
 
 CVector_arma operator-(const CVector_arma &v1, const CVector_arma &v2)
 {
 	CVector_arma v=v1;
-	v.vect=v1.vect-v2.vect;
+    v=arma::vec(v1)-arma::vec(v2);
 	return v;
 
 }
 
-double dotproduct(CVector_arma v1, CVector_arma v2)
+double dotproduct(const CVector_arma &v1, const CVector_arma &v2)
 {
-	return dot(v1.vect, v2.vect);
+    return dot(arma::vec(v1), arma::vec(v2));
 }
 
 CVector_arma& CVector_arma::operator*=(const CVector_arma& v)
 {
-	for (int i=0; i<num; ++i)
-		vect(i) *= v.vect(i);
+    *this *= arma::vec(v);
 	return *this;
 }
 
+arma::vec &CVector_arma::vect()
+{
+    return *this;
+}
 
 CVector_arma operator*(const CVector_arma &v1, const CVector_arma &v2)
 {
-	CVector_arma out(v1.getsize());
-	for (int i = 0; i < out.num; ++i)
-		out[i] = v1[i] * v2[i];
+    CVector_arma out;
+    out = arma::vec(v1)-arma::vec(v2);
+    out.num = v1.num;
 	return out; 
 }
 
@@ -225,47 +227,43 @@ double norm(CVector_arma v)
 {
 	double sum = 0;
 	for (int i=0; i<v.num; i++)
-		sum += pow(v.vect(i),2);
+        sum += pow(v.at(i),2);
 	return sqrt(sum/v.num);
 }
 
 CVector_arma operator*(const double &a, const CVector_arma &v)
 {
 	CVector_arma out(v.getsize());
-	for (int i = 0; i < out.num; ++i)
-		out[i] = v[i] * a;
+    out *= a;
 	return out;
 }
 
 CVector_arma operator*(const CVector_arma& v, const double &a)
 {
 	CVector_arma out(v.getsize());
-	for (int i = 0; i < out.num; ++i)
-		out[i] = v[i] * a;
-	return out;
+    out *= a;
+    return out;
 }
 
 CVector_arma operator/(const CVector_arma &v, const double &a)
 {
 	CVector_arma out(v.getsize());
-	for (int i = 0; i < out.num; ++i)
-		out[i] = v[i] / a;
-	return out;
+    out /= a;
+    return out;
+
 }
 
 CVector_arma operator+(const CVector_arma &v, const double &a)
 {
 	CVector_arma v1(v.num);
-	for (int i=0; i<v.num; i++)
-		v1[i] = a + v[i];
+    v1 += a;
 	return v1;
 }
 
 CVector_arma operator+(const double &a, const CVector_arma &v)
 {
 	CVector_arma v1(v.num);
-	for (int i=0; i<v.num; i++)
-		v1[i] = a + v[i];
+    v1 += a;
 	return v1;
 }
 
@@ -305,7 +303,7 @@ bool CVector_arma::operator==(double v)
 {
 	bool r=true;
 	for (int i=0; i<num; ++i)
-		if (vect(i) != v)
+        if (at(i) != v)
 			r=false;
 	return r;
 
@@ -316,7 +314,7 @@ bool CVector_arma::operator==(CVector_arma &v)
 	bool r=true;
 	if (num!=v.num) return false;
 	for (int i=0; i<num; ++i)
-		if ((vect(i)== v.vect(i))!=true)
+        if ((at(i)== v.at(i))!=true)
 			r=false;
 	return r;
 
@@ -326,7 +324,7 @@ bool CVector_arma::is_finite()
 {
 	bool r=true;
 	for (int i=0; i<num; ++i)
-        if (aquiutils::isfinite(vect(i))!=true)
+        if (aquiutils::isfinite(at(i))!=true)
 			r=false;
 	return r;
 }
@@ -336,7 +334,7 @@ std::vector<int> CVector_arma::get_nan_elements()
 	std::vector<int> out;
 	for (int i = 0; i < num; i++)
 	{
-        if ((vect[i] == vect[i]) != true || !aquiutils::isfinite(vect[i]))
+        if ((at(i) == at(i)) != true || !aquiutils::isfinite(at(i)))
 			out.push_back(i);
 	}
 	return out;
@@ -344,7 +342,7 @@ std::vector<int> CVector_arma::get_nan_elements()
 
 double CVector_arma::max()
 {
-	return vect.max();
+    return arma::vec::max();
 }
 
 double max(CVector_arma &V)
@@ -354,7 +352,7 @@ double max(CVector_arma &V)
 
 double CVector_arma::min()
 {
-	return vect.min();
+    return arma::vec::min();
 }
 
 double min(CVector_arma &V)
@@ -366,8 +364,8 @@ double CVector_arma::abs_max()
 	double a = -1E14;
 	for (int i=0;i<num; i++)
 	{
-		if (fabs(vect(i))>a)
-			a = fabs(vect(i));
+        if (fabs(at(i))>a)
+            a = fabs(at(i));
 	}
 	return a;
 }
@@ -378,9 +376,9 @@ int CVector_arma::abs_max_elems()
 	int ii;
 	for (int i = 0; i<num; i++)
 	{
-		if (fabs(vect(i)) > a)
+        if (fabs(at(i)) > a)
 		{
-			a = fabs(vect(i));
+            a = fabs(at(i));
 			ii = i;
 		}
 	}
@@ -397,10 +395,20 @@ double CVector_arma::norm2()
 	double a = 0;
 	for (int i=0;i<num; i++)
 	{
-		a+=vect(i)*vect(i)/double(num);
+        a+=at(i)*at(i)/double(num);
 	}
 	return pow(a,0.5);
 
+}
+
+double &CVector_arma::vect(int i)
+{
+    return at(i);
+}
+
+double const &CVector_arma::vect(int i) const
+{
+    return at(i);
 }
 
 double CVector_arma::sum()
@@ -517,17 +525,17 @@ CMatrix_arma CVector_arma::diagmat()
 
 CVector_arma CVector_arma::append(const CVector_arma& V1)
 {
-	vect.set_size(num + V1.num);
+    set_size(num + V1.num);
 
 	for (int i=0; i<V1.num; i++)
-		vect(i+num) = V1.vect(i);
+        vect(i+num) = V1.at(i);
 	num += V1.num;
 	return *this;
 }
 
 CVector_arma CVector_arma::append(double d)
 {
-	vect.set_size(num + 1);
+    set_size(num + 1);
 	vect(num) = d;
 	num += 1;
 	return *this;
@@ -618,7 +626,7 @@ void CVector_arma::print(std::string s)
 CVector_arma CVector_arma::operator=(mat A)
 {
 	num = A.n_rows;
-	vect.set_size(num);
+    set_size(num);
 
 	for (int i = 0; i<num; ++i)
 			vect(i)=A(i,0);

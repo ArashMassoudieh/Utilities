@@ -163,7 +163,7 @@ CVector_arma mult(CMatrix_arma_sp &m1, CVector_arma &v1)
 {	
 	int nr = m1.getnumrows();
 	CVector_arma vt(nr);
-	vt.vect = m1.matr*v1.vect;
+    vt = m1.matr*v1.vect();
 	vt.num = nr;
 	return vt;
 }
@@ -248,7 +248,7 @@ CVector_arma operator*(CMatrix_arma_sp &m, CVector_arma &v)
 CVector_arma operator/(CVector_arma &V, CMatrix_arma_sp &M)
 {
 	CVector_arma X(M.getnumcols()); 
-	bool status = spsolve( X.vect, M.matr, V.vect);
+    bool status = spsolve( X, M.matr, V);
 	if (status == false) X.num = 0;
 	return X; 
 }

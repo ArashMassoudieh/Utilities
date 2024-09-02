@@ -90,7 +90,7 @@ CVector::CVector(const CVector_arma &v)
 	num = v.num;
 	vec.resize(num);
 	for (int i = 0; i<num; i++)
-        vec[i] = v.vect[i];
+        vec[i] = v.vect(i);
 }
 #endif
 CVector::CVector(const std::vector<int> &v)
