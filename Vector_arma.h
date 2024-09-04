@@ -51,8 +51,7 @@ public:
 	CVector_arma& operator*=(const CVector_arma&);
     friend double dotproduct(const CVector_arma&, const CVector_arma&);
 	friend CVector_arma mult(CMatrix_arma&, CVector_arma&);
-	friend double norm(CVector_arma);			//Friend can be deleted. we don't have any private or protected variable in this class  //
-	friend double dotproduct(CVector_arma v1, CVector_arma v2);
+    friend double norm(CVector_arma);
 	bool operator==(double v);
 	bool operator==(CVector_arma &v);
 	double max();
