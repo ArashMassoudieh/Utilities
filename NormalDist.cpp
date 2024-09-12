@@ -7,7 +7,6 @@
 
 #include "Vector.h"
 #include "Matrix.h"
-#include "NormalDist.h"
 #include <cstdlib>
 #include "math.h"
 

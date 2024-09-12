@@ -11,7 +11,7 @@
 #include <iomanip>
 //#include "StringOP.h"
 #include "Utilities.h"
-#include "NormalDist.h"
+//#include "NormalDist.h"
 #ifndef _NO_GSL
 #include "gsl/gsl_fit.h"
 #endif
@@ -1117,7 +1117,7 @@ bool CTimeSeries<T>::append(T x)
     {   C[n]=x;
         t[n]=0;
     }
-	max_fabs = max(max_fabs,std::fabs(x));
+    max_fabs = std::max(max_fabs,std::fabs(x));
     n++;
     return increase;
 }
@@ -1789,7 +1789,7 @@ CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, double smoothing_span, i
             {
                 double l_bracket = p_start + (j-1)*dp;
                 double r_bracket = p_start + (j)*dp;
-                double eff_smoothing_span = max(min(min(C[i]-p_start,smoothing_span),p_end-C[i]),dp/10.0);
+                double eff_smoothing_span = std::max(std::min(std::min(C[i]-p_start,smoothing_span),p_end-C[i]),dp/10.0);
                 double portion = (exp((C1[i]-l_bracket)/eff_smoothing_span)/(1+exp((C1[i]-l_bracket)/eff_smoothing_span)) - exp((C1[i]-r_bracket)/eff_smoothing_span)/(1+exp((C1[i]-r_bracket)/eff_smoothing_span)));
                 out.C[j] += 1.0/C1.num/dp*portion;
             }

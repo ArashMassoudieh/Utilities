@@ -6,9 +6,9 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "BTC.h"
-#ifdef interface
+#ifdef _interface
 #include "interface.h"
-//#include "Structs.h"
+#include "Structs.h"
 #endif
 
 
@@ -16,7 +16,7 @@ using namespace std;
 
 enum class distribution__type {nonparameteric, normal, lognormal, gamma, levy, exponential, inverse_gaussian};
 
-#ifdef interface
+#ifdef _interface
 class CDistribution : public Interface
 #else // interface
 class CDistribution
@@ -83,5 +83,6 @@ CMatrix getlognormal(int m, int n, double mu, double std);
 CVector getlognormal(int m, double mu, double std);
 double stdnormal_cdf(double u);
 double unifrandom(double xmin, double xmax);
-double std_normal_phi_inv(double u);
+double std_normal_phi_inv(const double &u);
+double stdnormal_inv(const double &u);
 #endif

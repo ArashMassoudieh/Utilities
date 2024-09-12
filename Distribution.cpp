@@ -1,12 +1,12 @@
 #include "Distribution.h"
 #include "gsl/gsl_cdf.h"
 #include "Utilities.h"
-#ifdef interface
+#ifdef _interface
 #include "interface.h"
 #include "command.h"
 #endif
 
-#ifdef interface
+#ifdef _interface
 CDistribution::CDistribution(void):Interface()
 #else
 CDistribution::CDistribution(void)
@@ -31,6 +31,7 @@ bool CDistribution::CreateDistribution(const map<string,string> &Arguments)
 
 CDistribution::~CDistribution(void)
 {
+
 }
 
 CDistribution::CDistribution(string _name)
@@ -170,7 +171,7 @@ double gamma(double x)
 }
 
 
-CDistribution::CDistribution(int nn)
+CDistribution::CDistribution(int nn):Interface()
 {
 	pi = 4 * atan(1.0);
 	n = nn;
@@ -178,7 +179,7 @@ CDistribution::CDistribution(int nn)
 	s.resize(n);
 }
 
-CDistribution::CDistribution(const CDistribution &C)
+CDistribution::CDistribution(const CDistribution &C):Interface()
 {
 	pi = 4 * atan(1.0);
 	n = C.n;
@@ -266,11 +267,16 @@ double unifrandom(double xmin, double xmax)
 	return a / k*(xmax - xmin) + xmin;
 }
 
-double std_normal_phi_inv(double u)
+double std_normal_phi_inv(const double &u)
 {
 	double u1 = gsl_cdf_ugaussian_Pinv(u);
-	double out = 1.0 / sqrt(2.0 * 4.0 * atan(1.0))*exp(-0.5*pow(u1, 2.0));
-	return out;
+    double out = 1.0 / sqrt(2.0 * 4.0 * atan(1.0))*exp(-0.5*pow(u1, 2.0));
+    return out;
+}
+
+double stdnormal_inv(const double &u)
+{
+    return gsl_cdf_ugaussian_Pinv(u);
 }
 
 double CDistribution::evaluate_CDF(double x, bool flux_w)
@@ -296,7 +302,7 @@ bool CDistribution::readfromfile(const string &filename)
     inverse_cumulative = cumulative.inverse_cumulative_uniform();
     return true;
 }
-#ifdef interface
+#ifdef _interface
 vector<string> CDistribution::commands()
 {
     return Commands();
@@ -379,7 +385,7 @@ vector<double> CDistribution::SetRangeBasedOnMeanStd(const double &stdcoeff)
     return range;
 }
 
-#ifdef interface
+#ifdef _interface
 
 FunctionOutPut CDistribution::Execute(const string &cmd, const map<string,string> &arguments)
 {
