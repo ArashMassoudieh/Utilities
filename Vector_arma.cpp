@@ -114,6 +114,7 @@ CVector_arma& CVector_arma::operator=(const CVector_arma &v)
 	return *this;
 }
 
+
 CVector_arma & CVector_arma::operator=(const CVector &v)
 {
 	num = v.num;
@@ -518,7 +519,7 @@ CMatrix_arma CVector_arma::diagmat()
 {
 	CMatrix_arma A(num,num);
 	for (int i=0; i<num; i++)
-		A.matr(i,i) = vect(i);
+        A.at(i,i) = vect(i);
 
 	return A;
 

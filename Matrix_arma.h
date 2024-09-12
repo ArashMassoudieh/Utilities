@@ -16,7 +16,7 @@ class QVariant;
 using namespace arma;
 class CMatrix; 
 class CVector_arma;
-class CMatrix_arma
+class CMatrix_arma: public arma::mat
 {
 
 private:
@@ -24,7 +24,7 @@ private:
 	int numcols;
 
 public:
-	mat matr;
+    //mat matr;
 	CMatrix_arma(int, int);
 	CMatrix_arma(int);
 	CMatrix_arma();
@@ -43,7 +43,7 @@ public:
     CMatrix_arma& operator=(const CMatrix_arma&);
     CMatrix_arma& operator+=(const CMatrix_arma&);
     CMatrix_arma& operator-=(const CMatrix_arma &);
-    CMatrix_arma& operator=(mat&);
+    CMatrix_arma& operator=(const mat&);
 	friend void triangulate(CMatrix_arma&, CVector_arma&);
 	friend void backsubst(CMatrix_arma&, CVector_arma&, CVector_arma&);
 	friend CVector_arma gauss0(CMatrix_arma, CVector_arma);
@@ -107,7 +107,7 @@ CMatrix_arma Invert(const CMatrix_arma &M1);
 CVector_arma SpareSolve(CMatrix_arma, CVector_arma);
 CMatrix_arma oneoneprod(CMatrix_arma &m1, CMatrix_arma &m2);
 CVector_arma solve_ar(CMatrix_arma&, CVector_arma&);
-CMatrix_arma inv(CMatrix_arma&);
+CMatrix_arma inv(const CMatrix_arma&);
 CMatrix_arma normalize_diag( const CMatrix_arma&,  const CMatrix_arma&);
 CVector_arma normalize_diag( const CVector_arma&,  const CMatrix_arma&);
 CVector_arma normalize_diag( const CVector_arma&,  const CVector_arma&);

@@ -1283,7 +1283,7 @@ CMatrix::CMatrix(const CMatrix_arma &M)
 	}
 	for (int i = 0; i < numrows; i++)
 		for (int j = 0; j < numcols; j++)
-            matr[i][j] = M.matr(i, j);
+            matr[i][j] = M.at(i, j);
 
 }
 #endif
