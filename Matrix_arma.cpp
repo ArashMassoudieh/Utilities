@@ -85,7 +85,7 @@ CMatrix_arma::CMatrix_arma(const mat& m):arma::mat(m)
 
 CMatrix_arma::CMatrix_arma(const CVector_arma &v)
 {
-	numrows = v.num;
+    numrows = v.num();
 	numcols = 1;
     arma::mat(numrows,1);
 
@@ -177,11 +177,18 @@ CMatrix_arma mult(const CMatrix_arma &m1, const CMatrix_arma &m2)
 	return M;
 }
 
+CMatrix_arma operator*(const CMatrix_arma& m1, const CMatrix_arma& m2)
+{
+    arma::mat m = arma::mat(m1)*arma::mat(m2);
+    CMatrix_arma M = m;
+    M.setnumcolrows();
+    return M;
+}
+
 CVector_arma mult(const CMatrix_arma &m1, const CVector_arma &v1)
 {
     arma::vec V = m1*v1;
     CVector_arma out = V;
-    out.num = V.size();
     return out;
 }
 
@@ -266,7 +273,7 @@ CVector_arma operator/(CVector_arma &V, CMatrix_arma &M)
 {
 	CVector_arma X(M.getnumcols());
     bool status = solve(X, M, V);
-	if (status == false) X.num = 0;
+    if (status == false) X = arma::vec();
 	return X;
 }
 
@@ -274,7 +281,7 @@ CVector_arma operator/(const CVector_arma &V, const CMatrix_arma &M)
 {
     CVector_arma X(M.getnumcols());
     bool status = solve( X, M, V);
-    if (status == false) X.num = 0;
+    if (status == false) X = arma::vec();
     return X;
 }
 
@@ -379,7 +386,6 @@ CVector_arma operator*(const CMatrix_arma &m, const CVector_arma &v)
 {
     arma::vec a = arma::mat(m)*arma::vec(v);
     CVector_arma out = a;
-    out.num = a.size();
     return out;
 }
 
@@ -466,7 +472,7 @@ CVector_arma solve_ar(CMatrix_arma &M, CVector_arma &V)
 
 	CVector_arma ansr;
     solve(ansr, M,V);
-    if (ansr.n_rows > 0) ansr.num = ansr.n_rows;
+    if (ansr.n_rows == 0) ansr = arma::vec();
 	return ansr;
 }
 

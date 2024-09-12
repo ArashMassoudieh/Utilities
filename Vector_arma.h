@@ -33,7 +33,7 @@ public:
 	double& operator[](int);
     double operator[](int) const;
 	virtual ~CVector_arma();
-	int num;
+    int num() const {return  size();} ;
     int range(int);
 	CVector_arma& operator=(const CVector_arma&);
 	CVector_arma& operator=(const CVector&);

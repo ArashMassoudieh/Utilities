@@ -171,7 +171,7 @@ double gamma(double x)
 }
 
 
-CDistribution::CDistribution(int nn):Interface()
+CDistribution::CDistribution(int nn)
 {
 	pi = 4 * atan(1.0);
 	n = nn;
@@ -179,7 +179,7 @@ CDistribution::CDistribution(int nn):Interface()
 	s.resize(n);
 }
 
-CDistribution::CDistribution(const CDistribution &C):Interface()
+CDistribution::CDistribution(const CDistribution &C)
 {
 	pi = 4 * atan(1.0);
 	n = C.n;

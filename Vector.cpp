@@ -87,8 +87,8 @@ CVector::CVector(const std::vector<double> &v)
 #ifdef _arma
 CVector::CVector(const CVector_arma &v)
 {
-	num = v.num;
-	vec.resize(num);
+    num = v.num();
+    vec.resize(num);
 	for (int i = 0; i<num; i++)
         vec[i] = v.vect(i);
 }
@@ -155,8 +155,8 @@ CVector& CVector::operator=(const std::vector<double> &v)
 #ifdef _arma
 CVector &CVector::operator=(CVector_arma &v)
 {
-	vec.reserve(v.num);
-	num = v.num;
+    vec.reserve(v.num());
+    num = v.num();
 	for (int i = 0; i<num; ++i)
 		vec[i] = v[i];
 	return *this;

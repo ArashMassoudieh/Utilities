@@ -59,7 +59,7 @@ CMatrix_arma_sp::CMatrix_arma_sp(const CMatrix_arma_sp &m)
 
 CMatrix_arma_sp::CMatrix_arma_sp(const CVector_arma &v)
 {
-	numrows = v.num;
+    numrows = v.num();
 	numcols = 1;
 	matr = sp_mat(numrows,1);
 	
@@ -164,7 +164,6 @@ CVector_arma mult(CMatrix_arma_sp &m1, CVector_arma &v1)
 	int nr = m1.getnumrows();
 	CVector_arma vt(nr);
     vt = m1.matr*v1.vect();
-	vt.num = nr;
 	return vt;
 }
 
@@ -249,7 +248,7 @@ CVector_arma operator/(CVector_arma &V, CMatrix_arma_sp &M)
 {
 	CVector_arma X(M.getnumcols()); 
     bool status = spsolve( X, M.matr, V);
-	if (status == false) X.num = 0;
+    if (status == false) X = arma::vec();
 	return X; 
 }
 
@@ -416,9 +415,6 @@ CVector_arma solve_ar(CMatrix_arma_sp &M, CVector_arma &V)
 {
 
 	CVector_arma ansr = V/M;
-	//solve(ansr.vect, M.matr,V.vect);
-        //spsolve(ansr.vect, M.matr,V.vect, "lapack");
-	ansr.num = M.getnumcols();
 	return ansr;
 }
 
