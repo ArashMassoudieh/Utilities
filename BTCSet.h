@@ -70,6 +70,8 @@ public:
     CTimeSeries<T> &operator[](int index);
     CTimeSeries<T> &operator[](std::string BTCName);
     bool Contains(std::string BTCName);
+    CTimeSeriesSet<T> ConverttoNormalScore();
+    CTimeSeriesSet<T> AutoCorrelation(const double &span, const double &increment);
     bool SetRow(int i, const T &t, const std::vector<T> &c);
 #ifdef QT_version
 	CTimeSeries &operator[](Qstd::string BTCName) {
