@@ -1256,7 +1256,27 @@ void CTimeSeriesSet<T>::adjust_size()
         BTC[i].adjust_size();
 }
 
+template <class T>
+CTimeSeriesSet<T> CTimeSeriesSet<T>::ConverttoNormalScore()
+{
+    CTimeSeriesSet<T> out;
+    for (int i=0; i<nvars; i++)
+    {
+        out.append(BTC[i].ConverttoNormalScore(),names[i]);
+    }
+    return out;
+}
 
+template <class T>
+CTimeSeriesSet<T> CTimeSeriesSet<T>::AutoCorrelation(const double &span, const double &increment)
+{
+    CTimeSeriesSet<T> out;
+    for (int i=0; i<nvars; i++)
+    {
+        out.append(BTC[i].AutoCorrelation(span, increment),names[i]);
+    }
+    return out;
+}
 
 #ifdef QT_version
 template <class T>
