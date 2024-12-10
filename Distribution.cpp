@@ -329,9 +329,15 @@ bool CDistribution::HasCommand(const string &cmd)
 #endif // interface
 bool CDistribution::WriteToFile(const map<string,string> Arguments)
 {
+
     int nbins = 100;
     if (Arguments.count("filename")==0)
         return false;
+    if (DistributionType == distribution__type::nonparameteric)
+    {
+        density.writefile(Arguments.at("filename"));
+        return true;
+    }
     if (params.size()==0)
         return false;
     if (Arguments.count("nbins")>0)
