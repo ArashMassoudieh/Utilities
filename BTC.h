@@ -154,7 +154,7 @@ public:
     CTimeSeries<T> Predict(const RegressionParameters& regression_parameters);
     T sum(); 
     T sum_squared(); 
-
+    void CreatePeriodicStepFunction(const T &t_start, const T &t_end, const T &duration, const T &gap, const T &magnitude);
 private:
     std::vector<T> t;
     std::vector<T> C;
@@ -181,6 +181,7 @@ template<class T> T diff_mixed(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d, dou
 template<class T> T ADD(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d);
 template<class T> T diff_relative(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d, double m);
 template<class T> T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d);
+template<class T> T Covariance(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d);
 template<class T> T R2(const CTimeSeries<T> *BTC_p, const CTimeSeries<T> *BTC_d);
 template<class T> T R(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, int nlimit);
 template<class T> CTimeSeries<T> operator*(T, CTimeSeries<T>&);

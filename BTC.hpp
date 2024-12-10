@@ -532,6 +532,28 @@ T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d)
 }
 
 template<class T>
+T Covariance(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d)
+{
+    if (BTC_p.n != BTC_d.n || BTC_p.n==0) {
+            throw std::invalid_argument("Vectors must be non-empty and of the same size.");
+        }
+
+        size_t n = BTC_p.n;
+
+        // Calculate means of the two vectors
+        double meanX = BTC_p.mean();
+        double meanY = BTC_d.mean();
+
+        // Calculate the covariance
+        double covariance = 0.0;
+        for (size_t i = 0; i < n; ++i) {
+            covariance += (BTC_p.GetC(i) - meanX) * (BTC_d.GetC(i) - meanY);
+        }
+
+        return covariance / n;
+}
+
+template<class T>
 T R2(const CTimeSeries<T> *BTC_p, const CTimeSeries<T> *BTC_d)
 {
 	T sumcov = 0;
@@ -1939,4 +1961,18 @@ T CTimeSeries<T>::sum_squared()
 		sum2 += C[i]*C[i];
 	}
 	return sum2;
+}
+
+template<class T>
+void CTimeSeries<T>::CreatePeriodicStepFunction(const T &t_start, const T &t_end, const T &duration, const T &gap, const T &magnitude)
+{
+    double t = t_start;
+    while (t<=t_end)
+    {
+        append(t-1e-6,0);
+        append(t,magnitude);
+        append(t+duration,magnitude);
+        append(t+duration+1e-6,0);
+        t+=duration+gap;
+    }
 }
