@@ -1225,47 +1225,55 @@ CTimeSeries<T> operator+(CTimeSeries<T> &v1, CTimeSeries<T> &v2)
 template<class T>
 CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment, T t0)
 {
-    CTimeSeries<T> out;
-	assign_D();
-    if (t0==-999)
-        t0 = t[0];
-    if (true)
-    {   if (t.size() >1 && C.size() > 1)
-        {
-            out.append(t0, interpol(t0));
-            for (int i = 0; i < n - 1; i++)
-            {
-                int i1 = int((t[i] - t0) / increment);
-                int i2 = int((t[i + 1] - t0) / increment);
+	// Ensure the input time series is not empty
+	if (C.empty()) {
+		throw std::invalid_argument("Input time series is empty.");
+	}
 
-                for (int j = i1 + 1; j <= i2; j++)
-                {
-                    T x = j*increment + t0;
-                    T CC = (x - t[i]) / (t[i + 1] - t[i])*(C[i + 1] - C[i]) + C[i];
-                    T DD = (x - t[i]) / (t[i + 1] - t[i])*(D[i + 1] - D[i]) + D[i];
-                    if (x>out.GetLastItemTime() && x>t0)
-                    {
-                        out.append(x, CC);
-                        out.lastD() = DD;
-                    }
+	// Ensure increment is positive
+	if (increment <= 0) {
+		throw std::invalid_argument("Increment must be positive.");
+	}
 
-                }
-            }
-        }
-    }
-    else
-    {
-        if (t.size() >1 && C.size() > 1)
-        {
-            for (double _t = t[0]; _t<t[n-1]; _t+=increment)
-            {
-                out.append(_t,interpol(_t));
-            }
-        }
-    }
-	out.structured = true;
+	// Resulting uniform time series
+	CTimeSeries<T> uniformTimeseries;
 
-	return out;
+	// Start generating uniform times
+	double currentTime = t0;
+	if (t0 == -999)
+		currentTime = GetT(0);
+
+	// Iterator for traversing the input time series
+	int iterator = 0;
+
+	// Iterate over the uniform times
+	while (currentTime <= GetLastItemTime()) {
+		// Move the iterator to the interval containing currentTime
+		while ((iterator + 1) != t.size() && GetT(iterator + 1) < currentTime) {
+			++iterator;
+		}
+
+		// Perform linear interpolation
+		if ((iterator + 1) != t.size()) {
+			double t1 = GetT(iterator);
+			double t2 = GetT(iterator + 1);
+			double v1 = GetC(iterator);
+			double v2 = GetC(iterator + 1);
+
+			// Linear interpolation formula
+			double interpolatedValue = v1 + (v2 - v1) * (currentTime - t1) / (t2 - t1);
+
+			// Add the interpolated point to the result
+			uniformTimeseries.append( currentTime, interpolatedValue );
+		}
+
+		// Increment the current time
+		currentTime += increment;
+	}
+		
+	uniformTimeseries.structured = true;
+
+	return uniformTimeseries;
 }
 
 template<class T>
