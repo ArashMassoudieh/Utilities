@@ -1223,24 +1223,27 @@ CTimeSeries<T> operator+(CTimeSeries<T> &v1, CTimeSeries<T> &v2)
 }
 
 template<class T>
-CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment)
+CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment, T t0)
 {
     CTimeSeries<T> out;
 	assign_D();
+    if (t0==-999)
+        t0 = t[0];
     if (true)
     {   if (t.size() >1 && C.size() > 1)
         {
-            out.append(t[0], C[0]);
+            out.append(t0, interpol(t0));
             for (int i = 0; i < n - 1; i++)
             {
-                int i1 = int((t[i] - t[0]) / increment);
-                int i2 = int((t[i + 1] - t[0]) / increment);
+                int i1 = int((t[i] - t0) / increment);
+                int i2 = int((t[i + 1] - t0) / increment);
+
                 for (int j = i1 + 1; j <= i2; j++)
                 {
-                    T x = j*increment + t[0];
+                    T x = j*increment + t0;
                     T CC = (x - t[i]) / (t[i + 1] - t[i])*(C[i + 1] - C[i]) + C[i];
                     T DD = (x - t[i]) / (t[i + 1] - t[i])*(D[i + 1] - D[i]) + D[i];
-                    if (x>out.GetLastItemTime())
+                    if (x>out.GetLastItemTime() && x>t0)
                     {
                         out.append(x, CC);
                         out.lastD() = DD;
