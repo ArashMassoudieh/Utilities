@@ -3,6 +3,8 @@
 #include <vector>
 #include "Vector.h"
 
+using namespace arma;
+
 template <class T>
 class CTimeSeriesSet
 {
@@ -49,7 +51,7 @@ public:
     CTimeSeries<T> add_mult(std::vector<int> ii, std::vector<T> mult);
     CTimeSeries<T> add_mult(std::vector<int> ii, CTimeSeriesSet &mult);
     CTimeSeries<T> divide(int ii, int jj);
-    CTimeSeriesSet make_uniform(T increment, bool assgn_d=true);
+    CTimeSeriesSet make_uniform(T increment, T t0=-999, bool assgn_d=true);
     CTimeSeriesSet getpercentiles(std::vector<T> percents);
     CVector out_of_limit(T limit);
 	CTimeSeriesSet distribution(int n_bins, int n_columns, int limit);
@@ -73,6 +75,16 @@ public:
     CTimeSeriesSet<T> ConverttoNormalScore();
     CTimeSeriesSet<T> AutoCorrelation(const double &span, const double &increment);
     bool SetRow(int i, const T &t, const std::vector<T> &c);
+#ifdef _ARMA
+    arma::mat ToArmaMat(const vector<string> &columns = vector<string>());
+    arma::mat ToArmaMat(const vector<int> &columns);
+    CTimeSeriesSet(const mat &m, const double &dt, const vector<vector<int>> &lag = vector<vector<int>>());
+    static CTimeSeriesSet OutputShifter(const mat &m, const double &dt, const vector<vector<int>> &lag);
+    arma::mat ToArmaMatShifter(const vector<int> &columns, const vector<vector<int>> &lag);
+    arma::mat ToArmaMatShifterOutput(const vector<int> &columns, const vector<vector<int>> &lag);
+    static vector<CTimeSeriesSet<T>> GetFromArmaMatandSplit(const arma::mat &Mat, const double &dt, const vector<vector<int>> &lag, const vector<int> &splitsizes);
+#endif
+    vector<CTimeSeriesSet<T>> Split(const vector<int> &splitsizes);
 #ifdef QT_version
 	CTimeSeries &operator[](Qstd::string BTCName) {
 		return operator[](BTCName.toStdString());}

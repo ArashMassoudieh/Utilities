@@ -1223,7 +1223,7 @@ CTimeSeries<T> operator+(CTimeSeries<T> &v1, CTimeSeries<T> &v2)
 }
 
 template<class T>
-CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment, T t0)
+CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment, T t0, bool asgn_D)
 {
 	// Ensure the input time series is not empty
 	if (C.empty()) {
@@ -1269,8 +1269,8 @@ CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment, T t0)
 
 		// Increment the current time
 		currentTime += increment;
-	}
-		
+    }
+    if (asgn_D) assign_D();
 	uniformTimeseries.structured = true;
 
 	return uniformTimeseries;

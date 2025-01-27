@@ -98,7 +98,7 @@ public:
     void ResizeIfNeeded(int _increment); //increases the size of the vectors more capacity is needed
 	CTimeSeries& operator+=(CTimeSeries &v); //adds another time-series to the existing one
 	CTimeSeries& operator%=(CTimeSeries &v); //adds another time-series by corresponding indexes
-    CTimeSeries make_uniform(T increment, T t0=-999); //create a new time-series with uniformly distributed time-axis
+    CTimeSeries make_uniform(T increment, T t0=-999, bool asn_D=false); //create a new time-series with uniformly distributed time-axis
     CTimeSeries extract(T t1, T t2); //extracts a sub time-series from t1 to t2.
     std::vector<T> trend(); //calculate the slope based on regression
     T mean_t(); //mean of t values of data point
@@ -117,6 +117,9 @@ public:
 	CTimeSeries Exp();
 	CTimeSeries fabs();
     void adjust_size();
+    int t_size() {return t.size();}
+    int C_size() {return C.size();}
+    int D_size() {return D.size();}
 	//GUI
 	//QList <QMap <QVariant, QVariant>> compact() const;
     bool resize(unsigned int _size);

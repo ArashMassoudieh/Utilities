@@ -289,10 +289,8 @@ CTimeSeriesSet<T>::CTimeSeriesSet(std::string _filename, bool varytime)
 					if (int(s.size()) == nvars + 1)
 						for (int i = 0; i < nvars; i++)
 						{
-							BTC[i].t.push_back(atof(s[0].c_str()));
-							BTC[i].C.push_back(atof(s[i + 1].c_str()));
-							BTC[i].n++;
-							if (BTC[i].t.size()>2)
+                            BTC[i].append(atof(s[0].c_str()),atof(s[i + 1].c_str()));
+                            if (BTC[i].tSize()>2)
                                 if ((BTC[i].GetT(BTC[i].tSize() - 1) - BTC[i].GetT(BTC[i].tSize() - 2)) != (BTC[i].GetT(BTC[i].tSize() - 2) - BTC[i].GetT(BTC[i].tSize() - 3)))
 									BTC[i].structured = false;
 
@@ -320,12 +318,10 @@ CTimeSeriesSet<T>::CTimeSeriesSet(std::string _filename, bool varytime)
 						if (int(s.size()) >= 2 * (i + 1))
 							if ((aquiutils::trim(s[2 * i]) != "") && (aquiutils::trim(s[2 * i + 1]) != ""))
 							{
-								BTC[i].t.push_back(atof(s[2 * i].c_str()));
-								BTC[i].C.push_back(atof(s[2 * i + 1].c_str()));
-								BTC[i].n++;
-								if (BTC[i].t.size()>2)
-									if ((BTC[i].GetT(BTC[i].t.size() - 1) - BTC[i].GetT(BTC[i].t.size() - 2)) != (BTC[i].GetT(BTC[i].t.size() - 2) - BTC[i].GetT(BTC[i].t.size() - 3)))
-										BTC[i].structured = false;
+                                BTC[i].append(atof(s[2 * i].c_str()),atof(s[2 * i + 1].c_str()) );
+                                if (BTC[i].tSize()>2)
+                                    if ((BTC[i].GetT(BTC[i].tSize() - 1) - BTC[i].GetT(BTC[i].tSize() - 2)) != (BTC[i].GetT(BTC[i].tSize() - 2) - BTC[i].GetT(BTC[i].tSize() - 3)))
+                                        BTC[i].structured = false;
 							}
 					}
 				}
@@ -907,60 +903,17 @@ CTimeSeries<T> CTimeSeriesSet<T>::divide(int ii, int jj)
 }
 
 template <class T>
-CTimeSeriesSet<T> CTimeSeriesSet<T>::make_uniform(T increment, bool assgn_d)
+CTimeSeriesSet<T> CTimeSeriesSet<T>::make_uniform(T increment, T t0, bool assgn_d)
 {
 	if (nvars==0) return CTimeSeriesSet();
 	CTimeSeriesSet out(nvars);
 	out.names = names;
 
     for (int i = 0; i < nvars; i++)
-        out.BTC[i].name = BTC[i].name;
+    {
+        out.BTC[i] = BTC[i].make_uniform(increment, t0, assgn_d);
+    }
 
-	if (unif == true)
-	{
-		//qDebug() << "make uniform with unif option";
-		for (int i = 0; i < nvars; i++)
-		{
-
-            out.BTC[i].append(BTC[i].GetT(0), BTC[i].GetC(0));
-			if (assgn_d)
-			{
-				//qDebug() << "Assigning D to the original BTC";
-				if (BTC[i].DSize() == 0) BTC[i].assign_D();
-			}
-		}
-		for (int i=0; i<BTC[0].n-1; i++)
-		{
-			////qDebug() << i;
-            int i1 = int((BTC[0].GetT(i)-BTC[0].GetT(0))/increment);
-            int i2 = int((BTC[0].GetT(i+1)-BTC[0].GetT(0))/increment);
-			for (int j=i1+1; j<=i2; j++)
-			{
-                T x = j*increment+BTC[0].GetT(0);
-				for (int k=0; k<nvars; k++)
-				{
-                    T CC = (x-BTC[k].GetT(i))/(BTC[k].GetT(i+1)-BTC[k].GetT(i))*(BTC[k].GetC(i+1)-BTC[k].GetC(i))+BTC[k].GetC(i);
-
-					out.BTC[k].append(x,CC);
-					if (assgn_d)
-					{
-                        T DD = (x - BTC[k].GetT(i)) / (BTC[k].GetT(i + 1) - BTC[k].GetT(i))*(BTC[k].GetD(i + 1) - BTC[k].GetD(i)) + BTC[k].GetD(i);
-						out.BTC[k].AppendD(DD);
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		//qDebug() << "make uniform without unif option";
-		for (int k = 0; k < nvars; k++)
-		{
-			//qDebug() << "Variable:" + QString::fromStdString(names[k]);
-			out.BTC[k] = BTC[k].make_uniform(increment);
-
-		}
-	}
 	for (int k=0; k<nvars; k++)
     {   out.BTC[k].structured = true;
         out.BTC[k].name = BTC[k].name;
@@ -1275,6 +1228,235 @@ CTimeSeriesSet<T> CTimeSeriesSet<T>::AutoCorrelation(const double &span, const d
     {
         out.append(BTC[i].AutoCorrelation(span, increment),names[i]);
     }
+    return out;
+}
+
+#ifdef _ARMA
+template <class T>
+arma::mat CTimeSeriesSet<T>::ToArmaMat(const vector<string> &columns)
+{
+    if (columns.size()==0)
+    {   arma::mat out(nvars, maxnumpoints());
+        for (int i=0; i<maxnumpoints(); i++)
+        {
+            for (int j=0; j<nvars; j++)
+            {
+                out(j,i) = BTC[j].GetC(i);
+            }
+        }
+        return out;
+    }
+    else
+    {
+        arma::mat out(columns.size(), maxnumpoints());
+        for (int i=0; i<maxnumpoints(); i++)
+        {
+            for (int j=0; j<columns.size(); j++)
+            {
+                out(j,i) = operator[](columns[j]).GetC(i);
+            }
+        }
+        return out;
+    }
+}
+
+template <class T>
+arma::mat CTimeSeriesSet<T>::ToArmaMat(const vector<int> &columns)
+{
+
+    arma::mat out(columns.size(), maxnumpoints());
+    for (int i=0; i<maxnumpoints(); i++)
+    {
+        for (int j=0; j<columns.size(); j++)
+        {
+            out(j,i) = operator[](columns[j]).GetC(i);
+        }
+    }
+    return out;
+
+}
+
+template <class T>
+arma::mat CTimeSeriesSet<T>::ToArmaMatShifter(const vector<int> &columns, const vector<vector<int>> &lag)
+{
+    int total_number_of_columns =0;
+    int maximum_lag=0;
+    for (int j=0; j<columns.size(); j++)
+    {   total_number_of_columns+=lag[j].size();
+        for (int i=0; i<lag[j].size(); i++)
+            maximum_lag = max(maximum_lag, lag[j][i]);
+    }
+    arma::mat out(total_number_of_columns, maxnumpoints()-maximum_lag);
+    for (int i=maximum_lag; i<maxnumpoints(); i++)
+    {
+        int counter = 0;
+        for (int j=0; j<columns.size(); j++)
+        {
+            for (int k=0; k<lag[j].size(); k++)
+            {
+                out(counter,i-maximum_lag) = operator[](columns[j]).GetC(i-lag[j][k]);
+                counter++;
+            }
+        }
+    }
+    return out;
+
+}
+
+template <class T>
+arma::mat CTimeSeriesSet<T>::ToArmaMatShifterOutput(const vector<int> &columns, const vector<vector<int>> &lag)
+{
+
+    int maximum_lag=0;
+    for (int j=0; j<lag.size(); j++)
+    {
+        for (int i=0; i<lag[j].size(); i++)
+            maximum_lag = max(maximum_lag, lag[j][i]);
+    }
+    arma::mat out(columns.size(), maxnumpoints()-maximum_lag);
+    for (int i=maximum_lag; i<maxnumpoints(); i++)
+    {
+        int counter = 0;
+        for (int j=0; j<columns.size(); j++)
+        {
+            out(counter,i-maximum_lag) = operator[](columns[j]).GetC(i);
+            counter++;
+        }
+    }
+    return out;
+
+}
+
+template <class T>
+CTimeSeriesSet<T>::CTimeSeriesSet(const mat &m, const double &dt, const vector<vector<int>> &lag)
+{
+    nvars = m.n_rows;
+    BTC.resize(nvars);
+    names.resize(nvars);
+    int maximum_lag=0;
+    for (int j=0; j<lag.size(); j++)
+    {
+        for (int i=0; i<lag[j].size(); i++)
+            maximum_lag = max(maximum_lag, lag[j][i]);
+    }
+    for (int i=0; i<nvars; i++) BTC[i] = CTimeSeries<T>();
+    unif = true;
+
+    for (int i=0; i<m.n_rows; i++)
+    {
+        for (int j=0; j<m.n_cols; j++)
+        {
+            BTC[i].append((j+maximum_lag)*dt,m(i,j));
+        }
+    }
+
+
+}
+
+
+
+template <class T>
+vector<CTimeSeriesSet<T>> CTimeSeriesSet<T>::GetFromArmaMatandSplit(const arma::mat &m, const double &dt, const vector<vector<int>> &lag, const vector<int> &splitsizes)
+{
+    vector<int> split_sizes = splitsizes;
+    if (split_sizes.size()==0)
+    {
+        split_sizes.push_back(m.n_cols);
+    }
+    CTimeSeriesSet<T> FullTimeSeries(m.n_rows);
+    int maximum_lag=0;
+    for (int j=0; j<lag.size(); j++)
+    {
+        for (int i=0; i<lag[j].size(); i++)
+            maximum_lag = max(maximum_lag, lag[j][i]);
+    }
+    for (int i=0; i<FullTimeSeries.nvars; i++) FullTimeSeries.BTC[i] = CTimeSeries<T>();
+    FullTimeSeries.unif = true;
+
+    for (int i=0; i<m.n_rows; i++)
+    {
+        for (int j=0; j<m.n_cols; j++)
+        {
+            FullTimeSeries.BTC[i].append((j+maximum_lag)*dt,m(i,j));
+        }
+    }
+    vector<CTimeSeriesSet<double>> Splited = FullTimeSeries.Split(split_sizes);
+    for (unsigned int i=0; i<Splited.size(); i++)
+    {
+        for (unsigned int j=0; j<Splited[i].nvars; j++)
+        {
+            for (unsigned int k=0; k<Splited[i].BTC[j].n; k++)
+                Splited[i].BTC[j].SetT(k,(k+maximum_lag)*dt);
+        }
+    }
+    return Splited;
+
+}
+
+template <class T>
+CTimeSeriesSet<T> CTimeSeriesSet<T>::OutputShifter(const mat &m, const double &dt, const vector<vector<int>> &lag)
+{
+
+    CTimeSeriesSet<T> out(m.n_rows);
+
+    int maximum_lag=0;
+    for (int j=0; j<lag.size(); j++)
+    {
+        for (int i=0; i<lag[j].size(); i++)
+            maximum_lag = max(maximum_lag, lag[j][i]);
+    }
+
+    out.unif = true;
+
+    for (int i=0; i<m.n_rows; i++)
+    {
+        for (int j=0; j<m.n_cols; j++)
+        {
+            out.BTC[i].append((j+maximum_lag)*dt,m(i,j));
+        }
+    }
+    return out;
+}
+#endif
+
+
+template <class T>
+vector<CTimeSeriesSet<T>> CTimeSeriesSet<T>::Split(const vector<int> &splitsizes)
+{
+    vector<CTimeSeriesSet<T>> out;
+
+    if (splitsizes.size()==0)
+    {
+        out.push_back(*this);
+        return out;
+    }
+    int cum_split_point = splitsizes[0];
+    int split_counter = 0;
+    CTimeSeriesSet<T> segment(nvars);
+    segment.names = names;
+    for (unsigned int i=0; i<maxnumpoints(); i++)
+    {
+        if (i<cum_split_point)
+        {
+            for (unsigned int j=0; j<nvars; j++)
+            {
+                segment.BTC[j].append(BTC[j].GetT(i),BTC[j].GetC(i) );
+            }
+        }
+        else
+        {
+            i--;
+            out.push_back(segment);
+            split_counter+=1;
+            segment = CTimeSeriesSet<double>(nvars);
+            segment.names = names;
+            if (split_counter<splitsizes.size())
+                cum_split_point+=splitsizes[split_counter];
+            else
+                cum_split_point = maxnumpoints();
+        }
+    }
+    out.push_back(segment);
     return out;
 }
 
