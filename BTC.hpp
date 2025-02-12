@@ -1186,9 +1186,19 @@ void CTimeSeries<T>::ResizeIfNeeded(int _increment)
 }
 
 template<class T>
-void CTimeSeries<T>::append(CTimeSeries<T> &CC)
+void CTimeSeries<T>::append(CTimeSeries<T> &CC, bool continous_time)
 {
-	for (int i = 0; i<CC.n; i++) append(CC.t[i], CC.C[i]);
+    double last_t= lastt();
+    for (int i = 0; i<CC.n; i++)
+    {
+        if (!continous_time)
+            append(CC.t[i], CC.C[i]);
+        else
+        {
+            append(CC.t[i]+last_t, CC.C[i]);
+        }
+
+    }
 }
 
 template<class T>

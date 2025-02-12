@@ -802,6 +802,19 @@ void CTimeSeriesSet<T>::append(T t, std::vector<T> c)
 }
 
 template <class T>
+bool CTimeSeriesSet<T>::merge(CTimeSeriesSet<T> &TS, bool continous_time)
+{
+    if (TS.nvars!=nvars)
+        return false;
+
+    for (int i=0; i<nvars; i++)
+    {
+        BTC[i].append(TS.BTC[i],continous_time);
+    }
+    return true;
+}
+
+template <class T>
 bool CTimeSeriesSet<T>::SetRow(int i, const T &t, const std::vector<T> &c)
 {
     bool res = true;
@@ -1172,6 +1185,15 @@ void CTimeSeriesSet<T>::append(const CTimeSeries<T> &TS, std::string name)
         BTC[BTC.size()-1].name = name;
 	pushBackName(name);
 	nvars = this->BTC.size();
+}
+
+template <class T>
+void CTimeSeriesSet<T>::append(const CTimeSeriesSet<T> &TS)
+{
+    for (int i=0; i<TS.nvars; i++)
+    {
+        append(TS.BTC[i],TS.BTC[i].name);
+    }
 }
 
 

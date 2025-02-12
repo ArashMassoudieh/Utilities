@@ -93,6 +93,8 @@ public:
 	int indexOf(const std::string& name) const;
 	void pushBackName(std::string name);
     void append(const CTimeSeries<T> &BTC, std::string name = "");
+    void append(const CTimeSeriesSet<T> &TS);
+    bool merge(CTimeSeriesSet<T> &TS, bool continous_time=false);
 	CTimeSeriesSet sort(int burnOut = 0);
 #ifdef QT_version
 	void compact(QDataStream &data) const;
