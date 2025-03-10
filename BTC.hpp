@@ -72,6 +72,7 @@ bool CTimeSeries<T>::SetT(int i, const T &value)
         t[i] = value;
     else
         return false;
+    return true;
 }
 
 template<class T>
@@ -81,6 +82,7 @@ bool CTimeSeries<T>::SetC(int i, const T &value)
         C[i] = value;
     else
         return false;
+    return true;
 }
 
 template<class T>
@@ -90,6 +92,7 @@ bool CTimeSeries<T>::SetD(int i, const T& value)
 		D[i] = value;
 	else
 		return false;
+    return true;
 }
 
 template<class T>
