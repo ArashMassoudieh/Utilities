@@ -3,6 +3,7 @@
 #include <cctype>
 #include <algorithm>
 #include < time.h >
+#define NOMINMAX
 #include <windows.h> 
 #endif // _WINDOWS
 
