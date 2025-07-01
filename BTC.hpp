@@ -2,7 +2,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "BTC.h"
 #include "math.h"
 #include "string.h"
 #include <iostream>
@@ -72,6 +71,7 @@ bool CTimeSeries<T>::SetT(int i, const T &value)
         t[i] = value;
     else
         return false;
+    return true;
 }
 
 template<class T>
@@ -81,6 +81,7 @@ bool CTimeSeries<T>::SetC(int i, const T &value)
         C[i] = value;
     else
         return false;
+    return true;
 }
 
 template<class T>
@@ -90,6 +91,20 @@ bool CTimeSeries<T>::SetD(int i, const T& value)
 		D[i] = value;
 	else
 		return false;
+    return true;
+}
+
+template<class T>
+bool CTimeSeries<T>::SetRow(int i, const double& _t, const double& value)
+{
+    if (i<n)
+    {   SetT(i,_t);
+        SetC(i,value);
+        return true;
+    }
+    else
+        return false;
+
 }
 
 template<class T>
@@ -163,7 +178,7 @@ CTimeSeries<T>::CTimeSeries(arma::mat &x, arma::mat &y)
 
 
 template<class T>
-CTimeSeries<T>::CTimeSeries(std::string Filename)
+CTimeSeries<T>::CTimeSeries(const std::string &Filename)
 {
 	n = 0;
 	t.clear();
@@ -350,7 +365,7 @@ T CTimeSeries<T>::interpol_D(const T &x)
 }
 
 template<class T>
-CTimeSeries<T> CTimeSeries<T>::interpol(std::vector<T> x)
+CTimeSeries<T> CTimeSeries<T>::interpol(const std::vector<T>& x)
 {
     CTimeSeries<T> BTCout;
 	for (unsigned int i=0; i<x.size(); i++)
@@ -360,7 +375,7 @@ CTimeSeries<T> CTimeSeries<T>::interpol(std::vector<T> x)
 }
 
 template<class T>
-CTimeSeries<T> CTimeSeries<T>::interpol(CTimeSeries<T> &x) const
+CTimeSeries<T> CTimeSeries<T>::interpol(const CTimeSeries<T> &x) const
 {
     CTimeSeries<T> BTCout;
 	for (int i=0; i<x.n; i++)
@@ -737,7 +752,7 @@ T diff(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, CTimeSeries<T> Q)
 }
 
 template<class T>
-bool CTimeSeries<T>::readfile(std::string Filename)
+bool CTimeSeries<T>::readfile(const std::string &Filename)
 {
     clear();
     filename = Filename;
@@ -953,19 +968,7 @@ T CTimeSeries<T>::minC() const
 }
 
 template<class T>
-T CTimeSeries<T>::std()
-{
-    T sum = 0;
-    T m = mean();
-	for (int i=0; i<n; i++)
-	{
-		sum+= pow(C[i]-m,2);
-	}
-	return sqrt(sum/n);
-}
-
-template<class T>
-T CTimeSeries<T>::std(int nlimit)
+T CTimeSeries<T>::std(int nlimit) const
 {
     T sum = 0;
     T m = mean(nlimit);
@@ -977,21 +980,7 @@ T CTimeSeries<T>::std(int nlimit)
 }
 
 template<class T>
-T CTimeSeries<T>::mean()
-{
-    T sum = 0;
-	for (int i=0; i<n; i++)
-	{
-		sum+= C[i];
-	}
-	if (n>0)
-		return sum/n;
-	else
-		return 0;
-}
-
-template<class T>
-T CTimeSeries<T>::integrate()
+T CTimeSeries<T>::integrate() const
 {
     T sum = 0;
 	for (int i=1; i<n; i++)
@@ -1002,7 +991,7 @@ T CTimeSeries<T>::integrate()
 }
 
 template<class T>
-T CTimeSeries<T>::variance()
+T CTimeSeries<T>::variance() const
 {
     T sum = 0;
     T mean = average();
@@ -1014,7 +1003,7 @@ T CTimeSeries<T>::variance()
 }
 
 template<class T>
-T CTimeSeries<T>::integrate(T tt)
+T CTimeSeries<T>::integrate(T tt) const
 {
     T sum = 0;
 	for (int i = 1; i<n; i++)
@@ -1025,7 +1014,7 @@ T CTimeSeries<T>::integrate(T tt)
 }
 
 template<class T>
-T CTimeSeries<T>::integrate(T t1, T t2)
+T CTimeSeries<T>::integrate(T t1, T t2) const
 {
     T sum=0;
 	if (structured)
@@ -1051,7 +1040,7 @@ T CTimeSeries<T>::integrate(T t1, T t2)
 }
 
 template<class T>
-int CTimeSeries<T>::lookupt(T _t)
+int CTimeSeries<T>::lookupt(T _t) const
 {
 	for (int i = 0; i < n - 1; i++)
 		if ((t[i]<_t) && (t[i + 1]>_t))
@@ -1060,7 +1049,7 @@ int CTimeSeries<T>::lookupt(T _t)
 }
 
 template<class T>
-T CTimeSeries<T>::average()
+T CTimeSeries<T>::average() const
 {
 	if (n>0)
 		return integrate()/(t[n-1]-t[0]);
@@ -1069,7 +1058,7 @@ T CTimeSeries<T>::average()
 }
 
 template<class T>
-T CTimeSeries<T>::average(T tt)
+T CTimeSeries<T>::average(T tt) const
 {
 	if (n>0)
         return integrate(tt) / (std::max(tt,t[n - 1]) - t[0]);
@@ -1078,23 +1067,14 @@ T CTimeSeries<T>::average(T tt)
 }
 
 template<class T>
-T CTimeSeries<T>::slope()
+T CTimeSeries<T>::slope() const
 {
 	return (C[n - 1] - C[n - 2]) / (t[n - 1] - t[n - 2]);
 }
 
 
 template<class T>
-T CTimeSeries<T>::percentile(T x)
-{
-    std::vector<T> X = QSort(C);
-	int i = int(x*X.size());
-	return X[i];
-
-}
-
-template<class T>
-T CTimeSeries<T>::percentile(T x, int limit)
+T CTimeSeries<T>::percentile(T x, int limit) const
 {
     std::vector<T> C1(C.size()-limit);
 	for (unsigned int i=0; i<C1.size(); i++)
@@ -1108,7 +1088,7 @@ T CTimeSeries<T>::percentile(T x, int limit)
 }
 
 template<class T>
-T CTimeSeries<T>::mean(int limit)
+T CTimeSeries<T>::mean(int limit) const
 {
     T sum = 0;
 	for (int i=limit; i<n; i++)
@@ -1117,7 +1097,7 @@ T CTimeSeries<T>::mean(int limit)
 }
 
 template<class T>
-T CTimeSeries<T>::mean_log(int limit)
+T CTimeSeries<T>::mean_log(int limit) const
 {
     T sum = 0;
 	for (int i=limit; i<n; i++)
@@ -1287,13 +1267,13 @@ CTimeSeries<T> CTimeSeries<T>::make_uniform(T increment, T t0, bool asgn_D)
 }
 
 template<class T>
-T CTimeSeries<T>::GetLastItemValue()
+T CTimeSeries<T>::GetLastItemValue() const
 {
     return C[n-1];
 }
 
 template<class T>
-T CTimeSeries<T>::GetLastItemTime()
+T CTimeSeries<T>::GetLastItemTime() const
 {
     return t[n-1];
 }
@@ -1334,35 +1314,7 @@ CTimeSeries<T> CTimeSeries<T>::extract(T t1, T t2)
 
 
 template<class T>
-CTimeSeries<T> CTimeSeries<T>::distribution(int n_bins, int limit)
-{
-    CTimeSeries<T> out(n_bins+2);
-
-	CVector C1(C.size()-limit);
-	for (int i=0; i<C1.num; i++)
-		C1[i] = C[i+limit];
-
-    T p_start = C1.min();
-    T p_end = C1.max()*1.001;
-	if (C1.max() < 0) p_end = C1.max() * 0.99; 
-    T dp = abs(p_end - p_start)/n_bins;
-	if (dp == 0) return out;
-	out.t[0] = p_start - dp/2;
-	out.C[0] = 0;
-	for (int i=0; i<n_bins+1; i++)
-	{
-		out.t[i+1] = out.t[i] + dp;
-		out.C[i+1] = out.C[i];
-	}
-
-	for (int i=0; i<C1.num; i++)
-		out.C[int((C1[i]-p_start)/dp)+1] += 1.0/C1.num/dp;
-
-	return out;
-}
-
-template<class T>
-std::vector<T> CTimeSeries<T>::trend()
+std::vector<T> CTimeSeries<T>::trend() const
 {
     T x_bar = mean_t();
     T y_bar = mean();
@@ -1458,7 +1410,7 @@ void CTimeSeries<T>::clear()
 }
 
 template<class T>
-T CTimeSeries<T>::wiggle()
+T CTimeSeries<T>::wiggle() const
 {
 	if (n>2)
 		return 3*(std::fabs(C[n-1])*(t[n-2]-t[n-3])-std::fabs(C[n-2])*(t[n-1]-t[n-3])+std::fabs(C[n-3])*(t[n-1]-t[n-2]))/(t[n-1]-t[n-3])/max(maxfabs(),1e-7);
@@ -1468,7 +1420,7 @@ T CTimeSeries<T>::wiggle()
 }
 
 template<class T>
-T CTimeSeries<T>::wiggle_corr(int _n)
+T CTimeSeries<T>::wiggle_corr(int _n) const
 {
 	if (n < _n) return 0;
     T sum=0;
@@ -1493,7 +1445,7 @@ T CTimeSeries<T>::wiggle_corr(int _n)
 }
 
 template<class T>
-bool CTimeSeries<T>::wiggle_sl(T tol)
+bool CTimeSeries<T>::wiggle_sl(T tol) const
 {
 	if (n < 4) return false;
     T mean = std::fabs(C[n - 1] + C[n - 2] + C[n - 3] + C[n - 4]) / 4.0+tol/100;
@@ -1718,7 +1670,7 @@ bool CTimeSeries<T>::resize(unsigned int _size)
 }
 
 template<class T>
-unsigned int CTimeSeries<T>::Capacity()
+unsigned int CTimeSeries<T>::Capacity() const
 {
     return C.size();
 }
@@ -1897,7 +1849,7 @@ CTimeSeries<T> CTimeSeries<T>::KernelSmooth(CDistribution* dist, const double &s
 */
 
 template<class T>
-RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> othertimeseries)
+RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> &othertimeseries)
 {
 	RegressionParameters parameters;
 	CTimeSeries<T> othertimeseries_mapped = othertimeseries.interpol(this);
@@ -1923,7 +1875,7 @@ RegressionParameters CTimeSeries<T>::LinearRegress(const CTimeSeries<T> othertim
 }
 
 template<class T>
-RegressionParameters CTimeSeries<T>::PowerRegress(const CTimeSeries<T> othertimeseries)
+RegressionParameters CTimeSeries<T>::PowerRegress(const CTimeSeries<T> &othertimeseries)
 {
 	RegressionParameters parameters;
 	CTimeSeries<T> othertimeseries_mapped = othertimeseries.interpol(this).Log();
@@ -1963,7 +1915,7 @@ CTimeSeries<T> CTimeSeries<T>::Predict(const RegressionParameters& regression_pa
 }
 
 template<class T>
-T CTimeSeries<T>::sum()
+T CTimeSeries<T>::sum() const
 {
 	T sum = 0; 
 	for (int i = 0; i < n; i++)
@@ -1974,7 +1926,7 @@ T CTimeSeries<T>::sum()
 }
 
 template<class T>
-T CTimeSeries<T>::sum_squared()
+T CTimeSeries<T>::sum_squared() const
 {
 	T sum2 = 0;
 	for (int i = 0; i < n; i++)
