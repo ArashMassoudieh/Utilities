@@ -52,6 +52,7 @@ public:
     CTimeSeries<T> add_mult(std::vector<int> ii, CTimeSeriesSet &mult);
     CTimeSeries<T> divide(int ii, int jj);
     CTimeSeriesSet make_uniform(T increment, T t0=-999, bool assgn_d=true);
+    CTimeSeriesSet Log();
     CTimeSeriesSet getpercentiles(std::vector<T> percents);
     CVector out_of_limit(T limit);
 	CTimeSeriesSet distribution(int n_bins, int n_columns, int limit);

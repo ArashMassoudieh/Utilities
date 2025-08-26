@@ -939,6 +939,28 @@ CTimeSeriesSet<T> CTimeSeriesSet<T>::make_uniform(T increment, T t0, bool assgn_
 }
 
 template <class T>
+CTimeSeriesSet<T> CTimeSeriesSet<T>::Log()
+{
+    if (nvars==0) return CTimeSeriesSet();
+    CTimeSeriesSet out(nvars);
+    out.names = names;
+
+    for (int i = 0; i < nvars; i++)
+    {
+        out.BTC[i] = BTC[i].Log();
+    }
+
+    for (int k=0; k<nvars; k++)
+    {   out.BTC[k].structured = BTC[k].structured;
+        out.BTC[k].name = BTC[k].name;
+    }
+
+    out.unif=unif;
+
+    return out;
+}
+
+template <class T>
 CTimeSeriesSet<T> CTimeSeriesSet<T>::getpercentiles(std::vector<T> percents)
 {
 	CTimeSeriesSet X(1+percents.size());
