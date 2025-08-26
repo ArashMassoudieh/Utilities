@@ -767,7 +767,7 @@ CTimeSeriesSet<T> CTimeSeriesSet<T>::distribution(int n_bins, int n_columns, int
     CTimeSeriesSet A(n_columns);
 	for (int i = 0; i < n_columns; i++)
 	{
-		A.BTC[i] = BTC[i].distribution(n_bins, limit);
+        A.BTC[i] = BTC[i].distribution(n_bins,0, limit);
         A.setname(i,names[i]);
 	}
 
