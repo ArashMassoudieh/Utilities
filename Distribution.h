@@ -5,7 +5,7 @@
 #include<string>
 #include "Vector.h"
 #include "Matrix.h"
-#include "BTC.h"
+#include "TimeSeries.h"
 #ifdef _interface
 #include "interface.h"
 #include "Structs.h"
@@ -39,8 +39,8 @@ public:
 	int n;
 	vector<double> s;
 	vector<double> e;
-    CTimeSeries<double> inverse_cumulative;
-    CTimeSeries<double> density;
+    TimeSeries<double> inverse_cumulative;
+    TimeSeries<double> density;
     distribution__type DistributionType;
     CDistribution(int nn);
 	CDistribution(const CDistribution &C);
@@ -55,7 +55,7 @@ public:
     bool readfromfile(const string &filename);
     bool WriteToFile(const map<string,string> Arguments);
     vector<double> SetRangeBasedOnMeanStd(const double &stdcoeff=3);
-    CTimeSeries<double> ToTimeSeries(int nbins=100, const double& stdcoeff = 3);
+    TimeSeries<double> ToTimeSeries(int nbins=100, const double& stdcoeff = 3);
     static double unitrandom();
     static double getstdnormalrand();
     static double getnormalrand(double mu, double std);
