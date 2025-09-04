@@ -297,9 +297,9 @@ bool CDistribution::readfromfile(const string &filename)
         cout<< "File [" << filename << "] was not found!"<<endl;
         return false;
     }
-    CTimeSeries<double> cumulative = density.getcummulative();
-    cumulative = cumulative/cumulative.GetC(cumulative.n-1);
-    inverse_cumulative = cumulative.inverse_cumulative_uniform();
+    TimeSeries<double> cumulative = density.getcummulative();
+    cumulative = cumulative/cumulative.getValue(cumulative.size()-1);
+    inverse_cumulative = cumulative.inverse_cummulative_uniform();
     return true;
 }
 #ifdef _interface
@@ -344,7 +344,7 @@ bool CDistribution::WriteToFile(const map<string,string> Arguments)
         nbins = aquiutils::atof(Arguments.at("nbins"));
 
     vector<double> range = SetRangeBasedOnMeanStd(3);
-    CTimeSeries<double> timeseries;
+    TimeSeries<double> timeseries;
     for (double x = range[0]; x<=range[1]; x+=(range[1]-range[0])/nbins)
     {
         timeseries.append(x, evaluate(x));
@@ -353,10 +353,10 @@ bool CDistribution::WriteToFile(const map<string,string> Arguments)
     return true;
 }
 
-CTimeSeries<double> CDistribution::ToTimeSeries(int nbins, const double& stdcoeff)
+TimeSeries<double> CDistribution::ToTimeSeries(int nbins, const double& stdcoeff)
 {
     vector<double> range = SetRangeBasedOnMeanStd(stdcoeff);
-    CTimeSeries<double> timeseries;
+    TimeSeries<double> timeseries;
     for (double x = range[0]; x <= range[1]; x += (range[1] - range[0]) / nbins)
     {
         timeseries.append(x, evaluate(x));
@@ -433,10 +433,11 @@ bool CDistribution::SetInverseCumulative(const map<string,string> &arguments)
 
 bool CDistribution::WriteInverseCumulativeToFile(const map<string,string> &arguments)
 {
-    if (inverse_cumulative.n==0)
+    if (inverse_cumulative.size()==0)
         return false;
     if (arguments.count("filename")==0) return false;
-    return inverse_cumulative.writefile(arguments.at("filename"));
+    inverse_cumulative.writefile(arguments.at("filename"));
+    return true;
 }
 
 double CDistribution::InverseCumulativeValue(double u)
