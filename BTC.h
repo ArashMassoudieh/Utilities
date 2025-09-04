@@ -188,6 +188,7 @@ template<class T> T diff_log(const CTimeSeries<T>& BTC_p, const CTimeSeries<T>& 
 template<class T> T diff_norm(const CTimeSeries<T>& BTC_p, const CTimeSeries<T>& BTC_d);
 template<class T> T ADD(const CTimeSeries<T>& BTC_p, const CTimeSeries<T>& BTC_d);
 template<class T> T R2(const CTimeSeries<T>& BTC_p, const CTimeSeries<T>& BTC_d);
+template<class T> T R2(const CTimeSeries<T>* BTC_p, const CTimeSeries<T>* BTC_d);
 template<class T> CTimeSeries<T> operator*(T, const CTimeSeries<T>&);
 template<class T> CTimeSeries<T> operator*(const CTimeSeries<T>&, double);
 template<class T> CTimeSeries<T> operator/(const CTimeSeries<T>&, const CTimeSeries<T>&);

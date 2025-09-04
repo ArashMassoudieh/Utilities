@@ -526,7 +526,7 @@ T diff2(const CTimeSeries<T>* BTC_p, const CTimeSeries<T>* BTC_d)
 
 
 template<class T>
-T R2(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d)
+T R2(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d)
 {
     T sumcov = 0;
     T sumvar1 = 0;
@@ -591,7 +591,7 @@ T R2(const CTimeSeries<T> *BTC_p, const CTimeSeries<T> *BTC_d)
 
 
 template<class T>
-T R(CTimeSeries<T> BTC_p, CTimeSeries<T> BTC_d, int nlimit)
+T R(CTimeSeries<T> &BTC_p, CTimeSeries<T> &BTC_d, int nlimit)
 {
     T sumcov = 0;
     T sumvar1 = 0;
