@@ -2559,12 +2559,12 @@ namespace TimeSeriesMetrics {
             }
             return tensor;
         } else {
-            // Create 1D tensor with only values
-            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size())},
+            // Create 2D tensor with only values [num_points, 1] for neural networks
+            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size()), 1},
                                                 torch::dtype(torch::kFloat32).device(device));
 
             for (size_t i = 0; i < this->size(); ++i) {
-                tensor[i] = static_cast<float>((*this)[i].c);
+                tensor[i][0] = static_cast<float>((*this)[i].c);
             }
             return tensor;
         }
@@ -2605,11 +2605,12 @@ namespace TimeSeriesMetrics {
             }
             return tensor;
         } else {
-            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size())},
+            // Create 2D tensor with only normalized values [num_points, 1]
+            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size()), 1},
                                                 torch::dtype(torch::kFloat32).device(device));
 
             for (size_t i = 0; i < this->size(); ++i) {
-                tensor[i] = static_cast<float>(((*this)[i].c - v_min) / v_range);
+                tensor[i][0] = static_cast<float>(((*this)[i].c - v_min) / v_range);
             }
             return tensor;
         }
@@ -2690,7 +2691,7 @@ namespace TimeSeriesMetrics {
                     result.addPoint(time, value);
                 }
             } else {
-                // 2D tensor - treat as multiple time series values (take first column)
+                // 2D tensor - treat as values only (take first column)
                 result.reserve(cpu_tensor.size(0));
                 for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
                     T time = time_offset + static_cast<T>(i) * time_step;
@@ -2752,15 +2753,15 @@ namespace TimeSeriesMetrics {
             }
             return tensor;
         } else {
-            // Create 1D tensor with only interpolated values
-            torch::Tensor tensor = torch::zeros({num_points},
+            // Create 2D tensor with only interpolated values [num_points, 1] for neural networks
+            torch::Tensor tensor = torch::zeros({num_points, 1},
                                                 torch::dtype(torch::kFloat32).device(device));
 
             for (int64_t i = 0; i < num_points; ++i) {
                 T current_time = t_start + static_cast<T>(i) * dt;
                 if (current_time > t_end) current_time = t_end;
 
-                tensor[i] = static_cast<float>(this->interpol(current_time));
+                tensor[i][0] = static_cast<float>(this->interpol(current_time));
             }
             return tensor;
         }
@@ -2787,12 +2788,12 @@ namespace TimeSeriesMetrics {
             }
             return tensor;
         } else {
-            // Create 1D tensor with only interpolated values
-            torch::Tensor tensor = torch::zeros({num_points},
+            // Create 2D tensor with only interpolated values [num_points, 1] for neural networks
+            torch::Tensor tensor = torch::zeros({num_points, 1},
                                                 torch::dtype(torch::kFloat32).device(device));
 
             for (int64_t i = 0; i < num_points; ++i) {
-                tensor[i] = static_cast<float>(this->interpol(time_points[i]));
+                tensor[i][0] = static_cast<float>(this->interpol(time_points[i]));
             }
             return tensor;
         }
@@ -2841,8 +2842,8 @@ namespace TimeSeriesMetrics {
             }
             return tensor;
         } else {
-            // Create 1D tensor with only normalized interpolated values
-            torch::Tensor tensor = torch::zeros({num_points},
+            // Create 2D tensor with only normalized interpolated values [num_points, 1]
+            torch::Tensor tensor = torch::zeros({num_points, 1},
                                                 torch::dtype(torch::kFloat32).device(device));
 
             for (int64_t i = 0; i < num_points; ++i) {
@@ -2850,15 +2851,13 @@ namespace TimeSeriesMetrics {
                 if (current_time > t_end) current_time = t_end;
 
                 T interpolated_value = this->interpol(current_time);
-                tensor[i] = static_cast<float>((interpolated_value - v_min) / v_range);
+                tensor[i][0] = static_cast<float>((interpolated_value - v_min) / v_range);
             }
             return tensor;
         }
     }
 
 #endif // TORCH_SUPPORT
-
-
 
 
 
