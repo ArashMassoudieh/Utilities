@@ -763,12 +763,14 @@ T TimeSeries<T>::inverse_CDF(T x) const
     return invts.interpol(x);
 }
 
+#ifdef GSL
 template<typename T>
 T TimeSeries<T>::interpol(const T& x,
                           const TimeSeries<T> &CumulativeDistribution,
                           const double &correlationlength,
                           bool addpoint)
 {
+
     ensureGSLInitialized();
     // Convert to normal scores
     TimeSeries<T> NormalScores = ConvertToNormalScore();
@@ -820,7 +822,7 @@ T TimeSeries<T>::interpol(const T& x,
 
 
 }
-
+#endif
 
 
 template<typename T>
@@ -2499,6 +2501,7 @@ namespace TimeSeriesMetrics {
 
     
 }
+// namespace TimeSeriesMetrics
 
 
     /**
@@ -2537,8 +2540,325 @@ namespace TimeSeriesMetrics {
         return std::max(std::fabs(diff.maxC()), std::fabs(diff.minC()));
     }
 
+#ifdef TORCH_SUPPORT
 
-// namespace TimeSeriesMetrics
+    template<typename T>
+    torch::Tensor TimeSeries<T>::toTensor(bool include_time, torch::Device device) const {
+        if (this->empty()) {
+            return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+        }
+
+        if (include_time) {
+            // Create 2D tensor with [time, value] pairs
+            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size()), 2},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (size_t i = 0; i < this->size(); ++i) {
+                tensor[i][0] = static_cast<float>((*this)[i].t);
+                tensor[i][1] = static_cast<float>((*this)[i].c);
+            }
+            return tensor;
+        } else {
+            // Create 1D tensor with only values
+            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size())},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (size_t i = 0; i < this->size(); ++i) {
+                tensor[i] = static_cast<float>((*this)[i].c);
+            }
+            return tensor;
+        }
+    }
+
+    template<typename T>
+    torch::Tensor TimeSeries<T>::toNormalizedTensor(bool include_time,
+                                                    std::optional<T> value_min,
+                                                    std::optional<T> value_max,
+                                                    torch::Device device) const {
+        if (this->empty()) {
+            return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+        }
+
+        // Calculate normalization parameters for values
+        T v_min = value_min.value_or(this->minC());
+        T v_max = value_max.value_or(this->maxC());
+        T v_range = v_max - v_min;
+
+        // Calculate normalization parameters for time
+        T t_min = this->mint();
+        T t_max = this->maxt();
+        T t_range = t_max - t_min;
+
+        // Avoid division by zero
+        if (v_range == T{0}) v_range = T{1};
+        if (t_range == T{0}) t_range = T{1};
+
+        if (include_time) {
+            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size()), 2},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (size_t i = 0; i < this->size(); ++i) {
+                // Normalize time to [0, 1]
+                tensor[i][0] = static_cast<float>(((*this)[i].t - t_min) / t_range);
+                // Normalize value to [0, 1]
+                tensor[i][1] = static_cast<float>(((*this)[i].c - v_min) / v_range);
+            }
+            return tensor;
+        } else {
+            torch::Tensor tensor = torch::zeros({static_cast<int64_t>(this->size())},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (size_t i = 0; i < this->size(); ++i) {
+                tensor[i] = static_cast<float>(((*this)[i].c - v_min) / v_range);
+            }
+            return tensor;
+        }
+    }
+
+    template<typename T>
+    torch::Tensor TimeSeries<T>::toSlidingWindowTensor(int window_size,
+                                                       int stride,
+                                                       bool include_time,
+                                                       torch::Device device) const {
+        if (this->empty() || window_size <= 0 || stride <= 0) {
+            return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+        }
+
+        if (static_cast<size_t>(window_size) > this->size()) {
+            throw std::invalid_argument("Window size cannot be larger than time series length");
+        }
+
+        // Calculate number of windows
+        int num_windows = (static_cast<int>(this->size()) - window_size) / stride + 1;
+        int features = include_time ? 2 : 1;
+
+        torch::Tensor tensor = torch::zeros({num_windows, window_size, features},
+                                            torch::dtype(torch::kFloat32).device(device));
+
+        for (int w = 0; w < num_windows; ++w) {
+            int start_idx = w * stride;
+
+            for (int i = 0; i < window_size; ++i) {
+                int data_idx = start_idx + i;
+
+                if (include_time) {
+                    tensor[w][i][0] = static_cast<float>((*this)[data_idx].t);
+                    tensor[w][i][1] = static_cast<float>((*this)[data_idx].c);
+                } else {
+                    tensor[w][i][0] = static_cast<float>((*this)[data_idx].c);
+                }
+            }
+        }
+
+        return tensor;
+    }
+
+    template<typename T>
+    TimeSeries<T> TimeSeries<T>::fromTensor(const torch::Tensor& tensor,
+                                            bool has_time,
+                                            T time_offset,
+                                            T time_step) {
+        TimeSeries<T> result;
+
+        // Ensure tensor is on CPU for data access
+        torch::Tensor cpu_tensor = tensor.to(torch::kCPU);
+
+        if (cpu_tensor.dim() == 1) {
+            // 1D tensor - values only
+            if (has_time) {
+                throw std::invalid_argument("Cannot interpret 1D tensor as having time values");
+            }
+
+            result.reserve(cpu_tensor.size(0));
+            for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
+                T time = time_offset + static_cast<T>(i) * time_step;
+                T value = static_cast<T>(cpu_tensor[i].item<float>());
+                result.addPoint(time, value);
+            }
+        }
+        else if (cpu_tensor.dim() == 2) {
+            if (has_time) {
+                // 2D tensor with [time, value] pairs
+                if (cpu_tensor.size(1) != 2) {
+                    throw std::invalid_argument("2D tensor with time must have exactly 2 columns [time, value]");
+                }
+
+                result.reserve(cpu_tensor.size(0));
+                for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
+                    T time = static_cast<T>(cpu_tensor[i][0].item<float>());
+                    T value = static_cast<T>(cpu_tensor[i][1].item<float>());
+                    result.addPoint(time, value);
+                }
+            } else {
+                // 2D tensor - treat as multiple time series values (take first column)
+                result.reserve(cpu_tensor.size(0));
+                for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
+                    T time = time_offset + static_cast<T>(i) * time_step;
+                    T value = static_cast<T>(cpu_tensor[i][0].item<float>());
+                    result.addPoint(time, value);
+                }
+            }
+        }
+        else if (cpu_tensor.dim() == 3) {
+            // 3D tensor - assume it's a sliding window tensor, take first window
+            if (cpu_tensor.size(0) == 0) {
+                return result; // empty
+            }
+
+            torch::Tensor first_window = cpu_tensor[0]; // Take first window
+
+            result.reserve(first_window.size(0));
+            for (int64_t i = 0; i < first_window.size(0); ++i) {
+                if (has_time && first_window.size(1) >= 2) {
+                    T time = static_cast<T>(first_window[i][0].item<float>());
+                    T value = static_cast<T>(first_window[i][1].item<float>());
+                    result.addPoint(time, value);
+                } else {
+                    T time = time_offset + static_cast<T>(i) * time_step;
+                    T value = static_cast<T>(first_window[i][0].item<float>());
+                    result.addPoint(time, value);
+                }
+            }
+        }
+        else {
+            throw std::invalid_argument("Unsupported tensor dimension: " + std::to_string(cpu_tensor.dim()));
+        }
+
+        return result;
+    }
+
+    template<typename T>
+    torch::Tensor TimeSeries<T>::toTensorAtIntervals(T t_start, T t_end, T dt,
+                                                     bool include_time,
+                                                     torch::Device device) const {
+        if (this->empty() || dt <= T{0} || t_end <= t_start) {
+            return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+        }
+
+        // Calculate number of time points
+        int64_t num_points = static_cast<int64_t>((t_end - t_start) / dt) + 1;
+
+        if (include_time) {
+            // Create 2D tensor with [time, value] pairs
+            torch::Tensor tensor = torch::zeros({num_points, 2},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (int64_t i = 0; i < num_points; ++i) {
+                T current_time = t_start + static_cast<T>(i) * dt;
+                if (current_time > t_end) current_time = t_end; // Handle floating point precision
+
+                tensor[i][0] = static_cast<float>(current_time);
+                tensor[i][1] = static_cast<float>(this->interpol(current_time));
+            }
+            return tensor;
+        } else {
+            // Create 1D tensor with only interpolated values
+            torch::Tensor tensor = torch::zeros({num_points},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (int64_t i = 0; i < num_points; ++i) {
+                T current_time = t_start + static_cast<T>(i) * dt;
+                if (current_time > t_end) current_time = t_end;
+
+                tensor[i] = static_cast<float>(this->interpol(current_time));
+            }
+            return tensor;
+        }
+    }
+
+    template<typename T>
+    torch::Tensor TimeSeries<T>::toTensorAtTimes(const std::vector<T>& time_points,
+                                                 bool include_time,
+                                                 torch::Device device) const {
+        if (this->empty() || time_points.empty()) {
+            return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+        }
+
+        int64_t num_points = static_cast<int64_t>(time_points.size());
+
+        if (include_time) {
+            // Create 2D tensor with [time, value] pairs
+            torch::Tensor tensor = torch::zeros({num_points, 2},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (int64_t i = 0; i < num_points; ++i) {
+                tensor[i][0] = static_cast<float>(time_points[i]);
+                tensor[i][1] = static_cast<float>(this->interpol(time_points[i]));
+            }
+            return tensor;
+        } else {
+            // Create 1D tensor with only interpolated values
+            torch::Tensor tensor = torch::zeros({num_points},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (int64_t i = 0; i < num_points; ++i) {
+                tensor[i] = static_cast<float>(this->interpol(time_points[i]));
+            }
+            return tensor;
+        }
+    }
+
+    template<typename T>
+    torch::Tensor TimeSeries<T>::toNormalizedTensorAtIntervals(T t_start, T t_end, T dt,
+                                                               bool include_time,
+                                                               std::optional<T> value_min,
+                                                               std::optional<T> value_max,
+                                                               torch::Device device) const {
+        if (this->empty() || dt <= T{0} || t_end <= t_start) {
+            return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+        }
+
+        // Calculate normalization parameters for values
+        T v_min = value_min.value_or(this->minC());
+        T v_max = value_max.value_or(this->maxC());
+        T v_range = v_max - v_min;
+
+        // Calculate normalization parameters for time
+        T t_range = t_end - t_start;
+
+        // Avoid division by zero
+        if (v_range == T{0}) v_range = T{1};
+        if (t_range == T{0}) t_range = T{1};
+
+        // Calculate number of time points
+        int64_t num_points = static_cast<int64_t>((t_end - t_start) / dt) + 1;
+
+        if (include_time) {
+            // Create 2D tensor with normalized [time, value] pairs
+            torch::Tensor tensor = torch::zeros({num_points, 2},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (int64_t i = 0; i < num_points; ++i) {
+                T current_time = t_start + static_cast<T>(i) * dt;
+                if (current_time > t_end) current_time = t_end;
+
+                T interpolated_value = this->interpol(current_time);
+
+                // Normalize time to [0, 1]
+                tensor[i][0] = static_cast<float>((current_time - t_start) / t_range);
+                // Normalize value to [0, 1]
+                tensor[i][1] = static_cast<float>((interpolated_value - v_min) / v_range);
+            }
+            return tensor;
+        } else {
+            // Create 1D tensor with only normalized interpolated values
+            torch::Tensor tensor = torch::zeros({num_points},
+                                                torch::dtype(torch::kFloat32).device(device));
+
+            for (int64_t i = 0; i < num_points; ++i) {
+                T current_time = t_start + static_cast<T>(i) * dt;
+                if (current_time > t_end) current_time = t_end;
+
+                T interpolated_value = this->interpol(current_time);
+                tensor[i] = static_cast<float>((interpolated_value - v_min) / v_range);
+            }
+            return tensor;
+        }
+    }
+
+#endif // TORCH_SUPPORT
+
+
 
 
 

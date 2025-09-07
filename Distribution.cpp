@@ -226,7 +226,7 @@ int CDistribution::GetRand()
 }
 
 
-
+#ifdef GSL
 double CDistribution::inverseCDF(double u,bool flux_w)
 {
 	if (aquiutils::tolower(name) == "exp" || aquiutils::tolower(name) == "exponential")
@@ -259,6 +259,8 @@ double CDistribution::inverseCDF(double u,bool flux_w)
 	return 0;
 
 }
+#endif
+
 
 double unifrandom(double xmin, double xmax)
 {
@@ -267,6 +269,7 @@ double unifrandom(double xmin, double xmax)
 	return a / k*(xmax - xmin) + xmin;
 }
 
+#ifdef GSL
 double std_normal_phi_inv(const double &u)
 {
 	double u1 = gsl_cdf_ugaussian_Pinv(u);
@@ -289,6 +292,7 @@ double CDistribution::evaluate_CDF(double x, bool flux_w)
             return gsl_cdf_lognormal_P(x, params[0], params[1]);
 	}
 }
+#endif
 
 bool CDistribution::readfromfile(const string &filename)
 {
@@ -606,6 +610,7 @@ CVector getlognormal(int m, double mu, double std)
     return M;
 }
 
+#ifdef _arma
 double getpdfnormal(CVector& X, CVector& mu, CMatrix& std)
 {
     int k = X.num;
@@ -636,6 +641,8 @@ double getpdflognormal(CVector& X, CVector& mu, CMatrix& std)
     return pdf;
 
 }
+#endif
+
 double stdnormal_cdf(double u)
 {
     const double a[5] = {

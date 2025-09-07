@@ -29,6 +29,10 @@
 #include <QVariant>
 #endif
 
+#ifdef TORCH_SUPPORT
+#include <torch/torch.h>
+#endif
+
  /**
   * @brief Represents a data point in the time series.
   */
@@ -281,11 +285,118 @@ public:
     void fromJson(const QJsonObject& obj);                ///< Load from QJsonObject
 #endif // Q_JSON_SUPPORT
 
-    
-
     bool fileNotFound = false;
     bool fileNotCorrect = false;
     void setdt(double dt) {dt_=dt;}
+
+#ifdef TORCH_SUPPORT
+    /**
+     * @brief Convert TimeSeries values to a torch::Tensor for ANN training.
+     * @param include_time If true, returns a 2D tensor with [time, value] pairs.
+     *                     If false, returns a 1D tensor with only values.
+     * @param device Target device for the tensor (CPU, CUDA, etc.)
+     * @return torch::Tensor containing the time series data
+     */
+    torch::Tensor toTensor(bool include_time = false,
+                           torch::Device device = torch::kCPU) const;
+
+    /**
+     * @brief Convert TimeSeries to a normalized torch::Tensor.
+     * @param include_time If true, includes normalized time values.
+     * @param value_min Minimum value for normalization (uses series min if not provided)
+     * @param value_max Maximum value for normalization (uses series max if not provided)
+     * @param device Target device for the tensor
+     * @return torch::Tensor with values normalized to [0, 1] range
+     */
+    torch::Tensor toNormalizedTensor(bool include_time = false,
+                                     std::optional<T> value_min = std::nullopt,
+                                     std::optional<T> value_max = std::nullopt,
+                                     torch::Device device = torch::kCPU) const;
+
+    /**
+     * @brief Convert TimeSeries to a sliding window tensor for sequence modeling.
+     * @param window_size Size of each window
+     * @param stride Step size between windows
+     * @param include_time Whether to include time values in each window
+     * @param device Target device for the tensor
+     * @return torch::Tensor of shape [num_windows, window_size, features]
+     */
+    torch::Tensor toSlidingWindowTensor(int window_size,
+                                        int stride = 1,
+                                        bool include_time = false,
+                                        torch::Device device = torch::kCPU) const;
+
+    /**
+     * @brief Create a TimeSeries from a torch::Tensor.
+     * @param tensor Input tensor (1D for values only, 2D for [time, value] pairs)
+     * @param has_time If true, treats 2D tensor as [time, value] pairs
+     * @param time_offset Starting time value if tensor contains values only
+     * @param time_step Time increment if tensor contains values only
+     * @return TimeSeries constructed from tensor data
+     */
+    static TimeSeries<T> fromTensor(const torch::Tensor& tensor,
+                                    bool has_time = false,
+                                    T time_offset = T{0},
+                                    T time_step = T{1});
+
+    /**
+     * @brief Generate tensor with interpolated values at specified time intervals.
+     * @param t_start Start time
+     * @param t_end End time
+     * @param dt Time step increment
+     * @param include_time If true, returns [time, value] pairs
+     * @param device Target device for the tensor
+     * @return torch::Tensor with interpolated values at uniform time intervals
+     */
+    torch::Tensor toTensorAtIntervals(T t_start, T t_end, T dt,
+                                      bool include_time = false,
+                                      torch::Device device = torch::kCPU) const;
+
+    /**
+     * @brief Generate tensor with interpolated values at specified time points.
+     * @param time_points Vector of time points where values should be interpolated
+     * @param include_time If true, returns [time, value] pairs
+     * @param device Target device for the tensor
+     * @return torch::Tensor with interpolated values at specified times
+     */
+    torch::Tensor toTensorAtTimes(const std::vector<T>& time_points,
+                                  bool include_time = false,
+                                  torch::Device device = torch::kCPU) const;
+
+    /**
+     * @brief Generate normalized tensor with interpolated values at time intervals.
+     * @param t_start Start time
+     * @param t_end End time
+     * @param dt Time step increment
+     * @param include_time If true, includes normalized time values
+     * @param value_min Minimum value for normalization (auto-calculated if not provided)
+     * @param value_max Maximum value for normalization (auto-calculated if not provided)
+     * @param device Target device for the tensor
+     * @return torch::Tensor with normalized interpolated values
+     */
+    torch::Tensor toNormalizedTensorAtIntervals(T t_start, T t_end, T dt,
+                                                bool include_time = false,
+                                                std::optional<T> value_min = std::nullopt,
+                                                std::optional<T> value_max = std::nullopt,
+                                                torch::Device device = torch::kCPU) const;
+
+    /**
+     * @brief Generate sliding window tensor from interpolated uniform time grid.
+     * @param t_start Start time
+     * @param t_end End time
+     * @param dt Time step increment
+     * @param window_size Size of each window
+     * @param stride Step size between windows
+     * @param include_time Whether to include time values in each window
+     * @param device Target device for the tensor
+     * @return torch::Tensor of shape [num_windows, window_size, features]
+     */
+    torch::Tensor toSlidingWindowTensorAtIntervals(T t_start, T t_end, T dt,
+                                                   int window_size, int stride = 1,
+                                                   bool include_time = false,
+                                                   torch::Device device = torch::kCPU) const;
+
+#endif // TORCH_SUPPORT
 private:
     bool structured_ = false;
     T dt_ = 0;
