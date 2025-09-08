@@ -567,11 +567,10 @@ void TimeSeries<T>::writefile(const std::string& filename) const {
     std::ofstream file(filename);
     if (!file.good()) return;
 
-    file << "n " << this->size() << ", TimeSeries size " << this->size() << std::endl;
+    // Write each data point as "time,value" on separate lines
     for (const auto& dp : *this) {
-        std::ostringstream time_str;
-        time_str << std::fixed << std::setprecision(3) << dp.t;
-        file << time_str.str() << "," << dp.c;
+        file << std::fixed << std::setprecision(6)
+        << dp.t << "," << dp.c << std::endl;
     }
 
     file.close();
