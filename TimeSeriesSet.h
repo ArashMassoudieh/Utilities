@@ -167,6 +167,44 @@ public:
     void fromJson(const QJsonObject& json); ///< Load from QJsonObject
 #endif // Q_JSON_SUPPORT
 
+
+#ifdef TORCH_SUPPORT
+    /**
+     * @brief Create a TimeSeriesSet from a torch::Tensor.
+     * @param tensor Input tensor with shape [num_samples, num_series]
+     * @param start_time Start time for the time series
+     * @param end_time End time for the time series
+     * @param series_names Optional vector of names for each series
+     * @return TimeSeriesSet constructed from tensor data
+     */
+    static TimeSeriesSet<T> fromTensor(const torch::Tensor& tensor,
+                                       T start_time,
+                                       T end_time,
+                                       const std::vector<std::string>& series_names = {});
+
+    /**
+     * @brief Convert TimeSeriesSet to torch::Tensor using existing data points.
+     * All series must have the same number of points and corresponding time values.
+     * @param include_time If true, returns tensor with shape [num_points, num_series + 1] where first column is time
+     * @param device Target device for the tensor
+     * @return torch::Tensor with shape [num_points, num_series] or [num_points, num_series + 1]
+     */
+    torch::Tensor toTensor(bool include_time = false,
+                           torch::Device device = torch::kCPU) const;
+
+    /**
+     * @brief Convert TimeSeriesSet to torch::Tensor with uniform interpolation.
+     * @param t_start Start time for interpolation
+     * @param t_end End time for interpolation
+     * @param dt Time step for uniform sampling
+     * @param include_time If true, returns tensor with time column as first column
+     * @param device Target device for the tensor
+     * @return torch::Tensor with uniform time spacing
+     */
+    torch::Tensor toTensorAtIntervals(double t_start, double t_end, double dt,
+                                      bool include_time = false,
+                                      torch::Device device = torch::kCPU) const;
+#endif
     // Properties
     std::string filename; ///< File associated with the set
     std::string name; ///< Name of the set

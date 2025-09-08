@@ -1180,3 +1180,166 @@ T TimeSeriesSet<T>::maxtime() const {
         max_time = std::max((*this)[i].maxt(), max_time);
     return max_time;
 }
+
+#ifdef TORCH_SUPPORT
+template<typename T>
+TimeSeriesSet<T> TimeSeriesSet<T>::fromTensor(const torch::Tensor& tensor,
+                                              T start_time,
+                                              T end_time,
+                                              const std::vector<std::string>& series_names) {
+    // Ensure tensor is on CPU for data access
+    torch::Tensor cpu_tensor = tensor.to(torch::kCPU);
+
+    if (cpu_tensor.dim() != 2) {
+        throw std::invalid_argument("Tensor must be 2D with shape [num_samples, num_series]");
+    }
+
+    if (end_time <= start_time) {
+        throw std::invalid_argument("end_time must be greater than start_time");
+    }
+
+    int64_t num_samples = cpu_tensor.size(0);
+    int64_t num_series = cpu_tensor.size(1);
+
+    if (num_samples == 0) {
+        throw std::invalid_argument("Tensor cannot have zero samples");
+    }
+
+    // Calculate time step
+    T dt = (end_time - start_time) / static_cast<T>(num_samples - 1);
+
+    // Create TimeSeriesSet
+    TimeSeriesSet<T> result(static_cast<size_t>(num_series));
+
+    // Set series names
+    for (int64_t series_idx = 0; series_idx < num_series; ++series_idx) {
+        std::string name;
+        if (series_idx < static_cast<int64_t>(series_names.size()) && !series_names[series_idx].empty()) {
+            name = series_names[series_idx];
+        } else {
+            name = "series_" + std::to_string(series_idx);
+        }
+        result.setSeriesName(static_cast<int>(series_idx), name);
+
+        // Reserve space for efficiency
+        result[static_cast<int>(series_idx)].reserve(static_cast<size_t>(num_samples));
+    }
+
+    // Fill each TimeSeries with data
+    for (int64_t sample_idx = 0; sample_idx < num_samples; ++sample_idx) {
+        T current_time = start_time + static_cast<T>(sample_idx) * dt;
+
+        for (int64_t series_idx = 0; series_idx < num_series; ++series_idx) {
+            T value = static_cast<T>(cpu_tensor[sample_idx][series_idx].item<float>());
+            result[static_cast<int>(series_idx)].addPoint(current_time, value);
+        }
+    }
+
+    return result;
+}
+
+template<typename T>
+torch::Tensor TimeSeriesSet<T>::toTensor(bool include_time, torch::Device device) const {
+    if (this->empty()) {
+        return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+    }
+
+    // Check that all series have the same number of points
+    size_t num_points = (*this)[0].size();
+    for (size_t i = 1; i < this->size(); ++i) {
+        if ((*this)[i].size() != num_points) {
+            throw std::runtime_error("All TimeSeries must have the same number of points. "
+                                     "Series 0 has " + std::to_string(num_points) + " points, "
+                                                                    "but series " + std::to_string(i) + " has " +
+                                     std::to_string((*this)[i].size()) + " points.");
+        }
+    }
+
+    if (num_points == 0) {
+        return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+    }
+
+    // Verify that all series have corresponding time values (optional strict check)
+    const auto& reference_series = (*this)[0];
+    for (size_t i = 1; i < this->size(); ++i) {
+        for (size_t j = 0; j < num_points; ++j) {
+            if (std::abs((*this)[i].getTime(j) - reference_series.getTime(j)) > 1e-10) {
+                throw std::runtime_error("Time values must match across all series. "
+                                         "Mismatch at point " + std::to_string(j) +
+                                         " between series 0 and " + std::to_string(i));
+            }
+        }
+    }
+
+    int num_series = static_cast<int>(this->size());
+    int num_cols = include_time ? num_series + 1 : num_series;
+
+    // Create tensor [num_points, num_series] or [num_points, num_series + 1]
+    torch::Tensor tensor = torch::zeros({static_cast<int64_t>(num_points), num_cols},
+                                        torch::dtype(torch::kFloat32).device(device));
+
+    for (size_t point_idx = 0; point_idx < num_points; ++point_idx) {
+        int col_idx = 0;
+
+        // Add time column if requested
+        if (include_time) {
+            tensor[point_idx][col_idx] = static_cast<float>(reference_series.getTime(point_idx));
+            col_idx++;
+        }
+
+        // Add all series values
+        for (int series_idx = 0; series_idx < num_series; ++series_idx) {
+            tensor[point_idx][col_idx] = static_cast<float>((*this)[series_idx].getValue(point_idx));
+            col_idx++;
+        }
+    }
+
+    return tensor;
+}
+
+template<typename T>
+torch::Tensor TimeSeriesSet<T>::toTensorAtIntervals(double t_start, double t_end, double dt,
+                                                    bool include_time,
+                                                    torch::Device device) const {
+    if (this->empty()) {
+        return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
+    }
+
+    if (dt <= 0 || t_end <= t_start) {
+        throw std::invalid_argument("Invalid time parameters: dt must be positive and t_end > t_start");
+    }
+
+    // Calculate number of time points
+    int64_t num_points = static_cast<int64_t>((t_end - t_start) / dt) + 1;
+    int num_series = static_cast<int>(this->size());
+    int num_cols = include_time ? num_series + 1 : num_series;
+
+    // Create tensor [num_points, num_series] or [num_points, num_series + 1]
+    torch::Tensor tensor = torch::zeros({num_points, num_cols},
+                                        torch::dtype(torch::kFloat32).device(device));
+
+    // Fill tensor with interpolated values
+    for (int64_t point_idx = 0; point_idx < num_points; ++point_idx) {
+        double current_time = t_start + point_idx * dt;
+        if (current_time > t_end) current_time = t_end; // Handle floating point precision
+
+        int col_idx = 0;
+
+        // Add time column if requested
+        if (include_time) {
+            tensor[point_idx][col_idx] = static_cast<float>(current_time);
+            col_idx++;
+        }
+
+        // Add interpolated values for all series
+        for (int series_idx = 0; series_idx < num_series; ++series_idx) {
+            T interpolated_value = (*this)[series_idx].interpol(static_cast<T>(current_time));
+            tensor[point_idx][col_idx] = static_cast<float>(interpolated_value);
+            col_idx++;
+        }
+    }
+
+    return tensor;
+}
+
+#endif //TORCH_SUPPORT

@@ -327,18 +327,21 @@ public:
                                         torch::Device device = torch::kCPU) const;
 
     /**
-     * @brief Create a TimeSeries from a torch::Tensor.
-     * @param tensor Input tensor (1D for values only, 2D for [time, value] pairs)
-     * @param has_time If true, treats 2D tensor as [time, value] pairs
-     * @param time_offset Starting time value if tensor contains values only
-     * @param time_step Time increment if tensor contains values only
-     * @return TimeSeries constructed from tensor data
-     */
+ * @brief Create a TimeSeries from a torch::Tensor.
+ * @param tensor Input tensor (1D for values only, 2D for [time, value] pairs)
+ * @param has_time If true, treats 2D tensor as [time, value] pairs
+ * @param time_offset Starting time value if tensor contains values only
+ * @param time_step Time increment if tensor contains values only
+ * @param start_time Optional start time - if not provided, uses entire tensor
+ * @param end_time Optional end time - if not provided, uses entire tensor
+ * @return TimeSeries constructed from tensor data
+ */
     static TimeSeries<T> fromTensor(const torch::Tensor& tensor,
                                     bool has_time = false,
                                     T time_offset = T{0},
-                                    T time_step = T{1});
-
+                                    T time_step = T{1},
+                                    std::optional<T> start_time = std::nullopt,
+                                    std::optional<T> end_time = std::nullopt);
     /**
      * @brief Generate tensor with interpolated values at specified time intervals.
      * @param t_start Start time

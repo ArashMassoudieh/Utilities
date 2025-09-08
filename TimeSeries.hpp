@@ -2657,11 +2657,17 @@ namespace TimeSeriesMetrics {
     TimeSeries<T> TimeSeries<T>::fromTensor(const torch::Tensor& tensor,
                                             bool has_time,
                                             T time_offset,
-                                            T time_step) {
+                                            T time_step,
+                                            std::optional<T> start_time,
+                                            std::optional<T> end_time) {
         TimeSeries<T> result;
 
         // Ensure tensor is on CPU for data access
         torch::Tensor cpu_tensor = tensor.to(torch::kCPU);
+
+        // Determine start and end indices based on time range
+        int64_t start_idx = 0;
+        int64_t end_idx = cpu_tensor.size(0);
 
         if (cpu_tensor.dim() == 1) {
             // 1D tensor - values only
@@ -2669,8 +2675,20 @@ namespace TimeSeriesMetrics {
                 throw std::invalid_argument("Cannot interpret 1D tensor as having time values");
             }
 
-            result.reserve(cpu_tensor.size(0));
-            for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
+            // Calculate indices based on time range if provided
+            if (start_time.has_value() || end_time.has_value()) {
+                if (start_time.has_value()) {
+                    start_idx = static_cast<int64_t>((start_time.value() - time_offset) / time_step);
+                    start_idx = std::max(start_idx, int64_t(0));
+                }
+                if (end_time.has_value()) {
+                    end_idx = static_cast<int64_t>((end_time.value() - time_offset) / time_step) + 1;
+                    end_idx = std::min(end_idx, cpu_tensor.size(0));
+                }
+            }
+
+            result.reserve(end_idx - start_idx);
+            for (int64_t i = start_idx; i < end_idx; ++i) {
                 T time = time_offset + static_cast<T>(i) * time_step;
                 T value = static_cast<T>(cpu_tensor[i].item<float>());
                 result.addPoint(time, value);
@@ -2683,16 +2701,43 @@ namespace TimeSeriesMetrics {
                     throw std::invalid_argument("2D tensor with time must have exactly 2 columns [time, value]");
                 }
 
-                result.reserve(cpu_tensor.size(0));
-                for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
+                // Find indices based on actual time values in tensor
+                if (start_time.has_value() || end_time.has_value()) {
+                    for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
+                        T current_time = static_cast<T>(cpu_tensor[i][0].item<float>());
+
+                        if (start_time.has_value() && current_time < start_time.value()) {
+                            start_idx = i + 1;
+                        }
+                        if (end_time.has_value() && current_time <= end_time.value()) {
+                            end_idx = i + 1;
+                        }
+                    }
+                    start_idx = std::max(start_idx, int64_t(0));
+                    end_idx = std::min(end_idx, cpu_tensor.size(0));
+                }
+
+                result.reserve(end_idx - start_idx);
+                for (int64_t i = start_idx; i < end_idx; ++i) {
                     T time = static_cast<T>(cpu_tensor[i][0].item<float>());
                     T value = static_cast<T>(cpu_tensor[i][1].item<float>());
                     result.addPoint(time, value);
                 }
             } else {
                 // 2D tensor - treat as values only (take first column)
-                result.reserve(cpu_tensor.size(0));
-                for (int64_t i = 0; i < cpu_tensor.size(0); ++i) {
+                if (start_time.has_value() || end_time.has_value()) {
+                    if (start_time.has_value()) {
+                        start_idx = static_cast<int64_t>((start_time.value() - time_offset) / time_step);
+                        start_idx = std::max(start_idx, int64_t(0));
+                    }
+                    if (end_time.has_value()) {
+                        end_idx = static_cast<int64_t>((end_time.value() - time_offset) / time_step) + 1;
+                        end_idx = std::min(end_idx, cpu_tensor.size(0));
+                    }
+                }
+
+                result.reserve(end_idx - start_idx);
+                for (int64_t i = start_idx; i < end_idx; ++i) {
                     T time = time_offset + static_cast<T>(i) * time_step;
                     T value = static_cast<T>(cpu_tensor[i][0].item<float>());
                     result.addPoint(time, value);
@@ -2707,8 +2752,37 @@ namespace TimeSeriesMetrics {
 
             torch::Tensor first_window = cpu_tensor[0]; // Take first window
 
-            result.reserve(first_window.size(0));
-            for (int64_t i = 0; i < first_window.size(0); ++i) {
+            // Apply time filtering to the window
+            if (start_time.has_value() || end_time.has_value()) {
+                if (has_time && first_window.size(1) >= 2) {
+                    // Find indices based on time values in the window
+                    for (int64_t i = 0; i < first_window.size(0); ++i) {
+                        T current_time = static_cast<T>(first_window[i][0].item<float>());
+
+                        if (start_time.has_value() && current_time < start_time.value()) {
+                            start_idx = i + 1;
+                        }
+                        if (end_time.has_value() && current_time <= end_time.value()) {
+                            end_idx = i + 1;
+                        }
+                    }
+                } else {
+                    // Calculate indices based on generated time values
+                    if (start_time.has_value()) {
+                        start_idx = static_cast<int64_t>((start_time.value() - time_offset) / time_step);
+                        start_idx = std::max(start_idx, int64_t(0));
+                    }
+                    if (end_time.has_value()) {
+                        end_idx = static_cast<int64_t>((end_time.value() - time_offset) / time_step) + 1;
+                        end_idx = std::min(end_idx, first_window.size(0));
+                    }
+                }
+            } else {
+                end_idx = first_window.size(0);
+            }
+
+            result.reserve(end_idx - start_idx);
+            for (int64_t i = start_idx; i < end_idx; ++i) {
                 if (has_time && first_window.size(1) >= 2) {
                     T time = static_cast<T>(first_window[i][0].item<float>());
                     T value = static_cast<T>(first_window[i][1].item<float>());
@@ -2726,7 +2800,6 @@ namespace TimeSeriesMetrics {
 
         return result;
     }
-
     template<typename T>
     torch::Tensor TimeSeries<T>::toTensorAtIntervals(T t_start, T t_end, T dt,
                                                      bool include_time,
