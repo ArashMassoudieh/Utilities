@@ -9,10 +9,6 @@
 #include <iostream>
 #define ARMA_DONT_PRINT_ERRORS
 #include "armadillo"
-//#include "StringOP.h"
-//#include "qstring.h"
-//#include "qmap.h"
-//#include "qvariant.h"
 #include <vector>
 #include "Vector.h"
 #define ARMA_USE_SUPERLU 1

@@ -171,10 +171,40 @@ namespace aquiutils
             }
         return out;
     }
-//#ifdef _WINDOWS
-//    int gettimeofday(struct timeval* tv, struct timezone* tz);
-//#endif
+    /**
+     * @brief Extract directory path from full file path
+     * @param filepath Full path including filename
+     * @return Directory path without filename
+     *
+     * Examples:
+     *   "/home/user/data/file.txt" → "/home/user/data"
+     *   "C:\\Users\\data\\file.txt" → "C:\\Users\\data"
+     *   "relative/path/file.txt" → "relative/path"
+     *   "file.txt" → "."
+     */
+    inline std::string extract_path(const std::string& filepath) {
+        // Find last occurrence of path separator
+        size_t pos_slash = filepath.find_last_of('/');
+        size_t pos_backslash = filepath.find_last_of('\\');
 
+        // Get the position of the last separator (whichever comes last)
+        size_t pos = std::string::npos;
+        if (pos_slash != std::string::npos && pos_backslash != std::string::npos) {
+            pos = std::max(pos_slash, pos_backslash);
+        } else if (pos_slash != std::string::npos) {
+            pos = pos_slash;
+        } else if (pos_backslash != std::string::npos) {
+            pos = pos_backslash;
+        }
+
+        // If no separator found, return current directory
+        if (pos == std::string::npos) {
+            return ".";
+        }
+
+        // Return everything before the last separator
+        return filepath.substr(0, pos);
+    }
 
 }
 
