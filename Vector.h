@@ -108,7 +108,7 @@ CVector operator+(const CVector&, const CVector&);
 CVector operator+(double, const CVector&);
 CVector operator+(const CVector&, double);
 CVector operator-(const CVector&, const CVector&);
-CVector operator-(double, CVector&);
+CVector operator-(double, const CVector&);
 CVector operator-(const CVector&, double);
 CVector operator*(const CVector&, const CVector&);
 CVector operator*(double, const CVector&);

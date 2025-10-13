@@ -1,5 +1,5 @@
-#ifndef CDISTRIBUTION
-#define CDISTRIBUTION
+#ifndef CDISTRIBUTION_H
+#define CDISTRIBUTION_H
 
 #include<vector>
 #include<string>

@@ -288,6 +288,7 @@ public:
     bool fileNotFound = false;
     bool fileNotCorrect = false;
     void setdt(double dt) {dt_=dt;}
+    double getdt() const {return dt_;}
 
 #ifdef TORCH_SUPPORT
     /**

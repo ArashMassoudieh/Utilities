@@ -34,13 +34,14 @@
 #include "qfile.h"
 #include "qdatastream.h"
 #include <qdebug.h>
+#include <QJsonArray>
+#include <QJsonObject>
 #endif
 
 #ifdef GSL
 #include <gsl/gsl_cdf.h>
 #endif
-#include <QJsonArray>
-#include <QJsonObject>
+
 #include <mutex>
 
 
@@ -417,7 +418,7 @@ TimeSeries<T>::TimeSeries(const std::string& filename)
 
     this->reserve(tvec.size());
     for (size_t i = 0; i < tvec.size(); ++i)
-        this->emplace_back(DataPoint{tvec[i], cvec[i], std::nullopt});
+        this->emplace_back(DataPoint<T>{tvec[i], cvec[i], std::nullopt});
 
     detectStructure();
 
@@ -1069,8 +1070,8 @@ TimeSeries<T> TimeSeries<T>::interpol(const TimeSeries<T>* x) const {
     for (const auto& pt : *x)
         out.emplace_back(DataPoint<T>{pt.t, this->interpol(pt.t), std::nullopt});
 
-    out.structured_ = x->structured_;
-    out.dt_ = x->dt_;
+    out.setStructured(x->isStructured());
+    out.setdt(x->dt_);
     return out;
 }
 
@@ -1081,10 +1082,10 @@ TimeSeries<T> operator*(T alpha, const TimeSeries<T>& ts) {
     result.reserve(ts.size());
 
     for (const auto& pt : ts)
-        result.emplace_back(typename TimeSeries<T>::DataPoint{pt.t, alpha * pt.c, pt.d});
+        result.emplace_back(DataPoint<T>{pt.t, alpha * pt.c, pt.d});
 
     result.setStructured(ts.isStructured());
-    result.dt_ = ts.dt_;
+    result.setdt(ts.getdt());
     return result;
 }
 
@@ -1113,8 +1114,8 @@ TimeSeries<T> operator/(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2) {
         result.emplace_back(typename TimeSeries<T>::DataPoint{pt.t, pt.c / divisor, pt.d});
     }
 
-    result.structured_ = false;
-    result.dt_ = T{};
+    result.setStructured(false);
+    result.setdt(T{});
     return result;
 }
 
@@ -1145,8 +1146,8 @@ TimeSeries<T> operator*(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2) {
         result.emplace_back(typename TimeSeries<T>::DataPoint{pt.t, pt.c * interpolated, pt.d});
     }
 
-    result.structured_ = false;
-    result.dt_ = T{};
+    result.setStructured(false);
+    result.setdt(T{});
     return result;
 }
 
@@ -1159,8 +1160,8 @@ TimeSeries<T> operator-(const TimeSeries<T>& ts, T a) {
     for (const auto& pt : ts)
         result.emplace_back(typename TimeSeries<T>::DataPoint{pt.t, pt.c - a, pt.d});
 
-    result.structured_ = ts.structured_;
-    result.dt_ = ts.dt_;
+    result.setStructured(ts.structured_);
+    result.setdt(ts.dt_);
     return result;
 }
 
@@ -1179,8 +1180,8 @@ TimeSeries<T> operator%(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2) {
         });
     }
 
-    result.structured_ = false;
-    result.dt_ = T{};
+    result.setStructured(false);
+    result.setdt(T{});
     return result;
 }
 
@@ -1199,8 +1200,8 @@ TimeSeries<T> operator&(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2) {
         });
     }
 
-    result.structured_ = false;
-    result.dt_ = T{};
+    result.setStructured(false);
+    result.setdt(T{});
     return result;
 }
 
@@ -1991,8 +1992,8 @@ TimeSeries<T> TimeSeries<T>::ConvertToNormalScore() const {
         result.addPoint(pt.t, normal_val);
     }
 
-    result.structured_ = this->structured_;
-    result.dt_ = this->dt_;
+    result.setStructured(this->structured_);
+    result.setdt(this->dt_);
     return result;
 }
 #endif
@@ -2026,9 +2027,9 @@ TimeSeries<T> TimeSeries<T>::getcummulative() const {
         result.addPoint((*this)[i].t, result.back().c + trapezoid);
     }
 
-    result.structured_ = this->structured_;
-    result.dt_ = this->dt_;
-    result.name_ = this->name_;
+    result.setStructured(this->structured_);
+    result.setdt(this->dt_);
+    result.setName(this->name_);
     return result;
 }
 
