@@ -39,8 +39,10 @@
 #ifdef GSL
 #include <gsl/gsl_cdf.h>
 #endif
+#ifdef Q_JSON_SUPPORT
 #include <QJsonArray>
 #include <QJsonObject>
+#endif
 #include <mutex>
 
 
