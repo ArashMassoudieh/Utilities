@@ -39,36 +39,15 @@ double CNormalDist::getlognormalrand(double mu, double std)
     return exp(getstdnormalrand() * std + mu);
 }
 
-// Free function implementations (convenience wrappers)
-double unitrandom()
-{
-    return CNormalDist::unitrandom();
-}
-
-double getstdnormalrand()
-{
-    return CNormalDist::getstdnormalrand();
-}
-
-double getnormalrand(double mu, double std)
-{
-    return CNormalDist::getnormalrand(mu, std);
-}
-
-double getlognormalrand(double mu, double std)
-{
-    return CNormalDist::getlognormalrand(mu, std);
-}
-
 // Vector and matrix operations
-CVector getnormal(CVector &mu, CMatrix &sigma)
+CVector CNormalDist::getnormal(CVector &mu, CMatrix &sigma)
 {
     CMatrix L = sigma.Cholesky_factor();
     CVector V = getnormal(L.getnumrows(), 0, 1);
     return L * V + mu;
 }
 
-CMatrix getnormal(int m, int n, double mu, double std)
+CMatrix CNormalDist::getnormal(int m, int n, double mu, double std)
 {
     CMatrix M(m, n);
     for (int i = 0; i < m; i++)
@@ -77,7 +56,7 @@ CMatrix getnormal(int m, int n, double mu, double std)
     return M;
 }
 
-CVector getnormal(int m, double mu, double std)
+CVector CNormalDist::getnormal(int m, double mu, double std)
 {
     CVector M(m);
     for (int i = 0; i < m; i++)
@@ -85,13 +64,13 @@ CVector getnormal(int m, double mu, double std)
     return M;
 }
 
-CVector getlognormal(CVector &mu, CMatrix &sigma)
+CVector CNormalDist::getlognormal(CVector &mu, CMatrix &sigma)
 {
-    CVector V = getnormal(mu, sigma);
+    CVector V = CNormalDist::getnormal(mu, sigma);
     return Exp(V);
 }
 
-CMatrix getlognormal(int m, int n, double mu, double std)
+CMatrix CNormalDist::getlognormal(int m, int n, double mu, double std)
 {
     CMatrix M(m, n);
     for (int i = 0; i < m; i++)
@@ -100,7 +79,7 @@ CMatrix getlognormal(int m, int n, double mu, double std)
     return M;
 }
 
-CVector getlognormal(int m, double mu, double std)
+CVector CNormalDist::getlognormal(int m, double mu, double std)
 {
     CVector M(m);
     for (int i = 0; i < m; i++)
@@ -109,12 +88,12 @@ CVector getlognormal(int m, double mu, double std)
 }
 
 // CDF and inverse CDF
-double getnormalcdf(double x, double mu, double std)
+double CNormalDist::getnormalcdf(double x, double mu, double std)
 {
     return stdnormal_cdf((x - mu) / std);
 }
 
-double stdnormal_cdf(double u)
+double CNormalDist::stdnormal_cdf(double u)
 {
     const double a[5] = {
         1.161110663653770e-002, 3.951404679838207e-001, 2.846603853776254e+001,
@@ -174,7 +153,7 @@ double stdnormal_cdf(double u)
     return (u < 0.0 ? y : 1 - y);
 }
 
-double stdnormal_inv(double p)
+double CNormalDist::stdnormal_inv(double p)
 {
     const double a[6] = {
         -3.969683028665376e+01,  2.209460984245205e+02,
@@ -225,22 +204,22 @@ double stdnormal_inv(double p)
     return (p > 0.5 ? -u : u);
 }
 
-#ifdef arma_
-double getpdfnormal(CVector &X, CVector &mu, CMatrix &std)
+#ifdef _arma
+double CNormalDist::getpdfnormal(CVector &X, CVector &mu, CMatrix &std)
 {
     int k = X.num;
     double pi = atan(1.0) * 4;
     CMatrix Mu = X - mu;
     CMatrix Mu_p = X.T() - mu.T();
     CMatrix_arma M_inv = Invert(std);
-    CMatrix_arma M1 = Mu_p * M_inv;
-    CMatrix_arma exparg = 0.5 * (M1 * Mu);
+    CMatrix_arma M1 = CMatrix_arma(Mu_p) * M_inv;
+    CMatrix_arma exparg = 0.5 * (M1 * CMatrix_arma(Mu));
 
     double pdf = 1 / pow(2 * pi, k) / sqrt(std.det()) * exp(-exparg(0,0));
     return pdf;
 }
 
-double getpdflognormal(CVector &X, CVector &mu, CMatrix &std)
+double CNormalDist::getpdflognormal(CVector &X, CVector &mu, CMatrix &std)
 {
     int k = X.num;
     double pi = atan(1.0) * 4;
@@ -248,8 +227,8 @@ double getpdflognormal(CVector &X, CVector &mu, CMatrix &std)
     CMatrix TransposeMu = X.T();
     CMatrix Mu_p = Log(TransposeMu) - mu.T();
     CMatrix_arma M_inv = Invert(std);
-    CMatrix_arma M1 = Mu_p * M_inv;
-    CMatrix_arma exparg = 0.5 * (M1 * Mu);
+    CMatrix_arma M1 = CMatrix_arma(Mu_p) * M_inv;
+    CMatrix_arma exparg = 0.5 * (M1 * CMatrix_arma(Mu));
 
     double pdf = 1 / pow(2 * pi, k) / sqrt(fabs(std.det())) * exp(-exparg(0,0));
     return pdf;
