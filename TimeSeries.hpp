@@ -41,7 +41,10 @@
 #ifdef GSL
 #include <gsl/gsl_cdf.h>
 #endif
-
+#ifdef Q_JSON_SUPPORT
+#include <QJsonArray>
+#include <QJsonObject>
+#endif
 #include <mutex>
 
 
@@ -408,8 +411,13 @@ TimeSeries<T>::TimeSeries(const std::string& filename)
             return;
         }
     }
-
+    filename_ = filename;
     file.close();
+    detectStructure();
+    if (structured_ && dt_ == 0)
+    {
+        cout << "Warning: TimeSeries is structured but dt_ is zero. This may indicate an issue with the data." << std::endl;
+    }
 
     if (tvec.empty()) {
         fileNotCorrect = true;
