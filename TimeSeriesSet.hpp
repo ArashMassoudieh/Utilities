@@ -898,6 +898,82 @@ TimeSeriesSet<T> TimeSeriesSet<T>::distribution(int n_bins, int start_index, int
 }
 
 template<typename T>
+TimeSeriesSet<T> TimeSeriesSet<T>::distributionLog(int n_bins, int start_index, int end_index) const {
+    TimeSeriesSet<T> result;
+
+    for (const TimeSeries<T>& ts : *this) {
+        int _end_index = ts.size();
+        if (end_index != -1)
+            _end_index = end_index;
+
+        TimeSeries<T> dist_ts(n_bins + 2);
+
+        if (ts.size() > static_cast<size_t>(start_index) && ts.size() >= static_cast<size_t>(_end_index)) {
+            // Collect segment data
+            std::vector<T> segment;
+            for (int i = start_index; i <= _end_index && i < static_cast<int>(ts.size()); ++i) {
+                segment.push_back(ts.getValue(i));
+            }
+
+            // Find min and max
+            T p_start = *std::min_element(segment.begin(), segment.end());
+            T p_end = *std::max_element(segment.begin(), segment.end());
+
+            // Handle edge cases
+            if (p_start <= 0) {
+                // Shift values to make them positive for log scale
+                T offset = -p_start + 1e-10;
+                p_start += offset;
+                p_end += offset;
+                for (auto& val : segment) {
+                    val += offset;
+                }
+            }
+
+            if (p_start == p_end) {
+                result.push_back(dist_ts);
+                continue;
+            }
+
+            // Create logarithmic bins
+            T log_start = std::log(p_start);
+            T log_end = std::log(p_end * 1.001);  // Slight extension
+            T d_log = (log_end - log_start) / n_bins;
+
+            // Initialize bins with logarithmic spacing
+            dist_ts[0].t = std::exp(log_start - d_log / 2);
+            dist_ts[0].c = 0;
+
+            for (int i = 0; i < n_bins + 1; ++i) {
+                dist_ts[i + 1].t = std::exp(log_start + (i + 0.5) * d_log);
+                dist_ts[i + 1].c = 0;
+            }
+
+            // Count values in each bin
+            for (T value : segment) {
+                T log_value = std::log(value);
+                int bin = static_cast<int>((log_value - log_start) / d_log) + 1;
+
+                if (bin >= 1 && bin < static_cast<int>(dist_ts.size())) {
+                    // Calculate bin width in linear space for proper normalization
+                    T bin_left = std::exp(log_start + (bin - 1) * d_log);
+                    T bin_right = std::exp(log_start + bin * d_log);
+                    T bin_width = bin_right - bin_left;
+
+                    // Normalize by bin width and total count to ensure area = 1
+                    dist_ts[bin].c += 1.0 / (segment.size() * bin_width);
+                }
+            }
+        }
+
+        dist_ts.setName(ts.name());
+        result.push_back(dist_ts);
+    }
+
+    return result;
+}
+
+template<typename T>
 TimeSeriesSet<T> TimeSeriesSet<T>::add_noise(const std::vector<T>& stddevs, bool log_noise) const {
     TimeSeriesSet<T> result;
     for (size_t i = 0; i < this->size(); ++i) {

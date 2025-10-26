@@ -219,7 +219,7 @@ public:
     TimeSeries<T> getcummulative() const;                 ///< Cumulative integral
     TimeSeries<T> GetCummulativeDistribution() const;     ///< Sorted value CDF
     TimeSeries<T> distribution(int n_bins, int start_index) const; ///< Histogram density
-
+    TimeSeries<T> distributionLog(int n_bins, int start_index) const; ///<Histogram density with Log intervals
     // Append operators
     TimeSeries<T>& operator+=(const TimeSeries<T>& v);   // Add with interpolation
     TimeSeries<T>& operator%=(const TimeSeries<T>& v);   // Add pointwise (same timestamps)

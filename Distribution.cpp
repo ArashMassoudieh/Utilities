@@ -611,7 +611,7 @@ CVector getlognormal(int m, double mu, double std)
 }
 
 #ifdef _arma
-double getpdfnormal(CVector& X, CVector& mu, CMatrix& std)
+double getpdfnormal(const CVector& X, const CVector& mu, const CMatrix& std)
 {
     int k = X.num;
     double pi = atan(1.0) * 4;

@@ -496,7 +496,7 @@ double CVector::mean() const
     return sum()/double(num);
 }
 
-CMatrix CVector::T()
+CMatrix CVector::T() const
 {
 	CMatrix K(1,num);
 	for (int i=0; i<num; i++)

@@ -1731,6 +1731,76 @@ TimeSeries<T> TimeSeries<T>::distribution(int n_bins, int start_index) const {
 }
 
 template<typename T>
+TimeSeries<T> TimeSeries<T>::distributionLog(int n_bins, int start_index) const {
+    TimeSeries<T> out(n_bins + 2);  // histogram will have n_bins + 2 edges
+
+    // Validate range
+    if (this->size() <= static_cast<size_t>(start_index) || n_bins <= 0)
+        return out;
+
+    // Copy the values starting from start_index
+    std::vector<T> values;
+    values.reserve(this->size() - start_index);
+    for (size_t i = start_index; i < this->size(); ++i)
+        values.push_back((*this)[i].c);
+
+    if (values.empty()) return out;
+
+    // Determine range
+    auto min_val = *std::min_element(values.begin(), values.end());
+    auto max_val = *std::max_element(values.begin(), values.end());
+
+    // Handle edge cases for log scale
+    if (min_val <= T{}) {
+        // Shift values to make them positive for log scale
+        T offset = -min_val + static_cast<T>(1e-10);
+        min_val += offset;
+        max_val += offset;
+        for (auto& val : values) {
+            val += offset;
+        }
+    }
+
+    if (min_val == max_val) return out;
+
+    // Create logarithmic bins
+    T log_min = std::log(min_val);
+    T log_max = std::log(max_val * static_cast<T>(1.001));  // Slight extension
+    T d_log = (log_max - log_min) / static_cast<T>(n_bins);
+
+    // Initialize bin centers with logarithmic spacing
+    out[0].t = std::exp(log_min - d_log / static_cast<T>(2));
+    out[0].c = T{};
+
+    for (int i = 1; i < n_bins + 2; ++i) {
+        out[i].t = std::exp(log_min + (static_cast<T>(i) - static_cast<T>(0.5)) * d_log);
+        out[i].c = T{};
+    }
+
+    // Count values in each bin with proper normalization
+    for (const auto& val : values) {
+        T log_val = std::log(val);
+        int bin = static_cast<int>((log_val - log_min) / d_log) + 1;
+
+        if (bin >= 1 && bin < static_cast<int>(out.size())) {
+            // Calculate bin width in linear space for proper normalization
+            T bin_left = std::exp(log_min + static_cast<T>(bin - 1) * d_log);
+            T bin_right = std::exp(log_min + static_cast<T>(bin) * d_log);
+            T bin_width = bin_right - bin_left;
+
+            // Normalize by bin width and total count to ensure area = 1
+            out[bin].c += T{1} / static_cast<T>(values.size()) / bin_width;
+        }
+    }
+
+    out.structured_ = false;
+    out.dt_ = T{};
+    out.computeMaxFabs();
+
+    return out;
+}
+
+template<typename T>
 T TimeSeries<T>::mean_t() const {
     if (this->empty()) return T{};
 

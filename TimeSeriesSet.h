@@ -148,6 +148,7 @@ public:
     TimeSeriesSet<T> make_uniform(T increment, bool assign_d = true) const; ///< Make all series uniform
     TimeSeriesSet<T> getpercentiles(const std::vector<T>& fractions) const; ///< Get specified percentiles at all times
     TimeSeriesSet<T> distribution(int n_bins, int start_index=0, int end_index=-1) const; ///< Density histograms
+    TimeSeriesSet<T> distributionLog(int n_bins, int start_index, int end_index=-1) const; ///< Density histograms with logarithmic intervals
     TimeSeriesSet<T> add_noise(const std::vector<T>& stddevs, bool log_noise = false) const; ///< Add Gaussian noise
     TimeSeriesSet<T> sort(int column_index = 0) const; ///< Sort based on a column
     TimeSeriesSet<T> ConverttoNormalScore() const; ///< Convert each to normal score

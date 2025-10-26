@@ -600,7 +600,7 @@ CMatrix LU_decomposition(CMatrix &M)
 }
 
 
-double CMatrix::det()
+double CMatrix::det() const
 {
 	CMatrix A = *this;
 	CMatrix D = A.LU_decomposition();

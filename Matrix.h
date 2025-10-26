@@ -71,7 +71,7 @@ public:
 	friend CMatrix LU_decomposition(CMatrix &M);
     CMatrix LU_decomposition();
     CMatrix Cholesky_factor();
-    double det();
+    double det() const;
     void Print(FILE *FIL);
     void print(std::string s);
     void setval(double a);

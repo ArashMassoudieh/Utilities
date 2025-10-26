@@ -72,7 +72,7 @@ public:
 	double abs_max();
     int abs_max_elems();
 	std::vector<int> maxelements();
-	CMatrix T();
+    CMatrix T() const;
     CVector Log() const;
 	CVector abs();
 	CVector H();
