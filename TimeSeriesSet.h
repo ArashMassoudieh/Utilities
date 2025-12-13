@@ -121,6 +121,16 @@ public:
     std::vector<T> interpolate(T t, int n) const; ///< Interpolate for first n series
     TimeSeries<T> extract(int index, T t1, T t2) const; ///< Extract a subset of one series
 
+    /**
+ * @brief Extract a subset of all TimeSeries from time t1 to t2.
+ * Creates a new TimeSeriesSet containing only data points within the specified time range
+ * for each TimeSeries in the set.
+ * @param t1 Start time for extraction
+ * @param t2 End time for extraction
+ * @return TimeSeriesSet containing extracted subsets of all series
+ */
+    TimeSeriesSet<T> extract(T t1, T t2) const;
+
     // Series Statistics
     std::vector<T> getrandom() const; ///< Random row of values
     std::vector<T> getrandom(int start_item) const; ///< Random row after index
