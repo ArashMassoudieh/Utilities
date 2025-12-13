@@ -526,6 +526,24 @@ TimeSeries<T> TimeSeriesSet<T>::extract(int index, T t1, T t2) const {
     return (*this)[index].extract(t1, t2);
 }
 
+template <typename T>
+TimeSeriesSet<T> TimeSeriesSet<T>::extract(T t1, T t2) const {
+    TimeSeriesSet<T> result;
+    result.reserve(this->size());
+
+    // Extract each TimeSeries in the set
+    for (const auto& ts : *this) {
+        TimeSeries<T> extracted_ts = ts.extract(t1, t2);
+        result.push_back(extracted_ts);
+    }
+
+    // Preserve metadata
+    result.name = this->name;
+    result.unif = this->unif;
+
+    return result;
+}
+
 // Series Statistics
 
 template <typename T>
@@ -1419,3 +1437,5 @@ torch::Tensor TimeSeriesSet<T>::toTensorAtIntervals(double t_start, double t_end
 }
 
 #endif //TORCH_SUPPORT
+
+
