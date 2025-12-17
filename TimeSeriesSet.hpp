@@ -1438,4 +1438,3 @@ torch::Tensor TimeSeriesSet<T>::toTensorAtIntervals(double t_start, double t_end
 
 #endif //TORCH_SUPPORT
 
-
