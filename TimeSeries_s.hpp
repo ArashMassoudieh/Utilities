@@ -1550,3 +1550,12 @@ T CTimeSeries<T>::sum_squared()
 	}
 	return sum2;
 }
+
+template<typename T>
+void TimeSeriesSet<T>::sortAllByTime()
+{
+    // Iterate through all TimeSeries in the set and sort each one
+    for (size_t i = 0; i < this->size(); ++i) {
+        (*this)[i].sortByTime();
+    }
+}

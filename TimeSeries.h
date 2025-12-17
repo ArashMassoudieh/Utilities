@@ -117,7 +117,8 @@ public:
     bool append(T t, T c);                                 ///< Append time-value pair
 	void append(const TimeSeries<T>& other);               ///< Append another TimeSeries to the end
     void assign_D();                                       ///< Assign durations (d) based on value change intervals
-
+    
+    void sortByTime();                                     /// Sort time series by time (ascending order)
     // -------------------------------------------------------------------------
     // Structural Properties
     // -------------------------------------------------------------------------

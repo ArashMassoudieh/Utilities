@@ -3010,6 +3010,36 @@ namespace TimeSeriesMetrics {
 
 #endif // TORCH_SUPPORT
 
+template<typename T>
+void TimeSeries<T>::sortByTime()
+{
+    // Create a vector of indices
+    std::vector<size_t> indices(m_times.size());
+    for (size_t i = 0; i < indices.size(); ++i) {
+        indices[i] = i;
+    }
+    
+    // Sort indices based on time values
+    std::sort(indices.begin(), indices.end(),
+              [this](size_t i1, size_t i2) {
+                  return m_times[i1] < m_times[i2];
+              });
+    
+    // Reorder both times and values based on sorted indices
+    QVector<double> sortedTimes;
+    QVector<T> sortedValues;
+    sortedTimes.reserve(m_times.size());
+    sortedValues.reserve(m_values.size());
+    
+    for (size_t idx : indices) {
+        sortedTimes.append(m_times[idx]);
+        sortedValues.append(m_values[idx]);
+    }
+    
+    m_times = sortedTimes;
+    m_values = sortedValues;
+}
+
 
 
 
