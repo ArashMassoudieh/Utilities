@@ -13,7 +13,7 @@ class QVariant;
 //class QString;
 //class QList;
 //#include "QMap"
-using namespace arma;
+
 class CMatrix; 
 class CVector_arma;
 class CMatrix_arma: public arma::mat
@@ -31,7 +31,7 @@ public:
 	CMatrix_arma(const CMatrix_arma&);
 	CMatrix_arma(const CVector_arma&);
     CMatrix_arma(const CMatrix&);
-    CMatrix_arma(const mat& m);
+    CMatrix_arma(const arma::mat& m);
     static CMatrix_arma Diag(int n);
     //CVector_arma operator[](int);
     double& get(int i, int j);
@@ -43,7 +43,7 @@ public:
     CMatrix_arma& operator=(const CMatrix_arma&);
     CMatrix_arma& operator+=(const CMatrix_arma&);
     CMatrix_arma& operator-=(const CMatrix_arma &);
-    CMatrix_arma& operator=(const mat&);
+    CMatrix_arma& operator=(const arma::mat&);
 	friend void triangulate(CMatrix_arma&, CVector_arma&);
 	friend void backsubst(CMatrix_arma&, CVector_arma&, CVector_arma&);
 	friend CVector_arma gauss0(CMatrix_arma, CVector_arma);

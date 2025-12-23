@@ -260,6 +260,7 @@ public:
     T AutoCorrelation(const T& distance) const;           ///< At lag
     TimeSeries<T> AutoCorrelation(const T& span, const T& increment) const; ///< Curve
     double AutoCorrelationCoeff() const;                  ///< Coarse slope vs log(|value|)
+    T correlation_tc() const;
 
     // -------------------------------------------------------------------------
     // Noise / Stochastic

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include "armadillo"
-using namespace arma;
+
 
 //using namespace std;
 
@@ -21,7 +21,7 @@ public:
 	CVector_arma(int);
 	CVector_arma(const std::vector<double>, int);
 	CVector_arma(const std::vector<double> &v);
-    CVector_arma(const vec &v);
+    CVector_arma(const arma::vec &v);
 	CVector_arma(CVector &v);
 	CVector_arma(const std::vector<int> &v);
 	CVector_arma(const double x, int n);
@@ -39,7 +39,7 @@ public:
 	CVector_arma& operator=(const CVector&);
 	CVector_arma& operator=(const std::vector<double>&);
 	CVector_arma& operator=(const double &v);
-	CVector_arma operator=(mat);
+    CVector_arma operator=(arma::mat);
 	CVector_arma& operator+();
 	void swap(int , int );
     int getsize() const;

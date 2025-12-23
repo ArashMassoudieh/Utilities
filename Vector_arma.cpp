@@ -20,7 +20,7 @@ CVector_arma::CVector_arma()
 
 }
 
-CVector_arma::CVector_arma(int n):arma::vec(n,fill::zeros)
+CVector_arma::CVector_arma(int n):arma::vec(n,arma::fill::zeros)
 {
 
 }
@@ -54,7 +54,7 @@ CVector_arma::CVector_arma(const std::vector<double> &v)
     *this = v;
 }
 
-CVector_arma::CVector_arma(const vec & v):arma::vec(v)
+CVector_arma::CVector_arma(const arma::vec & v):arma::vec(v)
 {
 
 }
@@ -610,13 +610,13 @@ void CVector_arma::print(std::string s)
 	Afile.open(s);
 
     for (int i=0; i<num(); ++i)
-		Afile << vect(i) << endl;
+        Afile << vect(i) << std::endl;
 
 	Afile.close();
 
 }
 
-CVector_arma CVector_arma::operator=(mat A)
+CVector_arma CVector_arma::operator=(arma::mat A)
 {
     set_size(A.n_rows);
 

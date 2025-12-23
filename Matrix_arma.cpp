@@ -13,8 +13,6 @@
 #include "Vector.h"
 #define ARMA_USE_SUPERLU 1
 
-using namespace arma;
-
 
 //using namespace std;
 //////////////////////////////////////////////////////////////////////
@@ -26,7 +24,7 @@ CMatrix_arma::CMatrix_arma(int m, int n)
 	numrows = m;
 	numcols = n;
     arma::mat::resize(m, n);
-    fill(fill::zeros);
+    fill(arma::fill::zeros);
 
 }
 
@@ -40,7 +38,7 @@ CMatrix_arma::CMatrix_arma(int m):arma::mat(m,m)
 {
 	numrows = m;
 	numcols = m;
-    fill(fill::zeros);
+    fill(arma::fill::zeros);
 }
 
 CMatrix_arma::CMatrix_arma(const CMatrix_arma &m):arma::mat(m)
@@ -65,14 +63,14 @@ CMatrix_arma::CMatrix_arma(const CMatrix& m)
 {
 	numrows = m.getnumrows();
 	numcols = m.getnumcols();
-    mat::resize(numrows, numcols);
+    arma::mat::resize(numrows, numcols);
 	for (int i = 0; i < numrows; ++i)
 		for (int j = 0; j < numcols; ++j)
             at(i,j) = m.matr[i][j];
 
 }
 
-CMatrix_arma::CMatrix_arma(const mat& m):arma::mat(m)
+CMatrix_arma::CMatrix_arma(const arma::mat& m):arma::mat(m)
 {
     setnumcolrows();
 }
@@ -121,21 +119,21 @@ CMatrix_arma& CMatrix_arma::operator=(const CMatrix_arma &m)
 
 	numcols = m.numcols;
 	numrows = m.numrows;
-    mat::operator=(m);
+    arma::mat::operator=(m);
 
 	return *this;
 }
 
 CMatrix_arma& CMatrix_arma::operator+=(const CMatrix_arma &m)
 {
-    mat::operator+=(m);
+    arma::mat::operator+=(m);
     setnumcolrows();
 	return *this;
 }
 
 CMatrix_arma& CMatrix_arma::operator-=(const CMatrix_arma &m)
 {
-    mat::operator-=(m);
+    arma::mat::operator-=(m);
     setnumcolrows();
 	return *this;
 }
@@ -481,9 +479,9 @@ CMatrix_arma inv(const CMatrix_arma &M)
 	return A;
 }
 
-CMatrix_arma& CMatrix_arma::operator=(const mat &A)
+CMatrix_arma& CMatrix_arma::operator=(const arma::mat &A)
 {
-    mat::operator=(A);
+    arma::mat::operator=(A);
     setnumcolrows();
 
 	return *this;
@@ -500,7 +498,7 @@ void write_to_file(std::vector<CMatrix_arma> M, std::string filename)
 			for (int j = 0; j<M[k].numcols; ++j)
 			{
 				Afile << M[k].get(i,j) << "\, ";
-				cout<< M[k].get(i,j) << "\, ";
+                std::cout<< M[k].get(i,j) << "\, ";
 			}
 			Afile << "\n";
 		}
