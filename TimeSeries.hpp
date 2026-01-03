@@ -29,6 +29,8 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <algorithm>
+#include <random>
 
 #ifdef Q_JSON_SUPPORT
 #include "qfile.h"
