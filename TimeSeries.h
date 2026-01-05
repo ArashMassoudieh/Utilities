@@ -183,6 +183,8 @@ public:
     void setMaxFabs(T val);                                ///< Manually set cached max abs
     T getMaxFabs() const;                                  ///< Access cached max abs
 
+    T fitExponentialDecay() const;                         ///< Fit exponential decay model exp(-x/l) and return characteristic length l
+
     // -------------------------------------------------------------------------
     // Transformations
     // -------------------------------------------------------------------------
