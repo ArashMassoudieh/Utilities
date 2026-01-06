@@ -3072,9 +3072,9 @@ T TimeSeries<T>::fitExponentialDecay() const
     int valid_points = 0;
 
     for (const auto& point : *this) {
-        T y = point.Value();
+        T y = point.c;
         if (y > 0.0 && y <= 1.0) {  // Valid correlation values
-            T x = point.Time();
+            T x = point.t;
             sum_x += x;
             sum_neg_ln_y += -std::log(y);
             valid_points++;
