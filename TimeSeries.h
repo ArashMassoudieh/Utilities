@@ -18,9 +18,13 @@
 #include <vector>
 #include <string>
 #include <optional>
+#ifdef GSL
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#endif
+#ifdef arma
 #include "armadillo"
+#endif
 
 #ifdef Q_JSON_SUPPORT
 #include <QList>
