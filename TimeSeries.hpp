@@ -3050,5 +3050,51 @@ T TimeSeries<T>::correlation_tc() const {
     return cov / std::sqrt(var_t * var_c);
 }
 
+template<typename T>
+T TimeSeries<T>::fitExponentialDecay() const
+{
+    if (this->size() < 2) {
+        throw std::runtime_error("fitExponentialDecay: need at least 2 points");
+    }
 
+    // For y = exp(-x/l), the MLE has closed form:
+    // Minimize sum[(y_i - exp(-x_i/l))^2]
+    // Taking derivative and setting to zero gives:
+    // sum[y_i * x_i * exp(-x_i/l)] = sum[x_i * exp(-2*x_i/l)]
+    //
+    // However, a simpler and more robust approach is:
+    // If y = exp(-x/l), then -ln(y) = x/l
+    // So l = -x/ln(y), and we can average over all points:
+    // l_MLE = sum(x_i) / sum(-ln(y_i))
+
+    T sum_x = 0.0;
+    T sum_neg_ln_y = 0.0;
+    int valid_points = 0;
+
+    for (const auto& point : *this) {
+        T y = point.Value();
+        if (y > 0.0 && y <= 1.0) {  // Valid correlation values
+            T x = point.Time();
+            sum_x += x;
+            sum_neg_ln_y += -std::log(y);
+            valid_points++;
+        }
+    }
+
+    if (valid_points < 1) {
+        throw std::runtime_error("fitExponentialDecay: no valid positive values");
+    }
+
+    if (std::abs(sum_neg_ln_y) < 1e-15) {
+        throw std::runtime_error("fitExponentialDecay: all values are 1 (no decay)");
+    }
+
+    T l = sum_x / sum_neg_ln_y;
+
+    if (l <= 0.0) {
+        throw std::runtime_error("fitExponentialDecay: negative decay length");
+    }
+
+    return l;
+}
 
