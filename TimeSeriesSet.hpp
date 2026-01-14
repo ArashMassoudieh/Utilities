@@ -1039,6 +1039,17 @@ TimeSeriesSet<T> TimeSeriesSet<T>::ConverttoNormalScore() const {
 }
 
 template<typename T>
+TimeSeriesSet<T> TimeSeriesSet<T>::derivative() const {
+    TimeSeriesSet<T> result;
+    for (const TimeSeries<T>& ts : *this) {
+        result.push_back(ts.derivative());
+    }
+    return result;
+}
+
+
+
+template<typename T>
 TimeSeriesSet<T> TimeSeriesSet<T>::AutoCorrelation(const double& span, const double& increment) const {
     TimeSeriesSet<T> result;
     for (const TimeSeries<T>& ts : *this) {
