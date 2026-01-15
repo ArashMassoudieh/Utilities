@@ -121,7 +121,8 @@ public:
     std::vector<T> interpolate(T t, int n) const; ///< Interpolate for first n series
     TimeSeries<T> extract(int index, T t1, T t2) const; ///< Extract a subset of one series
     
-    CTimeSeriesSet<T> derivative();
+    TimeSeriesSet<T> derivative() const;
+
     /**
  * @brief Extract a subset of all TimeSeries from time t1 to t2.
  * Creates a new TimeSeriesSet containing only data points within the specified time range
