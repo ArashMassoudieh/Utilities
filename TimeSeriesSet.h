@@ -180,6 +180,9 @@ public:
     void fromJson(const QJsonObject& json); ///< Load from QJsonObject
 #endif // Q_JSON_SUPPORT
 
+    // Timeseriesset mean as a single Timeseries
+    TimeSeries<T> mean_ts(int start_item = 0) const;
+    TimeSeries<T> mean_ts(int start_item, const std::vector<int>& indices) const;
 
 #ifdef TORCH_SUPPORT
     /**

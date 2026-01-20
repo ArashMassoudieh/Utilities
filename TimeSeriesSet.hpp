@@ -1296,6 +1296,85 @@ T TimeSeriesSet<T>::maxtime() const {
     return max_time;
 }
 
+// Timeseriesset mean as a single Timeseries
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item) const
+{
+    TimeSeries<T> out;
+    if (this->empty()) return out;
+
+    const size_t max_points = this->maxnumpoints();
+    out.reserve(max_points);
+
+    for (size_t i = 0; i < max_points; ++i) {
+        if ((int)i < start_item) continue;
+
+        long double sum = 0.0L;
+        int count = 0;
+
+        for (size_t j = 0; j < this->size(); ++j) {
+            const auto& ts = (*this)[(int)j];
+            if (i < ts.size()) {
+                sum += (long double)ts.getValue(i);
+                ++count;
+            }
+        }
+
+        if (count == 0) continue;
+
+        T t = (i < (*this)[0].size()) ? (*this)[0].getTime(i) : (T)i;
+        T m = (T)(sum / (long double)count);
+
+        out.append(t, m);
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item, const std::vector<int>& indices) const
+{
+    TimeSeries<T> out;
+    if (indices.empty()) return out;
+
+    size_t max_points = 0;
+    for (int idx : indices) {
+        if (idx < 0 || (size_t)idx >= this->size())
+            throw std::out_of_range("mean_ts(indices): index out of range");
+        max_points = std::max(max_points, (*this)[idx].size());
+    }
+
+    out.reserve(max_points);
+
+    for (size_t i = 0; i < max_points; ++i) {
+        if ((int)i < start_item) continue;
+
+        long double sum = 0.0L;
+        int count = 0;
+
+        for (int idx : indices) {
+            const auto& ts = (*this)[idx];
+            if (i < ts.size()) {
+                sum += (long double)ts.getValue(i);
+                ++count;
+            }
+        }
+
+        if (count == 0) continue;
+
+        const auto& ref = (*this)[indices[0]];
+        T t = (i < ref.size()) ? ref.getTime(i) : (T)i;
+        T m = (T)(sum / (long double)count);
+
+        out.append(t, m);
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+
 #ifdef TORCH_SUPPORT
 template<typename T>
 TimeSeriesSet<T> TimeSeriesSet<T>::fromTensor(const torch::Tensor& tensor,
