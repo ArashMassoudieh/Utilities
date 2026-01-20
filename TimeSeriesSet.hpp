@@ -1041,13 +1041,23 @@ TimeSeriesSet<T> TimeSeriesSet<T>::ConverttoNormalScore() const {
 template<typename T>
 TimeSeriesSet<T> TimeSeriesSet<T>::derivative() const {
     TimeSeriesSet<T> result;
+    result.reserve(this->size());
+
     for (const TimeSeries<T>& ts : *this) {
-        result.push_back(ts.derivative());
+        TimeSeries<T> d = ts.derivative();
+
+        // Preserve the series label (this is the whole point)
+        d.setName(ts.name());
+
+        result.push_back(std::move(d));
     }
+
+    // Preserve optional metadata if you use it
+    result.name = this->name;
+    result.unif = this->unif;
+
     return result;
 }
-
-
 
 template<typename T>
 TimeSeriesSet<T> TimeSeriesSet<T>::AutoCorrelation(const double& span, const double& increment) const {
