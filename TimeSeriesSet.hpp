@@ -1300,32 +1300,15 @@ T TimeSeriesSet<T>::maxtime() const {
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item) const
 {
-    TimeSeries<T> out;
-    if (this->empty()) return out;
+    if (this->empty()) return TimeSeries<T>();
 
+    TimeSeries<T> out = (*this)[0]/double(this->size());
     const size_t max_points = this->maxnumpoints();
     out.reserve(max_points);
 
-    for (size_t i = 0; i < max_points; ++i) {
-        if ((int)i < start_item) continue;
-
-        long double sum = 0.0L;
-        int count = 0;
-
-        for (size_t j = 0; j < this->size(); ++j) {
-            const auto& ts = (*this)[(int)j];
-            if (i < ts.size()) {
-                sum += (long double)ts.getValue(i);
-                ++count;
-            }
-        }
-
-        if (count == 0) continue;
-
-        T t = (i < (*this)[0].size()) ? (*this)[0].getTime(i) : (T)i;
-        T m = (T)(sum / (long double)count);
-
-        out.append(t, m);
+    for (size_t j = 1; j < this->size(); ++j) {
+         const TimeSeries<double>& ts = (*this)[(int)j];
+         out+= ts/double(this->size());
     }
 
     out.setName("Mean");
