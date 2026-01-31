@@ -188,7 +188,7 @@ public:
     T getMaxFabs() const;                                  ///< Access cached max abs
 
     T fitExponentialDecay() const;                         ///< Fit exponential decay model exp(-x/l) and return characteristic length l
-
+    T fitGaussianDecay() const;
     // -------------------------------------------------------------------------
     // Transformations
     // -------------------------------------------------------------------------
