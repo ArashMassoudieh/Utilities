@@ -190,7 +190,7 @@ void TimeSeriesSet<T>::write(const std::string& filename, const std::string& del
             if (j < ts.size()) {
                 // Format only the time with 3 decimal digits
                 std::ostringstream time_str;
-                time_str << std::fixed << std::setprecision(3) << ts.getTime(j);
+                time_str << std::fixed << std::setprecision(6) << ts.getTime(j);
                 file << time_str.str() << "," << ts.getValue(j);
             }
             else {

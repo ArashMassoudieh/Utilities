@@ -3090,3 +3090,40 @@ T TimeSeries<T>::fitExponentialDecay() const
     return l;
 }
 
+template<typename T>
+T TimeSeries<T>::fitGaussianDecay() const
+{
+    if (this->size() < 2) {
+        throw std::runtime_error("fitGaussianDecay: need at least 2 points");
+    }
+
+    T sum_x = 0.0;
+    T sum_sqrt_neg_ln_y = 0.0;
+    int valid_points = 0;
+
+    for (const auto& point : *this) {
+        T y = point.c;
+        if (y > 0.0 && y <= 1.0) {  // Valid correlation values
+            T x = point.t;
+            sum_x += x;
+            sum_sqrt_neg_ln_y += std::sqrt(-std::log(y));
+            valid_points++;
+        }
+    }
+
+    if (valid_points < 1) {
+        throw std::runtime_error("fitGaussianDecay: no valid positive values");
+    }
+
+    if (std::abs(sum_sqrt_neg_ln_y) < 1e-15) {
+        throw std::runtime_error("fitGaussianDecay: all values are 1 (no decay)");
+    }
+
+    T l = sum_x / sum_sqrt_neg_ln_y;
+
+    if (l <= 0.0) {
+        throw std::runtime_error("fitGaussianDecay: negative decay length");
+    }
+
+    return l;
+}
