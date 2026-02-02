@@ -42,6 +42,10 @@
 
 #ifdef GSL
 #include <gsl/gsl_cdf.h>
+#include <gsl/gsl_sf_bessel.h>
+#include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_multimin.h>
+#include <gsl/gsl_vector.h>
 #endif
 #ifdef Q_JSON_SUPPORT
 #include <QJsonArray>
@@ -3127,3 +3131,172 @@ T TimeSeries<T>::fitGaussianDecay() const
 
     return l;
 }
+
+#ifdef GSL
+
+namespace {
+
+// ---------------------------------------------------------------------------
+// Matérn correlation function
+//
+//   rho(r; nu, ell) = (2^{1-nu} / Gamma(nu)) * z^nu * K_nu(z)
+//                      z = sqrt(2*nu) * r / ell
+//
+// Computed in log-space for numerical stability.
+// Returns 1 at r = 0.
+// ---------------------------------------------------------------------------
+double matern(double r, double nu, double ell)
+{
+    if (r <= 0.0 || ell <= 0.0) return 1.0;
+
+    double z = std::sqrt(2.0 * nu) * r / ell;
+    if (z < 1e-15) return 1.0;   // limit as z -> 0 is 1
+
+    // log(rho) = (1 - nu)*ln2  -  lgamma(nu)  +  nu*ln(z)  +  ln(K_nu(z))
+    gsl_sf_result knu;
+    int status = gsl_sf_bessel_Knu_e(nu, z, &knu);
+    if (status != GSL_SUCCESS || knu.val <= 0.0) return 0.0;   // underflow -> rho = 0
+
+    double log_rho = (1.0 - nu) * std::log(2.0)
+                     - gsl_sf_lngamma(nu)
+                     + nu * std::log(z)
+                     + std::log(knu.val);
+
+    double rho = std::exp(log_rho);
+    return (rho > 0.0) ? rho : 0.0;
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Exchange rate from the fitted Matérn parameters.
+//
+// For nu > 1, rho is twice differentiable at the origin and
+// rho''(0) = -nu / ((nu-1) * ell^2)    [verified numerically].
+// The exchange rate per direction is then 1/tau_i = -rho''(0)*D, giving
+//
+//     1/tau_x  =  [nu / (nu-1)] * D / ell_x^2
+//     1/tau_y  =  [nu / (nu-1)] * D / ell_y^2
+//
+// Note: nu/(nu-1) equals 3 at nu=1.5, 5/3 at nu=2.5, and decays to 1
+// as nu -> inf (Gaussian limit).  At nu = 0.5 the second derivative does
+// not exist; use the alpha* argument from Appendix A, which gives
+// coefficient = 1, i.e. 1/tau_x = D/ell_x^2.
+//
+// For 0.5 < nu <= 1, rho''(0) diverges; this range does not arise in
+// practice for the Matérn family with physical correlation structures.
+// ---------------------------------------------------------------------------
+
+    struct MaternFitData {
+        const std::vector<double>* r;
+        const std::vector<double>* rho;
+    };
+
+    double matern_rss(const gsl_vector* x, void* params)
+    {
+        double nu  = gsl_vector_get(x, 0);
+        double ell = gsl_vector_get(x, 1);
+        auto* data = static_cast<MaternFitData*>(params);
+
+        if (nu < 0.3 || ell <= 0.0) return 1e30;   // infeasible penalty
+
+        double rss = 0.0;
+        for (std::size_t i = 0; i < data->r->size(); ++i) {
+            double res = (*data->rho)[i] - matern((*data->r)[i], nu, ell);
+            rss += res * res;
+        }
+        return rss;
+    }
+
+} // anonymous namespace
+
+// ---------------------------------------------------------------------------
+// fitMaternDecay: fit rho(r) = Matern(r; nu, ell) to the time series.
+//
+// Returns {nu, ell}.
+//   nu  : smoothness parameter (clamped to >= 0.5)
+//           0.5  ->  exponential (cusp at origin)
+//           1.5  ->  C^1
+//           2.5  ->  C^2
+//           ...
+//   ell : Matérn length-scale parameter.
+//           NOTE: ell equals the e^{-1} correlation length only when nu = 0.5.
+//           For nu != 0.5, the correlation at r = ell is nu-dependent;
+//           see matern() for the exact relationship.
+//
+// Uses GSL Nelder-Mead (nmsimplex2) with three starting points
+// (nu = 0.5, 1.5, 3.0); keeps the result with lowest RSS.
+// ---------------------------------------------------------------------------
+
+
+template<typename T>
+std::pair<T,T> TimeSeries<T>::fitMaternDecay() const
+{
+    // Collect valid points: r > 0, 0 < rho <= 1
+    std::vector<double> r, rho;
+    for (const auto& point : *this) {
+        if (point.t > 0.0 && point.c > 0.0 && point.c <= 1.0) {
+            r.push_back(static_cast<double>(point.t));
+            rho.push_back(static_cast<double>(point.c));
+        }
+    }
+    if (r.size() < 2)
+        throw std::runtime_error("fitMaternDecay: need at least 2 valid points");
+
+    const double nu_fixed = 1.5;
+    const double sqrt3    = std::sqrt(3.0);
+
+    // Matern 1.5 closed form
+    auto matern_1p5 = [&](double ri, double ell) -> double {
+        double x = sqrt3 * ri / ell;
+        return (1.0 + x) * std::exp(-x);
+    };
+
+    // RSS as a function of ell alone
+    auto rss_1d = [&](double ell) -> double {
+        double s = 0.0;
+        for (std::size_t i = 0; i < r.size(); ++i) {
+            double diff = rho[i] - matern_1p5(r[i], ell);
+            s += diff * diff;
+        }
+        return s;
+    };
+
+    // Exponential estimate of ell — used only to set the search bracket
+    double sum_r = 0.0, sum_neg_ln = 0.0;
+    for (std::size_t i = 0; i < r.size(); ++i) {
+        sum_r      += r[i];
+        sum_neg_ln += -std::log(rho[i]);
+    }
+    double ell0 = (sum_neg_ln > 1e-15) ? sum_r / sum_neg_ln : r.back();
+
+    // Golden-section search over ell in [a, b]
+    double a = 1e-6;
+    double b = 10.0 * ell0;   // ell_opt(1.5) > ell_opt(0.5), so bracket is wide
+    const double gr  = (std::sqrt(5.0) - 1.0) / 2.0;   // 0.6180...
+    const double tol = 1e-12;
+
+    double c  = b - gr * (b - a);
+    double d  = a + gr * (b - a);
+    double fc = rss_1d(c);
+    double fd = rss_1d(d);
+
+    while ((b - a) > tol) {
+        if (fc < fd) {
+            b  = d;
+            d  = c;  fd = fc;
+            c  = b - gr * (b - a);
+            fc = rss_1d(c);
+        } else {
+            a  = c;
+            c  = d;  fc = fd;
+            d  = a + gr * (b - a);
+            fd = rss_1d(d);
+        }
+    }
+
+    double best_ell = (a + b) / 2.0;
+    return {static_cast<T>(nu_fixed), static_cast<T>(best_ell)};
+}
+
+#endif

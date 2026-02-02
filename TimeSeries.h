@@ -21,6 +21,10 @@
 #ifdef GSL
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_multimin.h>
+#include <gsl/gsl_vector.h>
 #endif
 #ifdef arma
 #include "armadillo"
@@ -188,7 +192,11 @@ public:
     T getMaxFabs() const;                                  ///< Access cached max abs
 
     T fitExponentialDecay() const;                         ///< Fit exponential decay model exp(-x/l) and return characteristic length l
-    T fitGaussianDecay() const;
+    T fitGaussianDecay() const;                            ///< Fit Gaussian decay model exp(-x^/l^2s) and return characteristic length l
+
+#ifdef GSL
+    std::pair<T,T> fitMaternDecay() const;                 ///< Fit Matérn rho(r; nu, ell); returns {nu, ell}
+#endif
     // -------------------------------------------------------------------------
     // Transformations
     // -------------------------------------------------------------------------
