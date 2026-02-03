@@ -3101,35 +3101,29 @@ T TimeSeries<T>::fitGaussianDecay() const
         throw std::runtime_error("fitGaussianDecay: need at least 2 points");
     }
 
-    T sum_x = 0.0;
-    T sum_sqrt_neg_ln_y = 0.0;
+    T sum_r4 = 0.0;
+    T sum_r2_neg_ln_rho = 0.0;
     int valid_points = 0;
 
     for (const auto& point : *this) {
-        T y = point.c;
-        if (y > 0.0 && y <= 1.0) {  // Valid correlation values
-            T x = point.t;
-            sum_x += x;
-            sum_sqrt_neg_ln_y += std::sqrt(-std::log(y));
+        T rho = point.c;
+        if (rho > 0.0 && rho <= 1.0) {
+            T r = point.t;
+            T r2 = r * r;
+            sum_r4 += r2 * r2;
+            sum_r2_neg_ln_rho += r2 * (-std::log(rho));
             valid_points++;
         }
     }
 
-    if (valid_points < 1) {
-        throw std::runtime_error("fitGaussianDecay: no valid positive values");
+    if (valid_points < 1 || sum_r2_neg_ln_rho < 1e-15) {
+        throw std::runtime_error("fitGaussianDecay: insufficient valid data");
     }
 
-    if (std::abs(sum_sqrt_neg_ln_y) < 1e-15) {
-        throw std::runtime_error("fitGaussianDecay: all values are 1 (no decay)");
-    }
+    // Least squares: λ² = Σ(r⁴) / Σ[r² · (-ln(ρ))]
+    T lambda_squared = sum_r4 / sum_r2_neg_ln_rho;
 
-    T l = sum_x / sum_sqrt_neg_ln_y;
-
-    if (l <= 0.0) {
-        throw std::runtime_error("fitGaussianDecay: negative decay length");
-    }
-
-    return l;
+    return std::sqrt(lambda_squared);
 }
 
 #ifdef GSL
