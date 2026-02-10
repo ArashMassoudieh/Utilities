@@ -2118,28 +2118,24 @@ TimeSeries<T> TimeSeries<T>::getcummulative() const {
 }
 
 template<typename T>
-TimeSeries<T> TimeSeries<T>::GetCummulativeDistribution() const {
+TimeSeries<T> TimeSeries<T>::GetCummulativeDistribution(bool reverse) const {
     std::vector<T> values;
     values.reserve(this->size());
-
     for (const auto& dp : *this)
         values.push_back(dp.c);
-
     std::sort(values.begin(), values.end());
+
+    if (reverse)
+        std::reverse(values.begin(), values.end());
 
     TimeSeries<T> result;
     result.reserve(values.size());
-
-
     result.addPoint(1.5*values[0]-0.5*values[1], 0);
-
     for (size_t i = 0; i < values.size(); ++i) {
         T y = static_cast<T>(i + 0.5) / static_cast<T>(values.size());
         result.addPoint(values[i], y);
     }
-
     result.addPoint(1.5*values[this->size()-1]-0.5*values[this->size()-2], 1);
-
     result.structured_ = false;
     result.name_ = name_;
     return result;

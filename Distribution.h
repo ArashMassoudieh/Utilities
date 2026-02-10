@@ -6,6 +6,7 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "TimeSeries.h"
+#include <map>
 #ifdef _interface
 #include "interface.h"
 #include "Structs.h"
