@@ -1353,19 +1353,13 @@ T TimeSeriesSet<T>::maxtime() const {
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item) const
 {
-    if (this->empty()) return TimeSeries<T>();
-
-    TimeSeries<T> out = (*this)[0] / double(this->size());
-    const size_t max_points = this->maxnumpoints();
-    out.reserve(max_points);
-
-    for (size_t j = 1; j < this->size(); ++j) {
-        const TimeSeries<T>& ts = (*this)[(int)j];
-        out += ts / double(this->size());
-    }
-
-    out.setName("Mean");
-    return out;
+    // ✅ FIX:
+    // The legacy implementation used operator+= across TimeSeries objects.
+    // If operator+= internally interpolates/extrapolates to match grids, it can create
+    // negative artifacts even when all stored samples are non-negative.
+    //
+    // Use robust longest-grid mean instead (skips series that don't cover a time).
+    return this->mean_ts_longest(start_item);
 }
 
 // -----------------------------------------------------------------------------
@@ -1448,7 +1442,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item, const std::vector<int>& 
         for (int idx : indices) {
             const auto& ts = (*this)[idx];
             if (i < ts.size()) {
-                sum += (long double)ts.getValue(i);
+                sum += (long double)ts.getValue((int)i);
                 ++count;
             }
         }
@@ -1456,7 +1450,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item, const std::vector<int>& 
         if (count == 0) continue;
 
         const auto& ref = (*this)[indices[0]];
-        T t = (i < ref.size()) ? ref.getTime(i) : (T)i;
+        T t = (i < ref.size()) ? ref.getTime((int)i) : (T)i;
         T m = (T)(sum / (long double)count);
 
         out.append(t, m);
