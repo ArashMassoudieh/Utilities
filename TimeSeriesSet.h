@@ -20,7 +20,20 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <fstream>
+
 #include "TimeSeries.h"
+
+/**
+ * @brief Mean grid mode for mean_ts_grid()
+ * - Intersection   : only where ALL selected series cover the time (common overlap)
+ * - UnionAvailable : from min start to max end; averages only available series at each time
+ */
+enum class MeanGridMode
+{
+    Intersection,
+    UnionAvailable
+};
 
 /**
  * @brief A class that represents a collection of TimeSeries objects.
@@ -55,42 +68,13 @@ public:
     std::string getSeriesName(int index) const; ///< Get series name by index
     std::vector<std::string> getSeriesNames() const; ///< Get all series names
     void SetAllSeriesSize(int n); ///<< Resizes all the timeseries
-    bool SetRow(int i, const T &t, const std::vector<T> &c); /// Set values of an entire row
+    bool SetRow(int i, const T& t, const std::vector<T>& c); /// Set values of an entire row
     void setname(int index, const std::string& name); ///< Set name on internal series object
 
     //Ranges
-    /**
-     * @brief Returns the maximum value across all time series.
-     *
-     * Iterates through each TimeSeries in the set and returns the largest
-     * observed value (`c`) found across all of them.
-     *
-     * @return T Maximum value among all series.
-     */
     T maxval() const;
-
-    /**
-     * @brief Returns the minimum value across all time series.
-     *
-     * Iterates through each TimeSeries in the set and returns the smallest
-     * observed value (`c`) found across all of them.
-     *
-     * @return T Minimum value among all series.
-     */
     T minval() const;
-
-    /**
-     * @brief Returns the minimum time value across all time series.
-     *
-     * @return T Minimum time (`t`) among all series.
-     */
     T mintime() const;
-
-    /**
-     * @brief Returns the maximum time value across all time series.
-     *
-     * @return T Maximum time (`t`) among all series.
-     */
     T maxtime() const;
 
     // Query
@@ -122,14 +106,6 @@ public:
 
     TimeSeriesSet<T> derivative() const;
 
-    /**
-     * @brief Extract a subset of all TimeSeries from time t1 to t2.
-     * Creates a new TimeSeriesSet containing only data points within the specified time range
-     * for each TimeSeries in the set.
-     * @param t1 Start time for extraction
-     * @param t2 End time for extraction
-     * @return TimeSeriesSet containing extracted subsets of all series
-     */
     TimeSeriesSet<T> extract(T t1, T t2) const;
 
     // Series Statistics
@@ -180,60 +156,53 @@ public:
 #endif // Q_JSON_SUPPORT
 
     // ============================================================
-    // Timeseriesset mean as a single TimeSeries
+    // TimeSeriesSet mean as a single TimeSeries
     //
     // mean_ts(...)       : FAST / legacy behavior
     //   - assumes aligned time grids (same timestamps by index)
     //
-    // mean_ts_union(...) : ROBUST uniform-grid mean (UPDATED semantics)
-    //   - builds a UNIFORM time grid with dt = 0.01
-    //   - grid spans from global min time (at start_item) to global max end time
-    //   - at each t, averages ONLY series that have data support at that t
-    //     (t within [t(start_item), t(end)] for that series), using interpolation
-    // NOTE: time_merge_tol is kept for API backward-compatibility. It is not used
-    //       in the current uniform-grid implementation.
+    // mean_ts_union(...) : ROBUST (but can be slower)
+    //   - uses UNION of timestamps from series (>= start_item)
+    //   - at each union time, averages interpolated values from series
+    //     that cover that time (available-only behavior)
+    //
+    // mean_ts_grid(...)  : FAST + ROBUST (recommended)
+    //   - builds a UNIFORM time grid with dt you choose (e.g., 0.01)
+    //   - supports:
+    //       Intersection   -> only where ALL series cover the time
+    //       UnionAvailable -> extend to longest end; average available series
+    //   - streaming interpolation (no ts.interpol() inside inner loops)
     // ============================================================
 
     TimeSeries<T> mean_ts(int start_item = 0) const;
     TimeSeries<T> mean_ts(int start_item, const std::vector<int>& indices) const;
+
     TimeSeries<T> mean_ts_union(int start_item = 0, T time_merge_tol = (T)1e-12) const;
     TimeSeries<T> mean_ts_union(int start_item,
                                 const std::vector<int>& indices,
                                 T time_merge_tol = (T)1e-12) const;
 
+    // ✅ NEW: uniform-grid mean (fast)
+    TimeSeries<T> mean_ts_grid(T dt,
+                              int start_item = 0,
+                              MeanGridMode mode = MeanGridMode::Intersection,
+                              T time_eps = (T)1e-12) const;
+
+    TimeSeries<T> mean_ts_grid(T dt,
+                              int start_item,
+                              const std::vector<int>& indices,
+                              MeanGridMode mode = MeanGridMode::Intersection,
+                              T time_eps = (T)1e-12) const;
+
 #ifdef TORCH_SUPPORT
-    /**
-     * @brief Create a TimeSeriesSet from a torch::Tensor.
-     * @param tensor Input tensor with shape [num_samples, num_series]
-     * @param start_time Start time for the time series
-     * @param end_time End time for the time series
-     * @param series_names Optional vector of names for each series
-     * @return TimeSeriesSet constructed from tensor data
-     */
     static TimeSeriesSet<T> fromTensor(const torch::Tensor& tensor,
                                        T start_time,
                                        T end_time,
                                        const std::vector<std::string>& series_names = {});
 
-    /**
-     * @brief Convert TimeSeriesSet to torch::Tensor using existing data points.
-     * All series must have the same number of points and corresponding time values.
-     * @param include_time If true, returns tensor with shape [num_points, num_series + 1] where first column is time
-     * @param device Target device for the tensor
-     * @return torch::Tensor with shape [num_points, num_series] or [num_points, num_series + 1]
-     */
     torch::Tensor toTensor(bool include_time = false,
                            torch::Device device = torch::kCPU) const;
 
-    /**
-     * @brief Convert TimeSeriesSet to torch::Tensor with uniform interpolation.
-     * @param t_start Start time for interpolation
-     * @param t_end End time for interpolation
-     * @param dt Time step for uniform sampling
-     * @param include_time If true, returns tensor with time column as first column
-     * @param device Target device for the tensor
-     * @return torch::Tensor with uniform time spacing
-     */
     torch::Tensor toTensorAtIntervals(double t_start, double t_end, double dt,
                                       bool include_time = false,
                                       torch::Device device = torch::kCPU) const;
@@ -251,51 +220,27 @@ private:
 
 // Helper functions
 
-/**
- * @brief Sum of absolute differences between two sets.
- */
 template<class T>
 T diff(TimeSeriesSet<T> A, TimeSeriesSet<T> B);
 
-/**
- * @brief Concatenate two TimeSeriesSets (horizontally).
- */
 template<class T>
 TimeSeriesSet<T> merge(TimeSeriesSet<T> A, const TimeSeriesSet<T>& B);
 
-/**
- * @brief Vertically merge multiple TimeSeriesSets.
- */
 template<class T>
 TimeSeriesSet<T> merge(std::vector<TimeSeriesSet<T>>& sets);
 
-/**
- * @brief Scalar multiplication.
- */
 template<class T>
 TimeSeriesSet<T> operator*(const TimeSeriesSet<T>& set, const T& scalar);
 
-/**
- * @brief Vector of L2 differences between pairs of series.
- */
 template<class T>
 CVector norm2dif(TimeSeriesSet<T>& A, TimeSeriesSet<T>& B);
 
-/**
- * @brief Sum of interpolated values at a given time from multiple sets.
- */
 template<class T>
 CVector sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, double t);
 
-/**
- * @brief Sum interpolated values at a time for a given variable.
- */
 template<class T>
 T sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, T t, std::string name);
 
-/**
- * @brief Determine the maximum number of variables (series) across all sets.
- */
 template<class T>
 int max_n_vars(std::vector<TimeSeriesSet<T>>& sets);
 

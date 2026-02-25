@@ -1344,103 +1344,82 @@ T TimeSeriesSet<T>::maxtime() const {
 
 // ============================================================
 // Timeseriesset mean as a single Timeseries
-//   - mean_ts(...)          : legacy/fast (aligned grids by index)
-//   - mean_ts_union(...)    : UPDATED per your definition:
-//       * uniform grid dt=0.01
-//       * goes to LONGEST end time across series
-//       * at each t, average ONLY series that have data at that t
-//         (i.e., within each series [t(start_item), t(end)])
+//   - mean_ts(...)          : FAST, assumes aligned time grids (legacy behavior)
+//   - mean_ts_union(...)    : ROBUST, uses UNION of times (legacy union list)
+//   - mean_ts_grid(...)     : FAST+ROBUST on UNIFORM GRID via streaming interpolation
 // ============================================================
 
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item) const
 {
-    TimeSeries<T> out;
-    if (this->empty()) return out;
+    if (this->empty()) return TimeSeries<T>();
 
-    // Legacy by index (NOT time): assume alignment by row index
+    TimeSeries<T> out = (*this)[0] / double(this->size());
     const size_t max_points = this->maxnumpoints();
     out.reserve(max_points);
 
-    for (size_t i = 0; i < max_points; ++i)
-    {
-        if ((int)i < start_item) continue;
-
-        long double sum = 0.0L;
-        int cnt = 0;
-
-        T t = T{};
-        bool t_set = false;
-
-        for (size_t j = 0; j < this->size(); ++j)
-        {
-            const auto& ts = (*this)[(int)j];
-            if (i >= ts.size()) continue;
-
-            const T v = ts.getValue(i);
-            if (!tss_isfinite(v)) continue;
-
-            if (!t_set) { t = ts.getTime(i); t_set = true; }
-            sum += (long double)v;
-            cnt++;
-        }
-
-        if (cnt > 0 && t_set) out.append(t, (T)(sum / (long double)cnt));
+    for (size_t j = 1; j < this->size(); ++j) {
+        const TimeSeries<T>& ts = (*this)[(int)j];
+        out += ts / double(this->size());
     }
 
     out.setName("Mean");
     return out;
 }
 
-// UPDATED mean_ts_union: uniform dt=0.01 to longest end time,
-// mean over available series at each time.
+// -----------------------------------------------------------------------------
+// Legacy UNION-OF-TIMESTAMPS mean (kept as-is from your current code)
+// -----------------------------------------------------------------------------
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item, T time_merge_tol) const
 {
-    (void)time_merge_tol; // not used in uniform-grid interpretation
-
     TimeSeries<T> out;
     if (this->empty()) return out;
 
-    const T dt = (T)0.01;
+    std::vector<T> all_t;
+    all_t.reserve(4096);
 
-    T tmin, tmax;
-    if (!tss_compute_global_time_bounds(*this, start_item, nullptr, tmin, tmax)) return out;
+    for (const auto& ts : *this) {
+        const int n = (int)ts.size();
+        for (int i = std::max(0, start_item); i < n; ++i) {
+            all_t.push_back((T)ts.getTime(i));
+        }
+    }
+    if (all_t.empty()) return out;
 
-    const long long nsteps = (long long)std::floor((tmax - tmin) / dt + (T)0.5);
-    out.reserve((size_t)(std::max<long long>(0, nsteps) + 2));
+    std::sort(all_t.begin(), all_t.end());
 
-    for (long long k = 0; ; ++k)
-    {
-        const T t = tmin + (T)k * dt;
-        if (t > tmax + (T)0.5 * dt) break;
+    std::vector<T> ut;
+    ut.reserve(all_t.size());
+    ut.push_back(all_t[0]);
+    for (size_t i = 1; i < all_t.size(); ++i) {
+        if (std::abs(all_t[i] - ut.back()) > time_merge_tol) ut.push_back(all_t[i]);
+    }
 
+    out.reserve(ut.size());
+
+    for (T t : ut) {
         long double sum = 0.0L;
         int cnt = 0;
 
-        for (const auto& ts : *this)
-        {
-            if (!tss_series_supports_time(ts, t, start_item)) continue;
+        for (const auto& ts : *this) {
+            if (ts.size() < 2) continue;
+
+            const T t0 = (T)ts.getTime(0);
+            const T t1 = (T)ts.getTime((int)ts.size() - 1);
+            if (t < t0 || t > t1) continue;
 
             const T v = ts.interpol(t);
-            if (!tss_isfinite(v)) continue;
-
-            sum += (long double)v;
-            cnt++;
+            if (std::isfinite((double)v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
         }
 
-        if (cnt > 0)
-        {
-            // store dt in optional d (nice for integrate/average later)
-            out.addPoint(t, (T)(sum / (long double)cnt), dt);
-        }
+        if (cnt > 0) out.append((double)t, (T)(sum / (long double)cnt));
     }
 
     out.setName("Mean");
-    out.setStructured(true);
-    out.setdt((double)dt);
-    out.assign_D();
-
     return out;
 }
 
@@ -1459,90 +1438,273 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item, const std::vector<int>& 
 
     out.reserve(max_points);
 
-    for (size_t i = 0; i < max_points; ++i)
-    {
+    for (size_t i = 0; i < max_points; ++i) {
         if ((int)i < start_item) continue;
 
         long double sum = 0.0L;
-        int cnt = 0;
+        int count = 0;
 
-        T t = T{};
-        bool t_set = false;
-
-        for (int idx : indices)
-        {
+        for (int idx : indices) {
             const auto& ts = (*this)[idx];
-            if (i >= ts.size()) continue;
-
-            const T v = ts.getValue(i);
-            if (!tss_isfinite(v)) continue;
-
-            if (!t_set) { t = ts.getTime(i); t_set = true; }
-            sum += (long double)v;
-            cnt++;
+            if (i < ts.size()) {
+                sum += (long double)ts.getValue(i);
+                ++count;
+            }
         }
 
-        if (cnt > 0 && t_set) out.append(t, (T)(sum / (long double)cnt));
+        if (count == 0) continue;
+
+        const auto& ref = (*this)[indices[0]];
+        T t = (i < ref.size()) ? ref.getTime(i) : (T)i;
+        T m = (T)(sum / (long double)count);
+
+        out.append(t, m);
     }
 
     out.setName("Mean");
     return out;
 }
 
-// UPDATED mean_ts_union over selected indices
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item,
                                              const std::vector<int>& indices,
                                              T time_merge_tol) const
 {
-    (void)time_merge_tol;
-
     TimeSeries<T> out;
     if (indices.empty()) return out;
 
-    const T dt = (T)0.01;
+    std::vector<T> all_t;
+    all_t.reserve(4096);
 
-    T tmin, tmax;
-    if (!tss_compute_global_time_bounds(*this, start_item, &indices, tmin, tmax)) return out;
+    for (int idx : indices) {
+        if (idx < 0 || (size_t)idx >= this->size())
+            throw std::out_of_range("mean_ts_union(indices): index out of range");
 
-    const long long nsteps = (long long)std::floor((tmax - tmin) / dt + (T)0.5);
-    out.reserve((size_t)(std::max<long long>(0, nsteps) + 2));
+        const auto& ts = (*this)[idx];
+        const int n = (int)ts.size();
+        for (int i = std::max(0, start_item); i < n; ++i) {
+            all_t.push_back((T)ts.getTime(i));
+        }
+    }
+    if (all_t.empty()) return out;
 
-    for (long long k = 0; ; ++k)
-    {
-        const T t = tmin + (T)k * dt;
-        if (t > tmax + (T)0.5 * dt) break;
+    std::sort(all_t.begin(), all_t.end());
+
+    std::vector<T> ut;
+    ut.reserve(all_t.size());
+    ut.push_back(all_t[0]);
+    for (size_t i = 1; i < all_t.size(); ++i) {
+        if (std::abs(all_t[i] - ut.back()) > time_merge_tol) ut.push_back(all_t[i]);
+    }
+
+    out.reserve(ut.size());
+
+    for (T t : ut) {
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (int idx : indices) {
+            const auto& ts = (*this)[idx];
+            if (ts.size() < 2) continue;
+
+            const T t0 = (T)ts.getTime(0);
+            const T t1 = (T)ts.getTime((int)ts.size() - 1);
+            if (t < t0 || t > t1) continue;
+
+            const T v = ts.interpol(t);
+            if (std::isfinite((double)v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
+        }
+
+        if (cnt > 0) out.append((double)t, (T)(sum / (long double)cnt));
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+// -----------------------------------------------------------------------------
+// ✅ NEW: mean_ts_grid (uniform grid, streaming interpolation; fast)
+// -----------------------------------------------------------------------------
+
+namespace {
+template <typename T>
+static inline bool ts_has_data_from(const TimeSeries<T>& ts, int start_item)
+{
+    const int n = (int)ts.size();
+    return (n >= 2 && start_item < n - 1);
+}
+
+template <typename T>
+static inline T lerp(T t, T t0, T t1, T v0, T v1)
+{
+    const double denom = (double)(t1 - t0);
+    if (denom == 0.0) return v0;
+    const double a = ((double)(t - t0)) / denom;
+    return (T)((1.0 - a) * (double)v0 + a * (double)v1);
+}
+} // anonymous
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
+                                            int start_item,
+                                            MeanGridMode mode,
+                                            T time_eps) const
+{
+    std::vector<int> indices;
+    indices.reserve(this->size());
+    for (int i = 0; i < (int)this->size(); ++i) indices.push_back(i);
+    return mean_ts_grid(dt, start_item, indices, mode, time_eps);
+}
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
+                                            int start_item,
+                                            const std::vector<int>& indices,
+                                            MeanGridMode mode,
+                                            T time_eps) const
+{
+    TimeSeries<T> out;
+    if (indices.empty()) return out;
+    if ((double)dt <= 0.0) throw std::invalid_argument("mean_ts_grid: dt must be > 0");
+
+    // Collect valid series
+    std::vector<int> valid;
+    valid.reserve(indices.size());
+
+    for (int idx : indices) {
+        if (idx < 0 || (size_t)idx >= this->size())
+            throw std::out_of_range("mean_ts_grid: index out of range");
+
+        const auto& ts = (*this)[idx];
+        if (ts_has_data_from(ts, start_item)) valid.push_back(idx);
+    }
+    if (valid.empty()) return out;
+
+    // Compute t_start / t_end depending on mode
+    double t_start = 0.0;
+    double t_end   = 0.0;
+
+    if (mode == MeanGridMode::Intersection) {
+        t_start = -std::numeric_limits<double>::infinity();
+        t_end   =  std::numeric_limits<double>::infinity();
+
+        for (int idx : valid) {
+            const auto& ts = (*this)[idx];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double a = (double)ts.getTime(s);
+            const double b = (double)ts.getTime(n - 1);
+
+            t_start = std::max(t_start, a);
+            t_end   = std::min(t_end,   b);
+        }
+    } else { // UnionAvailable
+        t_start =  std::numeric_limits<double>::infinity();
+        t_end   = -std::numeric_limits<double>::infinity();
+
+        for (int idx : valid) {
+            const auto& ts = (*this)[idx];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double a = (double)ts.getTime(s);
+            const double b = (double)ts.getTime(n - 1);
+
+            t_start = std::min(t_start, a);
+            t_end   = std::max(t_end,   b);
+        }
+    }
+
+    if (!(t_end > t_start)) return out;
+
+    // Number of grid points
+    const double eps = (double)time_eps;
+    const int64_t N = (int64_t)std::floor((t_end - t_start) / (double)dt + 1.0 + 1e-12);
+    if (N <= 0) return out;
+
+    out.reserve((size_t)N);
+
+    // Streaming cursor per series
+    std::vector<int> k(valid.size(), 0);
+
+    // Initialize k to start_item (bounded)
+    for (size_t j = 0; j < valid.size(); ++j) {
+        const auto& ts = (*this)[valid[j]];
+        const int n = (int)ts.size();
+        k[j] = std::max(0, std::min(start_item, n - 2)); // must have k+1 valid
+    }
+
+    // Iterate uniform grid
+    for (int64_t i = 0; i < N; ++i) {
+        const double tt = t_start + (double)i * (double)dt;
+        if (tt > t_end + 1e-12) break;
 
         long double sum = 0.0L;
         int cnt = 0;
 
-        for (int idx : indices)
-        {
-            if (idx < 0 || (size_t)idx >= this->size()) continue;
-            const auto& ts = (*this)[idx];
+        for (size_t j = 0; j < valid.size(); ++j) {
+            const auto& ts = (*this)[valid[j]];
+            const int n = (int)ts.size();
 
-            if (!tss_series_supports_time(ts, t, start_item)) continue;
+            // Quick out-of-range check
+            const double tmin = (double)ts.getTime(std::max(0, start_item));
+            const double tmax = (double)ts.getTime(n - 1);
 
-            const T v = ts.interpol(t);
-            if (!tss_isfinite(v)) continue;
+            if (tt < tmin - eps || tt > tmax + eps) {
+                if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
+                continue; // union: skip series
+            }
 
-            sum += (long double)v;
-            cnt++;
+            int& kk = k[j];
+            if (kk < std::max(0, start_item)) kk = std::max(0, start_item);
+            if (kk > n - 2) kk = n - 2;
+
+            // Advance kk until bracket contains tt
+            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) {
+                ++kk;
+            }
+
+            const double t0 = (double)ts.getTime(kk);
+            const double t1 = (double)ts.getTime(kk + 1);
+
+            if (!(tt >= t0 - eps && tt <= t1 + eps)) {
+                if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
+                continue;
+            }
+
+            const double v0 = (double)ts.getValue(kk);
+            const double v1 = (double)ts.getValue(kk + 1);
+
+            // Interp
+            const double denom = (t1 - t0);
+            double v = v0;
+            if (denom != 0.0) {
+                const double a = (tt - t0) / denom;
+                v = (1.0 - a) * v0 + a * v1;
+            }
+
+            if (std::isfinite(v)) {
+                sum += (long double)v;
+                ++cnt;
+            } else {
+                if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
+            }
         }
 
-        if (cnt > 0)
-        {
-            out.addPoint(t, (T)(sum / (long double)cnt), dt);
-        }
+        if (cnt <= 0) continue;
+        if (cnt == -999999) break; // intersection: once one time fails, we can stop (grid increasing)
+
+        out.append((T)tt, (T)(sum / (long double)cnt));
     }
 
     out.setName("Mean");
-    out.setStructured(true);
-    out.setdt((double)dt);
-    out.assign_D();
-
     return out;
 }
+
 
 #ifdef TORCH_SUPPORT
 template<typename T>
