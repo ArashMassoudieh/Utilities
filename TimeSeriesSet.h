@@ -172,6 +172,11 @@ public:
     //       Intersection   -> only where ALL series cover the time
     //       UnionAvailable -> extend to longest end; average available series
     //   - streaming interpolation (no ts.interpol() inside inner loops)
+    //
+    // mean_ts_longest(...) : ROBUST + SIMPLE (your preferred)
+    //   - uses the LONGEST series time grid (no union-of-times)
+    //   - for each ref time, averages interpolated values from series
+    //     that cover that time (available-only behavior)
     // ============================================================
 
     TimeSeries<T> mean_ts(int start_item = 0) const;
@@ -193,6 +198,14 @@ public:
                               const std::vector<int>& indices,
                               MeanGridMode mode = MeanGridMode::Intersection,
                               T time_eps = (T)1e-12) const;
+
+    // ✅ NEW: longest-series-grid mean (no union-of-times)
+    TimeSeries<T> mean_ts_longest(int start_item = 0,
+                                  T time_eps = (T)1e-10) const;
+
+    TimeSeries<T> mean_ts_longest(int start_item,
+                                  const std::vector<int>& indices,
+                                  T time_eps = (T)1e-10) const;
 
 #ifdef TORCH_SUPPORT
     static TimeSeriesSet<T> fromTensor(const torch::Tensor& tensor,

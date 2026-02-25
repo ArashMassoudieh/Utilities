@@ -1347,6 +1347,7 @@ T TimeSeriesSet<T>::maxtime() const {
 //   - mean_ts(...)          : FAST, assumes aligned time grids (legacy behavior)
 //   - mean_ts_union(...)    : ROBUST, uses UNION of times (legacy union list)
 //   - mean_ts_grid(...)     : FAST+ROBUST on UNIFORM GRID via streaming interpolation
+//   - mean_ts_longest(...)  : ROBUST on LONGEST series time grid (NO union-of-times)
 // ============================================================
 
 template<typename T>
@@ -1698,6 +1699,207 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
         if (cnt <= 0) continue;
         if (cnt == -999999) break; // intersection: once one time fails, we can stop (grid increasing)
 
+        out.append((T)tt, (T)(sum / (long double)cnt));
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+// -----------------------------------------------------------------------------
+// ✅ NEW: mean_ts_longest (LONGEST series time grid, skip missing series; NO union)
+//    - time grid = longest valid series (by size)
+//    - for each ref time, average contributors that can interpolate at that time
+// -----------------------------------------------------------------------------
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) const
+{
+    TimeSeries<T> out;
+    if (this->empty()) return out;
+
+    // Pick reference = longest usable series
+    int ref = -1;
+    int best_n = -1;
+    for (int i = 0; i < (int)this->size(); ++i) {
+        const auto& ts = (*this)[i];
+        if (!ts_has_data_from(ts, start_item)) continue;
+        const int n = (int)ts.size();
+        if (n > best_n) { best_n = n; ref = i; }
+    }
+    if (ref < 0) return out;
+
+    const auto& ref_ts = (*this)[ref];
+    const int nref = (int)ref_ts.size();
+    const int sref = std::max(0, start_item);
+    if (nref - sref < 2) return out;
+
+    // Valid series list
+    std::vector<int> valid;
+    valid.reserve(this->size());
+    for (int i = 0; i < (int)this->size(); ++i) {
+        if (ts_has_data_from((*this)[i], start_item)) valid.push_back(i);
+    }
+    if (valid.empty()) return out;
+
+    out.reserve((size_t)(nref - sref));
+    const double eps = (double)time_eps;
+
+    // Streaming cursor per series
+    std::vector<int> k(valid.size(), 0);
+    for (size_t j = 0; j < valid.size(); ++j) {
+        const auto& ts = (*this)[valid[j]];
+        const int n = (int)ts.size();
+        k[j] = std::max(0, std::min(start_item, n - 2));
+    }
+
+    // Iterate over reference time grid
+    for (int i = sref; i < nref; ++i) {
+        const double tt = (double)ref_ts.getTime(i);
+
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (size_t j = 0; j < valid.size(); ++j) {
+            const auto& ts = (*this)[valid[j]];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double tmin = (double)ts.getTime(s);
+            const double tmax = (double)ts.getTime(n - 1);
+
+            // This series does not cover tt -> skip it
+            if (tt < tmin - eps || tt > tmax + eps) continue;
+
+            int& kk = k[j];
+            if (kk < s) kk = s;
+            if (kk > n - 2) kk = n - 2;
+
+            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) ++kk;
+
+            const double t0 = (double)ts.getTime(kk);
+            const double t1 = (double)ts.getTime(kk + 1);
+
+            if (!(tt >= t0 - eps && tt <= t1 + eps)) continue;
+
+            const double v0 = (double)ts.getValue(kk);
+            const double v1 = (double)ts.getValue(kk + 1);
+
+            double v = v0;
+            const double denom = (t1 - t0);
+            if (denom != 0.0) {
+                const double a = (tt - t0) / denom;
+                v = (1.0 - a) * v0 + a * v1;
+            }
+
+            if (std::isfinite(v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
+        }
+
+        if (cnt <= 0) continue; // (shouldn’t happen since ref itself contributes)
+        out.append((T)tt, (T)(sum / (long double)cnt));
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
+                                                const std::vector<int>& indices,
+                                                T time_eps) const
+{
+    TimeSeries<T> out;
+    if (indices.empty()) return out;
+
+    // Pick reference = longest usable series among indices
+    int ref = -1;
+    int best_n = -1;
+
+    for (int idx : indices) {
+        if (idx < 0 || (size_t)idx >= this->size())
+            throw std::out_of_range("mean_ts_longest(indices): index out of range");
+
+        const auto& ts = (*this)[idx];
+        if (!ts_has_data_from(ts, start_item)) continue;
+
+        const int n = (int)ts.size();
+        if (n > best_n) { best_n = n; ref = idx; }
+    }
+    if (ref < 0) return out;
+
+    const auto& ref_ts = (*this)[ref];
+    const int nref = (int)ref_ts.size();
+    const int sref = std::max(0, start_item);
+    if (nref - sref < 2) return out;
+
+    // Valid list
+    std::vector<int> valid;
+    valid.reserve(indices.size());
+    for (int idx : indices) {
+        const auto& ts = (*this)[idx];
+        if (ts_has_data_from(ts, start_item)) valid.push_back(idx);
+    }
+    if (valid.empty()) return out;
+
+    out.reserve((size_t)(nref - sref));
+    const double eps = (double)time_eps;
+
+    // Streaming cursor per series
+    std::vector<int> k(valid.size(), 0);
+    for (size_t j = 0; j < valid.size(); ++j) {
+        const auto& ts = (*this)[valid[j]];
+        const int n = (int)ts.size();
+        k[j] = std::max(0, std::min(start_item, n - 2));
+    }
+
+    // Iterate over reference time grid
+    for (int i = sref; i < nref; ++i) {
+        const double tt = (double)ref_ts.getTime(i);
+
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (size_t j = 0; j < valid.size(); ++j) {
+            const auto& ts = (*this)[valid[j]];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double tmin = (double)ts.getTime(s);
+            const double tmax = (double)ts.getTime(n - 1);
+
+            if (tt < tmin - eps || tt > tmax + eps) continue;
+
+            int& kk = k[j];
+            if (kk < s) kk = s;
+            if (kk > n - 2) kk = n - 2;
+
+            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) ++kk;
+
+            const double t0 = (double)ts.getTime(kk);
+            const double t1 = (double)ts.getTime(kk + 1);
+
+            if (!(tt >= t0 - eps && tt <= t1 + eps)) continue;
+
+            const double v0 = (double)ts.getValue(kk);
+            const double v1 = (double)ts.getValue(kk + 1);
+
+            double v = v0;
+            const double denom = (t1 - t0);
+            if (denom != 0.0) {
+                const double a = (tt - t0) / denom;
+                v = (1.0 - a) * v0 + a * v1;
+            }
+
+            if (std::isfinite(v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
+        }
+
+        if (cnt <= 0) continue;
         out.append((T)tt, (T)(sum / (long double)cnt));
     }
 
