@@ -15,7 +15,6 @@
 
  // TimeSeriesSet.h
 
-
 #pragma once
 
 #include <vector>
@@ -61,13 +60,13 @@ public:
 
     //Ranges
     /**
- * @brief Returns the maximum value across all time series.
- *
- * Iterates through each TimeSeries in the set and returns the largest
- * observed value (`c`) found across all of them.
- *
- * @return T Maximum value among all series.
- */
+     * @brief Returns the maximum value across all time series.
+     *
+     * Iterates through each TimeSeries in the set and returns the largest
+     * observed value (`c`) found across all of them.
+     *
+     * @return T Maximum value among all series.
+     */
     T maxval() const;
 
     /**
@@ -93,7 +92,7 @@ public:
      * @return T Maximum time (`t`) among all series.
      */
     T maxtime() const;
-    
+
     // Query
     bool Contains(const std::string& name) const; ///< Check if series exists by name
     int indexOf(const std::string& name) const; ///< Get index of named series
@@ -113,24 +112,24 @@ public:
     void knockout(T t); ///< Knock out all points beyond time t
     void resize(size_t num_series); ///< Resize to given number of series
     //void ResizeIfNeeded(size_t new_size); ///< Expand size only if needed
-	void removeNaNs(); ///< Remove NaN values from all series
-	TimeSeriesSet<T> removeNaNs() const; ///< Return a new set with NaN values removed
+    void removeNaNs(); ///< Remove NaN values from all series
+    TimeSeriesSet<T> removeNaNs() const; ///< Return a new set with NaN values removed
 
     // Interpolation & Extraction
     std::vector<T> interpolate(T t) const; ///< Interpolate all series at given time
     std::vector<T> interpolate(T t, int n) const; ///< Interpolate for first n series
     TimeSeries<T> extract(int index, T t1, T t2) const; ///< Extract a subset of one series
-    
+
     TimeSeriesSet<T> derivative() const;
 
     /**
- * @brief Extract a subset of all TimeSeries from time t1 to t2.
- * Creates a new TimeSeriesSet containing only data points within the specified time range
- * for each TimeSeries in the set.
- * @param t1 Start time for extraction
- * @param t2 End time for extraction
- * @return TimeSeriesSet containing extracted subsets of all series
- */
+     * @brief Extract a subset of all TimeSeries from time t1 to t2.
+     * Creates a new TimeSeriesSet containing only data points within the specified time range
+     * for each TimeSeries in the set.
+     * @param t1 Start time for extraction
+     * @param t2 End time for extraction
+     * @return TimeSeriesSet containing extracted subsets of all series
+     */
     TimeSeriesSet<T> extract(T t1, T t2) const;
 
     // Series Statistics
@@ -181,46 +180,26 @@ public:
 #endif // Q_JSON_SUPPORT
 
     // Timeseriesset mean as a single Timeseries
+    // NOTE: Implementation updated in TimeSeriesSet.hpp to be time-aware:
+    // - fast path if aligned time grids
+    // - otherwise union-time grid + interpolation mean (no truncation)
     TimeSeries<T> mean_ts(int start_item = 0) const;
     TimeSeries<T> mean_ts(int start_item, const std::vector<int>& indices) const;
 
 #ifdef TORCH_SUPPORT
-    /**
-     * @brief Create a TimeSeriesSet from a torch::Tensor.
-     * @param tensor Input tensor with shape [num_samples, num_series]
-     * @param start_time Start time for the time series
-     * @param end_time End time for the time series
-     * @param series_names Optional vector of names for each series
-     * @return TimeSeriesSet constructed from tensor data
-     */
     static TimeSeriesSet<T> fromTensor(const torch::Tensor& tensor,
                                        T start_time,
                                        T end_time,
                                        const std::vector<std::string>& series_names = {});
 
-    /**
-     * @brief Convert TimeSeriesSet to torch::Tensor using existing data points.
-     * All series must have the same number of points and corresponding time values.
-     * @param include_time If true, returns tensor with shape [num_points, num_series + 1] where first column is time
-     * @param device Target device for the tensor
-     * @return torch::Tensor with shape [num_points, num_series] or [num_points, num_series + 1]
-     */
     torch::Tensor toTensor(bool include_time = false,
                            torch::Device device = torch::kCPU) const;
 
-    /**
-     * @brief Convert TimeSeriesSet to torch::Tensor with uniform interpolation.
-     * @param t_start Start time for interpolation
-     * @param t_end End time for interpolation
-     * @param dt Time step for uniform sampling
-     * @param include_time If true, returns tensor with time column as first column
-     * @param device Target device for the tensor
-     * @return torch::Tensor with uniform time spacing
-     */
     torch::Tensor toTensorAtIntervals(double t_start, double t_end, double dt,
                                       bool include_time = false,
                                       torch::Device device = torch::kCPU) const;
 #endif
+
     // Properties
     std::string filename; ///< File associated with the set
     std::string name; ///< Name of the set
@@ -228,58 +207,32 @@ public:
     bool unif = false; ///< Whether time steps are uniform
 
 private:
-
     static size_t countRows(std::ifstream& file, bool has_header); // estimate the number of rows in a csv file
-
 };
 
 // Helper functions
 
-/**
- * @brief Sum of absolute differences between two sets.
- */
 template<class T>
 T diff(TimeSeriesSet<T> A, TimeSeriesSet<T> B);
 
-/**
- * @brief Concatenate two TimeSeriesSets (horizontally).
- */
 template<class T>
 TimeSeriesSet<T> merge(TimeSeriesSet<T> A, const TimeSeriesSet<T>& B);
 
-/**
- * @brief Vertically merge multiple TimeSeriesSets.
- */
 template<class T>
 TimeSeriesSet<T> merge(std::vector<TimeSeriesSet<T>>& sets);
 
-/**
- * @brief Scalar multiplication.
- */
 template<class T>
 TimeSeriesSet<T> operator*(const TimeSeriesSet<T>& set, const T& scalar);
 
-/**
- * @brief Vector of L2 differences between pairs of series.
- */
 template<class T>
 CVector norm2dif(TimeSeriesSet<T>& A, TimeSeriesSet<T>& B);
 
-/**
- * @brief Sum of interpolated values at a given time from multiple sets.
- */
 template<class T>
 CVector sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, double t);
 
-/**
- * @brief Sum interpolated values at a time for a given variable.
- */
 template<class T>
 T sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, T t, std::string name);
 
-/**
- * @brief Determine the maximum number of variables (series) across all sets.
- */
 template<class T>
 int max_n_vars(std::vector<TimeSeriesSet<T>>& sets);
 
