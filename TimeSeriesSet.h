@@ -13,8 +13,6 @@
  * commercial license. Contact arash.massoudieh@enviroinformatics.co for details.
  */
 
- // TimeSeriesSet.h
-
 #pragma once
 
 #include <vector>
@@ -39,167 +37,210 @@ enum class MeanGridMode
  * @brief A class that represents a collection of TimeSeries objects.
  */
 template<typename T>
-class TimeSeriesSet : public std::vector<TimeSeries<T>> {
+class TimeSeriesSet : public std::vector<TimeSeries<T>>
+{
 public:
+
+    // ============================================================
     // Constructors
-    TimeSeriesSet(); ///< Default constructor
-    TimeSeriesSet(const TimeSeriesSet<T>& other); ///< Copy constructor
-    TimeSeriesSet(const TimeSeries<T>& ts); ///< Construct with a single TimeSeries
-    TimeSeriesSet(int num_series); ///< Construct with specified number of empty series
-    TimeSeriesSet(const std::vector<std::string>& filenames); ///< Construct from multiple file inputs
-    TimeSeriesSet(const std::string& filename, bool has_header = true); ///< Construct from CSV file
+    // ============================================================
 
-    TimeSeriesSet<T>& operator=(const TimeSeriesSet<T>& other); ///< Copy assignment
-    TimeSeriesSet<T>& operator=(TimeSeriesSet<T>&& other) noexcept; ///< Move assignment
+    TimeSeriesSet();
+    TimeSeriesSet(const TimeSeriesSet<T>& other);
+    TimeSeriesSet(const TimeSeries<T>& ts);
+    TimeSeriesSet(int num_series);
+    TimeSeriesSet(const std::vector<std::string>& filenames);
+    TimeSeriesSet(const std::string& filename, bool has_header = true);
 
+    TimeSeriesSet<T>& operator=(const TimeSeriesSet<T>& other);
+    TimeSeriesSet<T>& operator=(TimeSeriesSet<T>&& other) noexcept;
+
+    // ============================================================
     // File I/O
-    bool read(const std::string& filename, bool has_header = true); ///< Read from CSV
-    void write(const std::string& filename, const std::string& delimiter = ",") const; ///< Write to CSV
-    void appendtofile(const std::string& filename, bool include_time = true) const; ///< Append to existing CSV
+    // ============================================================
 
+    bool read(const std::string& filename, bool has_header = true);
+    void write(const std::string& filename, const std::string& delimiter = ",") const;
+    void appendtofile(const std::string& filename, bool include_time = true) const;
+
+    // ============================================================
     // Accessors
-    TimeSeries<T>& operator[](int index); ///< Access by index
-    TimeSeries<T>& operator[](const std::string& name); ///< Access by name (mutable)
-    const TimeSeries<T>& operator[](int index) const; ///< Access by index (const)
-    const TimeSeries<T>& operator[](const std::string& name) const; ///< Access by name (const)
+    // ============================================================
 
+    TimeSeries<T>& operator[](int index);
+    TimeSeries<T>& operator[](const std::string& name);
+    const TimeSeries<T>& operator[](int index) const;
+    const TimeSeries<T>& operator[](const std::string& name) const;
+
+    // ============================================================
     // Metadata
-    void setSeriesName(int index, const std::string& name); ///< Set series name by index
-    std::string getSeriesName(int index) const; ///< Get series name by index
-    std::vector<std::string> getSeriesNames() const; ///< Get all series names
-    void SetAllSeriesSize(int n); ///<< Resizes all the timeseries
-    bool SetRow(int i, const T& t, const std::vector<T>& c); /// Set values of an entire row
-    void setname(int index, const std::string& name); ///< Set name on internal series object
+    // ============================================================
 
-    //Ranges
+    void setSeriesName(int index, const std::string& name);
+    std::string getSeriesName(int index) const;
+    std::vector<std::string> getSeriesNames() const;
+
+    void SetAllSeriesSize(int n);
+    bool SetRow(int i, const T& t, const std::vector<T>& c);
+    void setname(int index, const std::string& name);
+
+    // ============================================================
+    // Ranges
+    // ============================================================
+
     T maxval() const;
     T minval() const;
     T mintime() const;
     T maxtime() const;
 
+    // ============================================================
     // Query
-    bool Contains(const std::string& name) const; ///< Check if series exists by name
-    int indexOf(const std::string& name) const; ///< Get index of named series
-    int lookup(const std::string& name) const; ///< Alias for indexOf
-    int maxnumpoints() const; ///< Get max number of points across all series
-    size_t seriesCount() const; ///< Number of series in the set
-    size_t pointCount(int series_index) const; ///< Number of points in a specific series
+    // ============================================================
 
+    bool Contains(const std::string& name) const;
+    int indexOf(const std::string& name) const;
+    int lookup(const std::string& name) const;
+    int maxnumpoints() const;
+    size_t seriesCount() const;
+    size_t pointCount(int series_index) const;
+
+    // ============================================================
     // Append & Modify
-    void append(const std::vector<T>& values); ///< Append a row of values
-    void append(double t, const std::vector<T>& values); ///< Append a row with time
-    bool append(const TimeSeries<T>& ts, const std::string& name = ""); ///< Append a named TimeSeries
-    void append(const std::string& name); ///< Add empty TimeSeries with given name
-    void clear(); ///< Clear all series
-    void clearContents(); ///< Clear content of each series, retain structure
-    void clearContentsExceptLastRow(); ///< Keep last row only
-    void knockout(T t); ///< Knock out all points beyond time t
-    void resize(size_t num_series); ///< Resize to given number of series
-    //void ResizeIfNeeded(size_t new_size); ///< Expand size only if needed
-    void removeNaNs(); ///< Remove NaN values from all series
-    TimeSeriesSet<T> removeNaNs() const; ///< Return a new set with NaN values removed
+    // ============================================================
 
+    void append(const std::vector<T>& values);
+    void append(double t, const std::vector<T>& values);
+    bool append(const TimeSeries<T>& ts, const std::string& name = "");
+    void append(const std::string& name);
+
+    void clear();
+    void clearContents();
+    void clearContentsExceptLastRow();
+    void knockout(T t);
+    void resize(size_t num_series);
+    void removeNaNs();
+    TimeSeriesSet<T> removeNaNs() const;
+
+    // ============================================================
     // Interpolation & Extraction
-    std::vector<T> interpolate(T t) const; ///< Interpolate all series at given time
-    std::vector<T> interpolate(T t, int n) const; ///< Interpolate for first n series
-    TimeSeries<T> extract(int index, T t1, T t2) const; ///< Extract a subset of one series
+    // ============================================================
+
+    std::vector<T> interpolate(T t) const;
+    std::vector<T> interpolate(T t, int n) const;
+
+    TimeSeries<T> extract(int index, T t1, T t2) const;
+    TimeSeriesSet<T> extract(T t1, T t2) const;
 
     TimeSeriesSet<T> derivative() const;
 
-    TimeSeriesSet<T> extract(T t1, T t2) const;
-
+    // ============================================================
     // Series Statistics
-    std::vector<T> getrandom() const; ///< Random row of values
-    std::vector<T> getrandom(int start_item) const; ///< Random row after index
-    std::vector<T> getrow(int index) const; ///< Get values from specific row
-    std::vector<T> percentile(T p) const; ///< Percentiles from each series
+    // ============================================================
+
+    std::vector<T> getrandom() const;
+    std::vector<T> getrandom(int start_item) const;
+    std::vector<T> getrow(int index) const;
+
+    std::vector<T> percentile(T p) const;
     std::vector<T> percentile(T p, int start_item) const;
     std::vector<T> percentile(T p, int start_item, const std::vector<int>& indices) const;
-    std::vector<T> mean(int start_item = 0) const; ///< Means from each series
+
+    std::vector<T> mean(int start_item = 0) const;
     std::vector<T> mean(int start_item, const std::vector<int>& indices) const;
-    std::vector<T> standardDeviation(int start_item = 0) const; ///< Stddev from each series
+
+    std::vector<T> standardDeviation(int start_item = 0) const;
     std::vector<T> standardDeviation(int start_item, const std::vector<int>& indices) const;
-    std::vector<T> min(int start_item = 0) const; ///< Minimums from each series
-    std::vector<T> max(int start_item = 0) const; ///< Maximums from each series
-    std::vector<T> integrate() const; ///< Trapezoidal integration
-    std::vector<T> average() const; ///< Time-averaged values
 
+    std::vector<T> min(int start_item = 0) const;
+    std::vector<T> max(int start_item = 0) const;
+
+    std::vector<T> integrate() const;
+    std::vector<T> average() const;
+
+    // ============================================================
     // Correlation & Linear Combinations
-    CMatrix correlation(int start_item, int end_item) const; ///< Correlation matrix
-    TimeSeries<T> add(const std::vector<int>& indices) const; ///< Sum multiple series
-    TimeSeries<T> add_mult(const std::vector<int>& indices, const std::vector<T>& weights) const; ///< Weighted sum
-    TimeSeries<T> add_mult(const std::vector<int>& indices, const TimeSeriesSet<T>& other) const; ///< Elementwise multiplication with another set
-    TimeSeries<T> divide(int numerator_index, int denominator_index) const; ///< Pointwise division
+    // ============================================================
 
+    CMatrix correlation(int start_item, int end_item) const;
+
+    TimeSeries<T> add(const std::vector<int>& indices) const;
+    TimeSeries<T> add_mult(const std::vector<int>& indices, const std::vector<T>& weights) const;
+    TimeSeries<T> add_mult(const std::vector<int>& indices, const TimeSeriesSet<T>& other) const;
+    TimeSeries<T> divide(int numerator_index, int denominator_index) const;
+
+    // ============================================================
     // Transformations
-    TimeSeriesSet<T> make_uniform(T increment, bool assign_d = true) const; ///< Make all series uniform
-    TimeSeriesSet<T> getpercentiles(const std::vector<T>& fractions) const; ///< Get specified percentiles at all times
-    TimeSeriesSet<T> distribution(int n_bins, int start_index=0, int end_index=-1) const; ///< Density histograms
-    TimeSeriesSet<T> distributionLog(int n_bins, int start_index, int end_index=-1) const; ///< Density histograms with logarithmic intervals
-    TimeSeriesSet<T> add_noise(const std::vector<T>& stddevs, bool log_noise = false) const; ///< Add Gaussian noise
-    TimeSeriesSet<T> sort(int column_index = 0) const; ///< Sort based on a column
-    TimeSeriesSet<T> ConverttoNormalScore() const; ///< Convert each to normal score
-    TimeSeriesSet<T> AutoCorrelation(const double& span, const double& increment) const; ///< Autocorrelation function
-    TimeSeriesSet<T> cummulative() const; ///< convert to cummulative distribution
-    TimeSeriesSet<T> GetCummulativeDistribution() const; ///< Extract CDF for each series
-    TimeSeriesSet<T> Log() const; ///< Log-transform values
+    // ============================================================
 
+    TimeSeriesSet<T> make_uniform(T increment, bool assign_d = true) const;
+    TimeSeriesSet<T> getpercentiles(const std::vector<T>& fractions) const;
+    TimeSeriesSet<T> distribution(int n_bins, int start_index = 0, int end_index = -1) const;
+    TimeSeriesSet<T> distributionLog(int n_bins, int start_index, int end_index = -1) const;
+    TimeSeriesSet<T> add_noise(const std::vector<T>& stddevs, bool log_noise = false) const;
+    TimeSeriesSet<T> sort(int column_index = 0) const;
+    TimeSeriesSet<T> ConverttoNormalScore() const;
+    TimeSeriesSet<T> AutoCorrelation(const double& span, const double& increment) const;
+    TimeSeriesSet<T> cummulative() const;
+    TimeSeriesSet<T> GetCummulativeDistribution() const;
+    TimeSeriesSet<T> Log() const;
+
+    // ============================================================
     // Wiggle Analysis
-    std::vector<T> max_wiggle() const; ///< Max wiggle metric across series
-    std::vector<T> max_wiggle_corr(int back_steps) const; ///< Max wiggle correlation
-    std::vector<int> max_wiggle_sl(int back_steps, T tolerance) const; ///< Wiggle slope test
+    // ============================================================
 
-    // File Serialization (Qt)
+    std::vector<T> max_wiggle() const;
+    std::vector<T> max_wiggle_corr(int back_steps) const;
+    std::vector<int> max_wiggle_sl(int back_steps, T tolerance) const;
+
 #ifdef Q_JSON_SUPPORT
-    QJsonObject toJson() const; ///< Convert to QJsonObject
-    void fromJson(const QJsonObject& json); ///< Load from QJsonObject
-#endif // Q_JSON_SUPPORT
+    QJsonObject toJson() const;
+    void fromJson(const QJsonObject& json);
+#endif
 
     // ============================================================
     // TimeSeriesSet mean as a single TimeSeries
     //
-    // mean_ts(...)       : FAST / legacy behavior
-    //   - assumes aligned time grids (same timestamps by index)
+    // mean_ts(...)        : DEFAULT (ROBUST)
+    //   - uses LONGEST series time grid
+    //   - averages available series at each time
+    //   - NO extrapolation
     //
-    // mean_ts_union(...) : ROBUST (but can be slower)
-    //   - uses UNION of timestamps from series (>= start_item)
-    //   - at each union time, averages interpolated values from series
-    //     that cover that time (available-only behavior)
+    // mean_ts_union(...)  : ROBUST
+    //   - UNION of timestamps (>= start_item)
+    //   - averages interpolated values from series that cover time
+    //   - NO extrapolation
     //
-    // mean_ts_grid(...)  : FAST + ROBUST (recommended)
-    //   - builds a UNIFORM time grid with dt you choose (e.g., 0.01)
-    //   - supports:
-    //       Intersection   -> only where ALL series cover the time
-    //       UnionAvailable -> extend to longest end; average available series
-    //   - streaming interpolation (no ts.interpol() inside inner loops)
+    // mean_ts_grid(...)   : FAST + ROBUST
+    //   - uniform grid with dt
+    //   - Intersection / UnionAvailable modes
+    //   - streaming interpolation
+    //   - NO extrapolation
     //
-    // mean_ts_longest(...) : ROBUST + SIMPLE (your preferred)
-    //   - uses the LONGEST series time grid (no union-of-times)
-    //   - for each ref time, averages interpolated values from series
-    //     that cover that time (available-only behavior)
+    // mean_ts_longest(...) : ROBUST + SIMPLE
+    //   - explicit longest-series-grid version
     // ============================================================
 
     TimeSeries<T> mean_ts(int start_item = 0) const;
     TimeSeries<T> mean_ts(int start_item, const std::vector<int>& indices) const;
 
-    TimeSeries<T> mean_ts_union(int start_item = 0, T time_merge_tol = (T)1e-12) const;
+    TimeSeries<T> mean_ts_union(int start_item = 0,
+                                T time_merge_tol = (T)1e-12) const;
+
     TimeSeries<T> mean_ts_union(int start_item,
                                 const std::vector<int>& indices,
                                 T time_merge_tol = (T)1e-12) const;
 
-    // ✅ NEW: uniform-grid mean (fast)
     TimeSeries<T> mean_ts_grid(T dt,
-                              int start_item = 0,
-                              MeanGridMode mode = MeanGridMode::Intersection,
-                              T time_eps = (T)1e-12) const;
+                               int start_item = 0,
+                               MeanGridMode mode = MeanGridMode::Intersection,
+                               T time_eps = (T)1e-12) const;
 
     TimeSeries<T> mean_ts_grid(T dt,
-                              int start_item,
-                              const std::vector<int>& indices,
-                              MeanGridMode mode = MeanGridMode::Intersection,
-                              T time_eps = (T)1e-12) const;
+                               int start_item,
+                               const std::vector<int>& indices,
+                               MeanGridMode mode = MeanGridMode::Intersection,
+                               T time_eps = (T)1e-12) const;
 
-    // ✅ NEW: longest-series-grid mean (no union-of-times)
     TimeSeries<T> mean_ts_longest(int start_item = 0,
                                   T time_eps = (T)1e-10) const;
 
@@ -221,17 +262,22 @@ public:
                                       torch::Device device = torch::kCPU) const;
 #endif
 
+    // ============================================================
     // Properties
-    std::string filename; ///< File associated with the set
-    std::string name; ///< Name of the set
-    bool file_not_found = false; ///< Flag for file read failure
-    bool unif = false; ///< Whether time steps are uniform
+    // ============================================================
+
+    std::string filename;
+    std::string name;
+    bool file_not_found = false;
+    bool unif = false;
 
 private:
-    static size_t countRows(std::ifstream& file, bool has_header); // estimate the number of rows in a csv file
+    static size_t countRows(std::ifstream& file, bool has_header);
 };
 
+// ============================================================
 // Helper functions
+// ============================================================
 
 template<class T>
 T diff(TimeSeriesSet<T> A, TimeSeriesSet<T> B);
@@ -256,5 +302,23 @@ T sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, T t, std::string name);
 
 template<class T>
 int max_n_vars(std::vector<TimeSeriesSet<T>>& sets);
+
+// ✅ NEW: mean over ensemble of multi-column TimeSeriesSet<T>
+// Each column is averaged independently using longest-grid logic.
+// Each output column may have its own t_end.
+//
+// IMPORTANT: avoid default-arg redeclaration errors by placing defaults
+// in ONLY ONE overload (see below).
+
+// Full overload (NO defaults here)
+template<typename T>
+TimeSeriesSet<T> mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
+                                      int start_item,
+                                      T time_eps);
+
+// Convenience overload (defaults live ONLY here)
+template<typename T>
+TimeSeriesSet<T> mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
+                                      int start_item = 0);
 
 #include "TimeSeriesSet.hpp"

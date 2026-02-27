@@ -1344,26 +1344,27 @@ T TimeSeriesSet<T>::maxtime() const {
 
 // ============================================================
 // Timeseriesset mean as a single Timeseries
-//   - mean_ts(...)          : FAST, assumes aligned time grids (legacy behavior)
-//   - mean_ts_union(...)    : ROBUST, uses UNION of times (legacy union list)
-//   - mean_ts_grid(...)     : FAST+ROBUST on UNIFORM GRID via streaming interpolation
-//   - mean_ts_longest(...)  : ROBUST on LONGEST series time grid (NO union-of-times)
+//   - mean_ts(...)          : default = ROBUST (longest-grid mean, NO extrapolation)
+//   - mean_ts_union(...)    : UNION of timestamps (interpolates only, NO extrapolation)
+//   - mean_ts_grid(...)     : UNIFORM GRID via streaming interpolation (NO extrapolation)
+//   - mean_ts_longest(...)  : LONGEST series time grid (NO extrapolation)
+//
+// NEW (multi-column realizations use-case):
+//   - mean_ts_longest_cols(...) : Mean TimeSeriesSet over realizations, per column,
+//                                each column uses its own longest-grid mean
+//                                => each column can have its own t_end.
 // ============================================================
 
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item) const
 {
-    // ✅ FIX:
-    // The legacy implementation used operator+= across TimeSeries objects.
-    // If operator+= internally interpolates/extrapolates to match grids, it can create
-    // negative artifacts even when all stored samples are non-negative.
-    //
-    // Use robust longest-grid mean instead (skips series that don't cover a time).
+    // Default robust mean: use the longest time-grid and skip series that
+    // cannot bracket the requested time (NO extrapolation).
     return this->mean_ts_longest(start_item);
 }
 
 // -----------------------------------------------------------------------------
-// Legacy UNION-OF-TIMESTAMPS mean (kept as-is from your current code)
+// UNION-OF-TIMESTAMPS mean (robust; NO extrapolation)
 // -----------------------------------------------------------------------------
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item, T time_merge_tol) const
@@ -1400,11 +1401,16 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item, T time_merge_tol) 
         for (const auto& ts : *this) {
             if (ts.size() < 2) continue;
 
-            const T t0 = (T)ts.getTime(0);
+            const int s = std::max(0, start_item);
+            if ((int)ts.size() - s < 2) continue;
+
+            const T t0 = (T)ts.getTime(s);
             const T t1 = (T)ts.getTime((int)ts.size() - 1);
+
+            // STRICT support check: NO tolerance that expands range (prevents extrapolation)
             if (t < t0 || t > t1) continue;
 
-            const T v = ts.interpol(t);
+            const T v = ts.interpol(t); // should interpolate inside support
             if (std::isfinite((double)v)) {
                 sum += (long double)v;
                 ++cnt;
@@ -1502,8 +1508,13 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item,
             const auto& ts = (*this)[idx];
             if (ts.size() < 2) continue;
 
-            const T t0 = (T)ts.getTime(0);
+            const int s = std::max(0, start_item);
+            if ((int)ts.size() - s < 2) continue;
+
+            const T t0 = (T)ts.getTime(s);
             const T t1 = (T)ts.getTime((int)ts.size() - 1);
+
+            // STRICT: NO extrapolation
             if (t < t0 || t > t1) continue;
 
             const T v = ts.interpol(t);
@@ -1521,7 +1532,9 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item,
 }
 
 // -----------------------------------------------------------------------------
-// ✅ NEW: mean_ts_grid (uniform grid, streaming interpolation; fast)
+// ✅ mean_ts_grid (uniform grid, streaming interpolation; NO extrapolation)
+//   - time_eps is used ONLY for floating comparisons / cursor advance,
+//     NOT for expanding bracket ranges.
 // -----------------------------------------------------------------------------
 
 namespace {
@@ -1530,15 +1543,6 @@ static inline bool ts_has_data_from(const TimeSeries<T>& ts, int start_item)
 {
     const int n = (int)ts.size();
     return (n >= 2 && start_item < n - 1);
-}
-
-template <typename T>
-static inline T lerp(T t, T t0, T t1, T v0, T v1)
-{
-    const double denom = (double)(t1 - t0);
-    if (denom == 0.0) return v0;
-    const double a = ((double)(t - t0)) / denom;
-    return (T)((1.0 - a) * (double)v0 + a * (double)v1);
 }
 } // anonymous
 
@@ -1616,8 +1620,9 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
 
     if (!(t_end > t_start)) return out;
 
-    // Number of grid points
     const double eps = (double)time_eps;
+
+    // Number of grid points
     const int64_t N = (int64_t)std::floor((t_end - t_start) / (double)dt + 1.0 + 1e-12);
     if (N <= 0) return out;
 
@@ -1633,7 +1638,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
         k[j] = std::max(0, std::min(start_item, n - 2)); // must have k+1 valid
     }
 
-    // Iterate uniform grid
     for (int64_t i = 0; i < N; ++i) {
         const double tt = t_start + (double)i * (double)dt;
         if (tt > t_end + 1e-12) break;
@@ -1645,28 +1649,28 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
             const auto& ts = (*this)[valid[j]];
             const int n = (int)ts.size();
 
-            // Quick out-of-range check
-            const double tmin = (double)ts.getTime(std::max(0, start_item));
+            const int s = std::max(0, start_item);
+            const double tmin = (double)ts.getTime(s);
             const double tmax = (double)ts.getTime(n - 1);
 
-            if (tt < tmin - eps || tt > tmax + eps) {
+            // STRICT support check: NO range expansion (prevents extrapolation)
+            if (tt < tmin || tt > tmax) {
                 if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
-                continue; // union: skip series
+                continue;
             }
 
             int& kk = k[j];
-            if (kk < std::max(0, start_item)) kk = std::max(0, start_item);
+            if (kk < s) kk = s;
             if (kk > n - 2) kk = n - 2;
 
-            // Advance kk until bracket contains tt
-            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) {
-                ++kk;
-            }
+            // Advance cursor (eps only for numerical stability)
+            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) ++kk;
 
             const double t0 = (double)ts.getTime(kk);
             const double t1 = (double)ts.getTime(kk + 1);
 
-            if (!(tt >= t0 - eps && tt <= t1 + eps)) {
+            // STRICT bracket containment (NO extrapolation). eps only to accept near-equality.
+            if (tt < t0 - eps || tt > t1 + eps) {
                 if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
                 continue;
             }
@@ -1674,11 +1678,13 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
             const double v0 = (double)ts.getValue(kk);
             const double v1 = (double)ts.getValue(kk + 1);
 
-            // Interp
-            const double denom = (t1 - t0);
             double v = v0;
+            const double denom = (t1 - t0);
             if (denom != 0.0) {
-                const double a = (tt - t0) / denom;
+                double a = (tt - t0) / denom;
+                // Clamp a to [0,1] to eliminate any residual extrapolation from fp noise
+                if (a < 0.0) a = 0.0;
+                if (a > 1.0) a = 1.0;
                 v = (1.0 - a) * v0 + a * v1;
             }
 
@@ -1691,7 +1697,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
         }
 
         if (cnt <= 0) continue;
-        if (cnt == -999999) break; // intersection: once one time fails, we can stop (grid increasing)
+        if (cnt == -999999) break;
 
         out.append((T)tt, (T)(sum / (long double)cnt));
     }
@@ -1701,9 +1707,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
 }
 
 // -----------------------------------------------------------------------------
-// ✅ NEW: mean_ts_longest (LONGEST series time grid, skip missing series; NO union)
-//    - time grid = longest valid series (by size)
-//    - for each ref time, average contributors that can interpolate at that time
+// ✅ mean_ts_longest (LONGEST series time grid, skip missing series; NO extrapolation)
 // -----------------------------------------------------------------------------
 
 template<typename T>
@@ -1747,7 +1751,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
         k[j] = std::max(0, std::min(start_item, n - 2));
     }
 
-    // Iterate over reference time grid
     for (int i = sref; i < nref; ++i) {
         const double tt = (double)ref_ts.getTime(i);
 
@@ -1762,8 +1765,8 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
             const double tmin = (double)ts.getTime(s);
             const double tmax = (double)ts.getTime(n - 1);
 
-            // This series does not cover tt -> skip it
-            if (tt < tmin - eps || tt > tmax + eps) continue;
+            // STRICT support (no range expansion)
+            if (tt < tmin || tt > tmax) continue;
 
             int& kk = k[j];
             if (kk < s) kk = s;
@@ -1774,7 +1777,8 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
             const double t0 = (double)ts.getTime(kk);
             const double t1 = (double)ts.getTime(kk + 1);
 
-            if (!(tt >= t0 - eps && tt <= t1 + eps)) continue;
+            // Strict bracket (eps only for near-equality)
+            if (tt < t0 - eps || tt > t1 + eps) continue;
 
             const double v0 = (double)ts.getValue(kk);
             const double v1 = (double)ts.getValue(kk + 1);
@@ -1782,7 +1786,10 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
             double v = v0;
             const double denom = (t1 - t0);
             if (denom != 0.0) {
-                const double a = (tt - t0) / denom;
+                double a = (tt - t0) / denom;
+                // Clamp to eliminate extrap from fp noise
+                if (a < 0.0) a = 0.0;
+                if (a > 1.0) a = 1.0;
                 v = (1.0 - a) * v0 + a * v1;
             }
 
@@ -1792,7 +1799,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
             }
         }
 
-        if (cnt <= 0) continue; // (shouldn’t happen since ref itself contributes)
+        if (cnt <= 0) continue;
         out.append((T)tt, (T)(sum / (long double)cnt));
     }
 
@@ -1808,7 +1815,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
     TimeSeries<T> out;
     if (indices.empty()) return out;
 
-    // Pick reference = longest usable series among indices
     int ref = -1;
     int best_n = -1;
 
@@ -1829,7 +1835,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
     const int sref = std::max(0, start_item);
     if (nref - sref < 2) return out;
 
-    // Valid list
     std::vector<int> valid;
     valid.reserve(indices.size());
     for (int idx : indices) {
@@ -1841,7 +1846,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
     out.reserve((size_t)(nref - sref));
     const double eps = (double)time_eps;
 
-    // Streaming cursor per series
     std::vector<int> k(valid.size(), 0);
     for (size_t j = 0; j < valid.size(); ++j) {
         const auto& ts = (*this)[valid[j]];
@@ -1849,7 +1853,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
         k[j] = std::max(0, std::min(start_item, n - 2));
     }
 
-    // Iterate over reference time grid
     for (int i = sref; i < nref; ++i) {
         const double tt = (double)ref_ts.getTime(i);
 
@@ -1864,7 +1867,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
             const double tmin = (double)ts.getTime(s);
             const double tmax = (double)ts.getTime(n - 1);
 
-            if (tt < tmin - eps || tt > tmax + eps) continue;
+            if (tt < tmin || tt > tmax) continue;
 
             int& kk = k[j];
             if (kk < s) kk = s;
@@ -1875,7 +1878,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
             const double t0 = (double)ts.getTime(kk);
             const double t1 = (double)ts.getTime(kk + 1);
 
-            if (!(tt >= t0 - eps && tt <= t1 + eps)) continue;
+            if (tt < t0 - eps || tt > t1 + eps) continue;
 
             const double v0 = (double)ts.getValue(kk);
             const double v1 = (double)ts.getValue(kk + 1);
@@ -1883,7 +1886,9 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
             double v = v0;
             const double denom = (t1 - t0);
             if (denom != 0.0) {
-                const double a = (tt - t0) / denom;
+                double a = (tt - t0) / denom;
+                if (a < 0.0) a = 0.0;
+                if (a > 1.0) a = 1.0;
                 v = (1.0 - a) * v0 + a * v1;
             }
 
@@ -1899,6 +1904,94 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
 
     out.setName("Mean");
     return out;
+}
+
+
+// -----------------------------------------------------------------------------
+// ✅ NEW: mean_ts_longest_cols
+//
+// Generic ensemble mean for "vector of TimeSeriesSet<T>".
+//
+// Use when you have an ENSEMBLE of runs/samples/realizations/etc, where each
+// member is a TimeSeriesSet<T> (multi-column), and you want one mean
+// TimeSeriesSet<T> where:
+//
+//   - output has max number of columns across members
+//   - each output column is averaged over members that HAVE that column
+//   - each column uses its OWN "longest time grid" (via mean_ts_longest)
+//   - NO extrapolation (inherits behavior of mean_ts_longest)
+//
+// Example:
+//   std::vector<TimeSeriesSet<double>> ensemble; // each element from a folder/run
+//   TimeSeriesSet<double> mean = mean_ts_longest_cols(ensemble, 0);
+//
+// -----------------------------------------------------------------------------
+
+template<typename T>
+static inline TimeSeriesSet<T>
+mean_ts_longest_cols_impl(const std::vector<TimeSeriesSet<T>>& sets,
+                          int start_item,
+                          T time_eps)
+{
+    TimeSeriesSet<T> out;
+    if (sets.empty()) return out;
+
+    // Max number of columns across members
+    size_t ncols = 0;
+    for (const auto& s : sets) ncols = std::max(ncols, s.size());
+    if (ncols == 0) return out;
+
+    out.resize(ncols);
+
+    // Column naming: take first non-empty name encountered for each column
+    for (size_t c = 0; c < ncols; ++c) {
+        for (const auto& s : sets) {
+            if (c < s.size()) {
+                const std::string nm = s[(int)c].name();
+                if (!nm.empty()) { out[(int)c].setName(nm); break; }
+            }
+        }
+        if (out[(int)c].name().empty())
+            out[(int)c].setName(std::string("Mean_col_") + std::to_string(c));
+    }
+
+    // Per-column mean
+    for (size_t c = 0; c < ncols; ++c) {
+        TimeSeriesSet<T> colset;
+        colset.reserve(sets.size());
+
+        for (const auto& s : sets) {
+            if (c < s.size()) colset.push_back(s[(int)c]);
+        }
+
+        // robust per-series mean using the column's longest grid
+        TimeSeries<T> m = colset.mean_ts_longest(start_item, time_eps);
+
+        if (m.name().empty()) m.setName(out[(int)c].name());
+        out[(int)c] = std::move(m);
+    }
+
+    out.name = "Mean";
+    return out;
+}
+
+// Public overload (NO default args here)
+template<typename T>
+static inline TimeSeriesSet<T>
+mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
+                     int start_item,
+                     T time_eps)
+{
+    return mean_ts_longest_cols_impl(sets, start_item, time_eps);
+}
+
+// Convenience overload: default epsilon ONLY HERE (prevents redeclaration error)
+template<typename T>
+static inline TimeSeriesSet<T>
+mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
+                     int start_item)
+{
+    return mean_ts_longest_cols_impl(sets, start_item, (T)1e-10);
 }
 
 
