@@ -1,12 +1,9 @@
 #ifndef CDISTRIBUTION_H
 #define CDISTRIBUTION_H
 
-/*
- * CDistribution centralizes parametric/non-parametric probability
- * distribution handling:
- * - parameter storage and command parsing
- * - PDF / CDF / inverse CDF evaluation
- * - random sample generation for scalar and vector/matrix APIs
+/**
+ * @file Distribution.h
+ * @brief Distribution declarations for PDF/CDF evaluation and random sampling.
  */
 
 #include<vector>
@@ -32,24 +29,25 @@ class CDistribution
 #endif
 {
 public:
-    // -----------------------------------------------------------------
-    // Lifecycle and configuration
-    // -----------------------------------------------------------------
+    /** @name Lifecycle and configuration */
+    ///@{
     CDistribution();
     CDistribution(string name);
 	~CDistribution(void);
     static int NumberOfCoreParameters(string _name);
     bool CreateDistribution(const map<string,string> &Arguments);
+    ///@}
 
-    // Distribution parameters and metadata.
+    /** @brief Distribution parameters (interpretation depends on type). */
 	vector<double> params;
+    /** @brief Distribution name (e.g. normal, lognormal, gamma). */
 	string name;
 
-    // -----------------------------------------------------------------
-    // Core evaluations
-    // -----------------------------------------------------------------
+    /** @name Core evaluations */
+    ///@{
 	double evaluate(double x);
 	double evaluate_CDF(double x, bool flux_w = false);
+    ///@}
     static bool HasCommand(const string &cmd);
     vector<string> commands();
     static vector<string> Commands();
@@ -85,9 +83,10 @@ public:
 
 };
 
-// -------------------------------------------------------------------------
-// Free helper functions for distribution sampling and transforms
-// -------------------------------------------------------------------------
+/**
+ * @name Free helper functions for distribution sampling and transforms
+ * @{
+ */
 double Gammapdf(double x, double k, double theta);
 double gamma(double x);
 double unitrandom();
@@ -104,4 +103,5 @@ double stdnormal_cdf(double u);
 double unifrandom(double xmin, double xmax);
 double std_normal_phi_inv(const double &u);
 double stdnormal_inv(const double &u);
+/** @} */
 #endif

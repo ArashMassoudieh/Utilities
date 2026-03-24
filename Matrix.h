@@ -1,10 +1,8 @@
-// Matrix.h: interface for the CMatrix class.
-//
-//////////////////////////////////////////////////////////////////////
-//
-// CMatrix is the repository's primary dense matrix abstraction.
-// It is designed to interoperate with CVector and, optionally, Armadillo
-// backends when `_arma` is enabled at compile time.
+/**
+ * @file Matrix.h
+ * @brief Declaration of the CMatrix dense matrix class and matrix free
+ * functions.
+ */
 
 #pragma once
 
@@ -33,17 +31,19 @@ class CMatrix
 {
 friend class D5Matrix;
 private:
-    // Stored dimensions; `matr` should be consistent with these values.
+    /** @brief Row count of the matrix. */
 	int numrows;
+    /** @brief Column count of the matrix. */
 	int numcols;
 	int range(int);
 public:
-    // Row-major view where each row is represented as a CVector.
+    /**
+     * @brief Row-major matrix storage where each row is a CVector.
+     */
 	std::vector<CVector> matr;
 
-    // -----------------------------------------------------------------
-    // Construction / sizing
-    // -----------------------------------------------------------------
+    /** @name Construction and sizing */
+    ///@{
     CMatrix(int numrows, int numcolumns);
 	CMatrix(int);
     static CMatrix Diag(int n);
@@ -57,10 +57,10 @@ public:
     CMatrix& operator=(mat&);
 #endif
 	CMatrix(const CVector&);
+    ///@}
 
-    // -----------------------------------------------------------------
-    // Element access
-    // -----------------------------------------------------------------
+    /** @name Element access */
+    ///@{
     CVector& operator [](int);
     CVector operator[](int) const;
     double & operator()(int i, int j);
@@ -68,14 +68,15 @@ public:
 	int getnumrows() const;
 	int getnumcols() const;
 	virtual ~CMatrix();
+    ///@}
 
-    // -----------------------------------------------------------------
-    // Arithmetic operations
-    // -----------------------------------------------------------------
+    /** @name Arithmetic operations */
+    ///@{
 	CMatrix& operator=(const CMatrix&);
 	CMatrix & operator=(const double & m);
 	CMatrix& operator+=(const CMatrix&);
 	CMatrix& operator-=(const CMatrix &);
+    ///@}
 
 	friend CMatrix mult(CMatrix&, CMatrix&);
 	friend CVector mult(CMatrix&, CVector&);
@@ -122,9 +123,10 @@ public:
 
 };
 
-// -------------------------------------------------------------------------
-// Free functions for matrix algebra and normalization
-// -------------------------------------------------------------------------
+/**
+ * @name Free functions for matrix algebra and normalization
+ * @{
+ */
 double det(const CMatrix &);
 CMatrix Log(const CMatrix &M1);
 CMatrix Exp(const CMatrix &M1);
@@ -167,5 +169,6 @@ CVector normalize_max( const CVector &V, const CMatrix &M2);
 CVector normalize_max( const CVector &V, const CVector &D);
 
 CMatrix Identity(int rows);
+/** @} */
 
 

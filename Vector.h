@@ -1,10 +1,9 @@
-/*
- * CVector: lightweight dynamic vector utility used throughout the repository.
+/**
+ * @file Vector.h
+ * @brief Declaration of the CVector dense numeric vector utility.
  *
- * Notes for maintainers:
- * - The class intentionally keeps `vec` public for legacy call sites.
- * - Most operators are value-semantic wrappers around `std::vector<double>`.
- * - Optional Armadillo conversion APIs are enabled only under `_arma`.
+ * CVector is a lightweight vector abstraction used across math, distribution,
+ * and time-series utilities in this repository.
  */
 #ifndef C_VECTOR
 #define C_VECTOR
@@ -26,12 +25,14 @@ private:
 
 
 public:
-    // Underlying contiguous storage (kept public for backward compatibility).
+    /**
+     * @brief Underlying contiguous storage.
+     * @note Kept public for backward compatibility with legacy call sites.
+     */
     std::vector<double> vec;
 
-    // ---------------------------------------------------------------------
-    // Construction / lifetime
-    // ---------------------------------------------------------------------
+    /** @name Construction and lifetime */
+    ///@{
 	CVector();
 	CVector(int);
 	CVector(const std::vector<double>, int);
@@ -46,14 +47,14 @@ public:
     double operator[](int) const;
     double at(int i) const;
 	virtual ~CVector();
+    ///@}
     CVector Extract(int start, int end);
     static CVector Extract(const std::vector<double> &x, int start, int end);
 	int num;
 	int range(int);
 
-    // ---------------------------------------------------------------------
-    // Assignment & scalar/vector arithmetic
-    // ---------------------------------------------------------------------
+    /** @name Assignment and arithmetic operators */
+    ///@{
 	CVector& operator=(const CVector&);
 	CVector& operator=(const std::vector<double>&);
 #ifdef _arma
@@ -72,7 +73,8 @@ public:
     CVector& operator/=(double);
     CVector& operator+=(const CVector&);
     CVector& operator-=(const CVector&);
-    CVector& operator*=(const CVector&);
+	CVector& operator*=(const CVector&);
+    ///@}
 	friend double dotproduct(CVector, CVector);
 	friend CVector mult(CMatrix&, CVector&);
 	friend double norm(CVector);			//Friend can be deleted. we don't have any private or protected variable in this class  //
@@ -80,9 +82,8 @@ public:
 	bool operator==(double v);
 	bool operator==(CVector &v);
 
-    // ---------------------------------------------------------------------
-    // Basic statistics and transforms
-    // ---------------------------------------------------------------------
+    /** @name Statistics and transforms */
+    ///@{
     double max() const;
     double min() const;
 	double norm2();
@@ -96,10 +97,10 @@ public:
     CVector Log() const;
 	CVector abs();
 	CVector H();
+    ///@}
 
-    // ---------------------------------------------------------------------
-    // I/O and conversion helpers
-    // ---------------------------------------------------------------------
+    /** @name I/O and conversion helpers */
+    ///@{
 	void writetofile(FILE *f);
 	void writetofile(std::string filename);
 	void writetofile(std::ofstream &f);
@@ -116,13 +117,15 @@ public:
 	bool is_finite();
     std::string toString();
     std::vector<int> negative_elements();
+    ///@}
 
 
 };
 
-// -------------------------------------------------------------------------
-// Free functions operating on CVector
-// -------------------------------------------------------------------------
+/**
+ * @name Free functions operating on CVector
+ * @{
+ */
 CVector Log(const CVector &);
 CVector Exp(const CVector &);
 CVector abs(const CVector &);  //works w/o reference. if const included means read only
@@ -154,6 +157,7 @@ CVector NormalizetoGaussian(CVector &V);
 std::vector<double> create_vector(int i);
 std::vector<std::vector<double> > create_vector(int i, int j);
 template<typename T> bool isfinite(T arg);
+/** @} */
 
 
 #endif
