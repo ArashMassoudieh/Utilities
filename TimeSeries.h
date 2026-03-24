@@ -249,7 +249,12 @@ public:
     TimeSeries<T> extract(T t1, T t2) const;               ///< Extract window
     TimeSeries<T> make_uniform(T increment, bool assignD = false) const; ///< Make uniform
     TimeSeries<T> getcummulative() const;                 ///< Cumulative integral
-    TimeSeries<T> GetCummulativeDistribution() const;     ///< Sorted value CDF
+    /**
+     * @brief Build the empirical cumulative distribution from series values.
+     * @param reverse If true, return exceedance-style ordering.
+     * @return TimeSeries containing cumulative probability vs. sorted value.
+     */
+    TimeSeries<T> GetCummulativeDistribution(bool reverse = false) const;
     TimeSeries<T> distribution(int n_bins, int start_index) const; ///< Histogram density
     TimeSeries<T> distributionLog(int n_bins, int start_index) const; ///< Histogram density with Log intervals
 
