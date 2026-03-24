@@ -1,4 +1,11 @@
-
+/*
+ * CVector: lightweight dynamic vector utility used throughout the repository.
+ *
+ * Notes for maintainers:
+ * - The class intentionally keeps `vec` public for legacy call sites.
+ * - Most operators are value-semantic wrappers around `std::vector<double>`.
+ * - Optional Armadillo conversion APIs are enabled only under `_arma`.
+ */
 #ifndef C_VECTOR
 #define C_VECTOR
 
@@ -19,7 +26,12 @@ private:
 
 
 public:
+    // Underlying contiguous storage (kept public for backward compatibility).
     std::vector<double> vec;
+
+    // ---------------------------------------------------------------------
+    // Construction / lifetime
+    // ---------------------------------------------------------------------
 	CVector();
 	CVector(int);
 	CVector(const std::vector<double>, int);
@@ -38,6 +50,10 @@ public:
     static CVector Extract(const std::vector<double> &x, int start, int end);
 	int num;
 	int range(int);
+
+    // ---------------------------------------------------------------------
+    // Assignment & scalar/vector arithmetic
+    // ---------------------------------------------------------------------
 	CVector& operator=(const CVector&);
 	CVector& operator=(const std::vector<double>&);
 #ifdef _arma
@@ -63,6 +79,10 @@ public:
 	friend double dotproduct(CVector v1, CVector v2);
 	bool operator==(double v);
 	bool operator==(CVector &v);
+
+    // ---------------------------------------------------------------------
+    // Basic statistics and transforms
+    // ---------------------------------------------------------------------
     double max() const;
     double min() const;
 	double norm2();
@@ -76,6 +96,10 @@ public:
     CVector Log() const;
 	CVector abs();
 	CVector H();
+
+    // ---------------------------------------------------------------------
+    // I/O and conversion helpers
+    // ---------------------------------------------------------------------
 	void writetofile(FILE *f);
 	void writetofile(std::string filename);
 	void writetofile(std::ofstream &f);
@@ -96,6 +120,9 @@ public:
 
 };
 
+// -------------------------------------------------------------------------
+// Free functions operating on CVector
+// -------------------------------------------------------------------------
 CVector Log(const CVector &);
 CVector Exp(const CVector &);
 CVector abs(const CVector &);  //works w/o reference. if const included means read only

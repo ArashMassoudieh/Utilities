@@ -1,6 +1,14 @@
 #ifndef CDISTRIBUTION_H
 #define CDISTRIBUTION_H
 
+/*
+ * CDistribution centralizes parametric/non-parametric probability
+ * distribution handling:
+ * - parameter storage and command parsing
+ * - PDF / CDF / inverse CDF evaluation
+ * - random sample generation for scalar and vector/matrix APIs
+ */
+
 #include<vector>
 #include<string>
 #include "Vector.h"
@@ -24,13 +32,22 @@ class CDistribution
 #endif
 {
 public:
+    // -----------------------------------------------------------------
+    // Lifecycle and configuration
+    // -----------------------------------------------------------------
     CDistribution();
     CDistribution(string name);
 	~CDistribution(void);
     static int NumberOfCoreParameters(string _name);
     bool CreateDistribution(const map<string,string> &Arguments);
+
+    // Distribution parameters and metadata.
 	vector<double> params;
 	string name;
+
+    // -----------------------------------------------------------------
+    // Core evaluations
+    // -----------------------------------------------------------------
 	double evaluate(double x);
 	double evaluate_CDF(double x, bool flux_w = false);
     static bool HasCommand(const string &cmd);
@@ -68,8 +85,9 @@ public:
 
 };
 
-//double erf(double x);
-//double erfc(double x);
+// -------------------------------------------------------------------------
+// Free helper functions for distribution sampling and transforms
+// -------------------------------------------------------------------------
 double Gammapdf(double x, double k, double theta);
 double gamma(double x);
 double unitrandom();
