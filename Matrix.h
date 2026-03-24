@@ -1,6 +1,10 @@
 // Matrix.h: interface for the CMatrix class.
 //
 //////////////////////////////////////////////////////////////////////
+//
+// CMatrix is the repository's primary dense matrix abstraction.
+// It is designed to interoperate with CVector and, optionally, Armadillo
+// backends when `_arma` is enabled at compile time.
 
 #pragma once
 
@@ -29,11 +33,17 @@ class CMatrix
 {
 friend class D5Matrix;
 private:
+    // Stored dimensions; `matr` should be consistent with these values.
 	int numrows;
 	int numcols;
 	int range(int);
 public:
+    // Row-major view where each row is represented as a CVector.
 	std::vector<CVector> matr;
+
+    // -----------------------------------------------------------------
+    // Construction / sizing
+    // -----------------------------------------------------------------
     CMatrix(int numrows, int numcolumns);
 	CMatrix(int);
     static CMatrix Diag(int n);
@@ -47,6 +57,10 @@ public:
     CMatrix& operator=(mat&);
 #endif
 	CMatrix(const CVector&);
+
+    // -----------------------------------------------------------------
+    // Element access
+    // -----------------------------------------------------------------
     CVector& operator [](int);
     CVector operator[](int) const;
     double & operator()(int i, int j);
@@ -54,6 +68,10 @@ public:
 	int getnumrows() const;
 	int getnumcols() const;
 	virtual ~CMatrix();
+
+    // -----------------------------------------------------------------
+    // Arithmetic operations
+    // -----------------------------------------------------------------
 	CMatrix& operator=(const CMatrix&);
 	CMatrix & operator=(const double & m);
 	CMatrix& operator+=(const CMatrix&);
@@ -90,7 +108,7 @@ public:
     CMatrix non_posdef_elems_m(double tol = 1);
     CMatrix Preconditioner(double tol = 1);
     std::vector<std::string> toString(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>()) const;
-	std::vector<std::string> toHtml(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>());
+    std::vector<std::string> toHtml(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>());
     void setnumcolrows();
 	void ScaleDiagonal(double x);
     void setcol(int i,  const CVector &V);
@@ -104,6 +122,9 @@ public:
 
 };
 
+// -------------------------------------------------------------------------
+// Free functions for matrix algebra and normalization
+// -------------------------------------------------------------------------
 double det(const CMatrix &);
 CMatrix Log(const CMatrix &M1);
 CMatrix Exp(const CMatrix &M1);

@@ -1,20 +1,19 @@
 ﻿/*
  * OpenHydroQual - Environmental Modeling Platform
  * Copyright (C) 2025 Arash Massoudieh
- * 
+ *
  * This file is part of OpenHydroQual.
- * 
+ *
  * OpenHydroQual is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or (at your
  * option) any later version.
- * 
+ *
  * If you use this file in a commercial product, you must purchase a
  * commercial license. Contact arash.massoudieh@enviroinformatics.co for details.
  */
 
-
- // TimeSeriesSet.hpp
+// TimeSeriesSet.hpp
 
 #pragma once
 
@@ -25,11 +24,97 @@
 #include <cmath>
 #include "DistributionNUnif.h"
 #include <iomanip>
+#include <limits>
+#include <algorithm>
+#include <numeric>   // accumulate
 
 #ifdef Q_JSON_SUPPORT
 #include <QFile>
 #include <QTextStream>
+#include <QJsonArray>
 #endif // Q_JSON_SUPPORT
+
+
+// ============================================================================
+// Local helpers (header-only safe)
+// ============================================================================
+
+template<typename T>
+static inline bool tss_isfinite(T x) { return std::isfinite((double)x); }
+
+template<typename T>
+static inline bool tss_series_has_start(const TimeSeries<T>& ts, int start_item)
+{
+    return (int)ts.size() > std::max(0, start_item);
+}
+
+// Use start_item as “burn-in index”: series contributes only for t >= t(start_item)
+// and t <= t(last). (Assumes ts time is increasing-ish.)
+template<typename T>
+static inline bool tss_series_supports_time(const TimeSeries<T>& ts, T t, int start_item)
+{
+    if (!tss_series_has_start(ts, start_item)) return false;
+
+    const int s = std::max(0, start_item);
+    const T t0 = (T)ts.getTime((size_t)s);
+    const T t1 = (T)ts.getTime((size_t)ts.size() - 1);
+
+    return (t >= t0 && t <= t1);
+}
+
+// Global min/max over a subset of series indices (or whole set if indices==nullptr)
+template<typename T>
+static inline bool tss_compute_global_time_bounds(const TimeSeriesSet<T>& set,
+                                                  int start_item,
+                                                  const std::vector<int>* indices,
+                                                  T& out_tmin,
+                                                  T& out_tmax)
+{
+    out_tmin = std::numeric_limits<T>::infinity();
+    out_tmax = -std::numeric_limits<T>::infinity();
+
+    int nvalid = 0;
+
+    if (!indices)
+    {
+        for (const auto& ts : set)
+        {
+            if (!tss_series_has_start(ts, start_item)) continue;
+
+            const int s = std::max(0, start_item);
+            const T t0 = (T)ts.getTime((size_t)s);
+            const T t1 = (T)ts.getTime((size_t)ts.size() - 1);
+
+            if (!tss_isfinite(t0) || !tss_isfinite(t1)) continue;
+            out_tmin = std::min(out_tmin, t0);
+            out_tmax = std::max(out_tmax, t1);
+            nvalid++;
+        }
+    }
+    else
+    {
+        for (int idx : *indices)
+        {
+            if (idx < 0 || (size_t)idx >= set.size()) continue;
+            const auto& ts = set[(int)idx];
+            if (!tss_series_has_start(ts, start_item)) continue;
+
+            const int s = std::max(0, start_item);
+            const T t0 = (T)ts.getTime((size_t)s);
+            const T t1 = (T)ts.getTime((size_t)ts.size() - 1);
+
+            if (!tss_isfinite(t0) || !tss_isfinite(t1)) continue;
+            out_tmin = std::min(out_tmin, t0);
+            out_tmax = std::max(out_tmax, t1);
+            nvalid++;
+        }
+    }
+
+    if (nvalid == 0) return false;
+    if (!tss_isfinite(out_tmin) || !tss_isfinite(out_tmax)) return false;
+    if (out_tmax < out_tmin) return false;
+    return true;
+}
 
 
 // --- Constructors ---
@@ -39,7 +124,8 @@ TimeSeriesSet<T>::TimeSeriesSet() {}
 
 template<typename T>
 TimeSeriesSet<T>::TimeSeriesSet(const TimeSeriesSet<T>& other)
-    : std::vector<TimeSeries<T>>(other), name(other.name), filename(other.filename), file_not_found(other.file_not_found), unif(other.unif) {}
+    : std::vector<TimeSeries<T>>(other), name(other.name), filename(other.filename),
+      file_not_found(other.file_not_found), unif(other.unif) {}
 
 template<typename T>
 TimeSeriesSet<T>::TimeSeriesSet(const TimeSeries<T>& ts) {
@@ -123,11 +209,11 @@ bool TimeSeriesSet<T>::read(const std::string& filename, bool has_header) {
     while (std::getline(file, line)) {
         std::vector<std::string> tokens = aquiutils::split(line, ',');
         for (size_t i = 0; i + 1 < tokens.size(); i += 2) {
-            double t = 0; 
-            double v = 0; 
+            double t = 0;
+            double v = 0;
             if (!aquiutils::trim(tokens[i]).empty())
                 t = std::stod(tokens[i]);
-            if (!aquiutils::trim(tokens[i+1]).empty())
+            if (!aquiutils::trim(tokens[i + 1]).empty())
                 v = std::stod(tokens[i + 1]);
             temp_series[i / 2].append(t, static_cast<T>(v));
         }
@@ -188,7 +274,7 @@ void TimeSeriesSet<T>::write(const std::string& filename, const std::string& del
         for (size_t i = 0; i < this->size(); ++i) {
             const auto& ts = (*this)[i];
             if (j < ts.size()) {
-                // Format only the time with 3 decimal digits
+                // Format only the time with 6 decimal digits
                 std::ostringstream time_str;
                 time_str << std::fixed << std::setprecision(6) << ts.getTime(j);
                 file << time_str.str() << "," << ts.getValue(j);
@@ -219,8 +305,6 @@ void TimeSeriesSet<T>::setname(int index, const std::string& name) {
     (*this)[index].setName(name);
 }
 
-
-
 template<typename T>
 void TimeSeriesSet<T>::append(const std::vector<T>& values) {
     if (values.size() != this->size()) {
@@ -244,7 +328,6 @@ void TimeSeriesSet<T>::append(const std::string& name) {
     this->push_back(new_ts);
 }
 
-
 template<typename T>
 void TimeSeriesSet<T>::append(double t, const std::vector<T>& values) {
     if (values.size() != this->size()) {
@@ -266,7 +349,6 @@ void TimeSeriesSet<T>::setSeriesName(int index, const std::string& name) {
         (*this)[index].setName(name);
     }
 }
-
 
 template<typename T>
 std::string TimeSeriesSet<T>::getSeriesName(int index) const {
@@ -298,7 +380,6 @@ TimeSeries<T>& TimeSeriesSet<T>::operator[](const std::string& name) {
         if (ts.name() == name)
             return ts;
     }
-
     throw std::out_of_range("TimeSeriesSet: Series name not found: " + name);
 }
 
@@ -310,7 +391,6 @@ const TimeSeries<T>& TimeSeriesSet<T>::operator[](const std::string& name) const
     }
     throw std::out_of_range("TimeSeriesSet::operator[] const: Series name not found: " + name);
 }
-
 
 template<typename T>
 bool TimeSeriesSet<T>::Contains(const std::string& name) const {
@@ -363,13 +443,6 @@ void TimeSeriesSet<T>::knockout(T t) {
     }
 }
 
-/*
-template <typename T>
-void TimeSeriesSet<T>::ResizeIfNeeded(size_t new_size) {
-    for (TimeSeries<T>& ts : *this)
-        ts.adjust_size(new_size);
-}
-*/
 template <typename T>
 void TimeSeriesSet<T>::removeNaNs() {
     for (size_t i = 0; i < this->size(); ++i)
@@ -403,14 +476,13 @@ void TimeSeriesSet<T>::SetAllSeriesSize(int n) {
     for (TimeSeries<T>& ts : *this) {
         ts.resize(n);
     }
-
 }
 
 template <class T>
-bool TimeSeriesSet<T>::SetRow(int i, const T &t, const std::vector<T> &c)
+bool TimeSeriesSet<T>::SetRow(int i, const T& t, const std::vector<T>& c)
 {
     bool res = true;
-    for (int j=0; j<std::min(int(c.size()), int(this->size())); j++)
+    for (int j = 0; j < std::min(int(c.size()), int(this->size())); j++)
     {
         res &= this->at(j).setValue(i, c[j]);
         res &= this->at(j).setTime(i, t);
@@ -435,7 +507,6 @@ size_t TimeSeriesSet<T>::pointCount(int series_index) const {
     return this->at(series_index).size();
 }
 
-
 template<typename T>
 void TimeSeriesSet<T>::appendtofile(const std::string& filename, bool include_time) const {
     std::ofstream file(filename, std::ios::app);
@@ -448,7 +519,6 @@ void TimeSeriesSet<T>::appendtofile(const std::string& filename, bool include_ti
         for (size_t i = 0; i < this->size(); ++i) {
             const auto& ts = (*this)[i];
             if (j < ts.size()) {
-                // Format only the time with 3 decimal digits
                 std::ostringstream time_str;
                 time_str << std::fixed << std::setprecision(3) << ts.getTime(j);
                 file << time_str.str() << "," << ts.getValue(j);
@@ -472,7 +542,6 @@ int TimeSeriesSet<T>::maxnumpoints() const {
     }
     return max_points;
 }
-
 
 template<typename T>
 bool TimeSeriesSet<T>::append(const TimeSeries<T>& ts, const std::string& name) {
@@ -531,13 +600,11 @@ TimeSeriesSet<T> TimeSeriesSet<T>::extract(T t1, T t2) const {
     TimeSeriesSet<T> result;
     result.reserve(this->size());
 
-    // Extract each TimeSeries in the set
     for (const auto& ts : *this) {
         TimeSeries<T> extracted_ts = ts.extract(t1, t2);
         result.push_back(extracted_ts);
     }
 
-    // Preserve metadata
     result.name = this->name;
     result.unif = this->unif;
 
@@ -591,6 +658,7 @@ std::vector<T> TimeSeriesSet<T>::getrow(int index) const {
 
     return row;
 }
+
 template<typename T>
 std::vector<T> TimeSeriesSet<T>::percentile(T p) const {
     std::vector<T> result;
@@ -659,7 +727,7 @@ std::vector<T> TimeSeriesSet<T>::min(int start_item) const {
     std::vector<T> result;
     for (const TimeSeries<T>& ts : *this) {
         T val = std::numeric_limits<T>::max();
-        for (size_t i = start_item; i < ts.size(); ++i)
+        for (size_t i = (size_t)std::max(0, start_item); i < ts.size(); ++i)
             val = std::min(val, ts[i].c);
         result.push_back(val);
     }
@@ -671,7 +739,7 @@ std::vector<T> TimeSeriesSet<T>::max(int start_item) const {
     std::vector<T> result;
     for (const TimeSeries<T>& ts : *this) {
         T val = std::numeric_limits<T>::lowest();
-        for (size_t i = start_item; i < ts.size(); ++i)
+        for (size_t i = (size_t)std::max(0, start_item); i < ts.size(); ++i)
             val = std::max(val, ts[i].c);
         result.push_back(val);
     }
@@ -797,7 +865,6 @@ TimeSeries<T> TimeSeriesSet<T>::add_mult(const std::vector<int>& indices, const 
     return result;
 }
 
-
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::divide(int numerator_index, int denominator_index) const {
     const auto& num = this->at(numerator_index);
@@ -834,7 +901,6 @@ TimeSeriesSet<T> TimeSeriesSet<T>::getpercentiles(const std::vector<T>& percents
     if (this->empty())
         return result;
 
-    // Set names: first is "Mean", then percentiles
     result[0].setName("Mean");
     for (size_t j = 0; j < percents.size(); ++j) {
         std::string label = std::to_string(percents[j] * 100) + " %";
@@ -864,7 +930,6 @@ TimeSeriesSet<T> TimeSeriesSet<T>::getpercentiles(const std::vector<T>& percents
         for (size_t j = 0; j < percents.size(); ++j)
             row[j + 1] = percentile_vals[j];
 
-        // Use time from the first time series (if available)
         T time = (i < (*this)[0].size()) ? (*this)[0].getTime(i) : T(i);
         result.append(time, row);
     }
@@ -872,13 +937,12 @@ TimeSeriesSet<T> TimeSeriesSet<T>::getpercentiles(const std::vector<T>& percents
     return result;
 }
 
-
 template<typename T>
 TimeSeriesSet<T> TimeSeriesSet<T>::distribution(int n_bins, int start_index, int end_index) const {
 
     TimeSeriesSet<T> result;
     for (const TimeSeries<T>& ts : *this) {
-        int _end_index = ts.size();
+        int _end_index = (int)ts.size();
         if (end_index != -1)
             _end_index = end_index;
         TimeSeries<T> dist_ts(n_bins + 2);
@@ -888,14 +952,15 @@ TimeSeriesSet<T> TimeSeriesSet<T>::distribution(int n_bins, int start_index, int
                 segment.push_back(ts.getValue(i));
             }
             T p_start = *std::min_element(segment.begin(), segment.end());
-            T p_end = *std::max_element(segment.begin(), segment.end()) * 1.001;
-            T dp = std::abs(p_end - p_start) / n_bins;
+            T p_end = *std::max_element(segment.begin(), segment.end()) * (T)1.001;
+            T dp = std::abs(p_end - p_start) / (T)n_bins;
             if (dp == 0) {
+                dist_ts.setName(ts.name());
                 result.push_back(dist_ts);
                 continue;
             }
 
-            dist_ts[0].t = p_start - dp / 2;
+            dist_ts[0].t = p_start - dp / (T)2;
             dist_ts[0].c = 0;
             for (int i = 0; i < n_bins + 1; ++i) {
                 dist_ts[i + 1].t = dist_ts[i].t + dp;
@@ -905,7 +970,7 @@ TimeSeriesSet<T> TimeSeriesSet<T>::distribution(int n_bins, int start_index, int
             for (T value : segment) {
                 int bin = int((value - p_start) / dp) + 1;
                 if (bin >= 0 && bin < static_cast<int>(dist_ts.size())) {
-                    dist_ts[bin].c += 1.0 / segment.size() / dp;
+                    dist_ts[bin].c += (T)1.0 / (T)segment.size() / dp;
                 }
             }
         }
@@ -920,27 +985,23 @@ TimeSeriesSet<T> TimeSeriesSet<T>::distributionLog(int n_bins, int start_index, 
     TimeSeriesSet<T> result;
 
     for (const TimeSeries<T>& ts : *this) {
-        int _end_index = ts.size();
+        int _end_index = (int)ts.size();
         if (end_index != -1)
             _end_index = end_index;
 
         TimeSeries<T> dist_ts(n_bins + 2);
 
         if (ts.size() > static_cast<size_t>(start_index) && ts.size() >= static_cast<size_t>(_end_index)) {
-            // Collect segment data
             std::vector<T> segment;
             for (int i = start_index; i <= _end_index && i < static_cast<int>(ts.size()); ++i) {
                 segment.push_back(ts.getValue(i));
             }
 
-            // Find min and max
             T p_start = *std::min_element(segment.begin(), segment.end());
             T p_end = *std::max_element(segment.begin(), segment.end());
 
-            // Handle edge cases
             if (p_start <= 0) {
-                // Shift values to make them positive for log scale
-                T offset = -p_start + 1e-10;
+                T offset = -p_start + (T)1e-10;
                 p_start += offset;
                 p_end += offset;
                 for (auto& val : segment) {
@@ -949,37 +1010,33 @@ TimeSeriesSet<T> TimeSeriesSet<T>::distributionLog(int n_bins, int start_index, 
             }
 
             if (p_start == p_end) {
+                dist_ts.setName(ts.name());
                 result.push_back(dist_ts);
                 continue;
             }
 
-            // Create logarithmic bins
             T log_start = std::log(p_start);
-            T log_end = std::log(p_end * 1.001);  // Slight extension
-            T d_log = (log_end - log_start) / n_bins;
+            T log_end = std::log(p_end * (T)1.001);
+            T d_log = (log_end - log_start) / (T)n_bins;
 
-            // Initialize bins with logarithmic spacing
-            dist_ts[0].t = std::exp(log_start - d_log / 2);
+            dist_ts[0].t = std::exp(log_start - d_log / (T)2);
             dist_ts[0].c = 0;
 
             for (int i = 0; i < n_bins + 1; ++i) {
-                dist_ts[i + 1].t = std::exp(log_start + (i + 0.5) * d_log);
+                dist_ts[i + 1].t = std::exp(log_start + ((T)i + (T)0.5) * d_log);
                 dist_ts[i + 1].c = 0;
             }
 
-            // Count values in each bin
             for (T value : segment) {
                 T log_value = std::log(value);
                 int bin = static_cast<int>((log_value - log_start) / d_log) + 1;
 
                 if (bin >= 1 && bin < static_cast<int>(dist_ts.size())) {
-                    // Calculate bin width in linear space for proper normalization
-                    T bin_left = std::exp(log_start + (bin - 1) * d_log);
-                    T bin_right = std::exp(log_start + bin * d_log);
+                    T bin_left = std::exp(log_start + (T)(bin - 1) * d_log);
+                    T bin_right = std::exp(log_start + (T)bin * d_log);
                     T bin_width = bin_right - bin_left;
 
-                    // Normalize by bin width and total count to ensure area = 1
-                    dist_ts[bin].c += 1.0 / (segment.size() * bin_width);
+                    dist_ts[bin].c += (T)1.0 / ((T)segment.size() * bin_width);
                 }
             }
         }
@@ -1045,14 +1102,10 @@ TimeSeriesSet<T> TimeSeriesSet<T>::derivative() const {
 
     for (const TimeSeries<T>& ts : *this) {
         TimeSeries<T> d = ts.derivative();
-
-        // Preserve the series label (this is the whole point)
         d.setName(ts.name());
-
         result.push_back(std::move(d));
     }
 
-    // Preserve optional metadata if you use it
     result.name = this->name;
     result.unif = this->unif;
 
@@ -1175,8 +1228,6 @@ T diff(TimeSeriesSet<T> A, TimeSeriesSet<T> B) {
     return total_diff;
 }
 
-// Helper function: Merge two TimeSeriesSets
-
 template<class T>
 TimeSeriesSet<T> merge(TimeSeriesSet<T> A, const TimeSeriesSet<T>& B) {
     if (A.size() != B.size()) {
@@ -1198,13 +1249,11 @@ TimeSeriesSet<T> merge(std::vector<TimeSeriesSet<T>>& sets) {
     TimeSeriesSet<T> merged;
     size_t num_series = sets[0].size();
 
-    // Ensure all sets have the same number of series
     for (size_t i = 1; i < sets.size(); ++i) {
         if (sets[i].size() != num_series)
             throw std::runtime_error("All TimeSeriesSets must have the same number of series to merge.");
     }
 
-    // Copy the series names from the first set
     for (size_t i = 0; i < num_series; ++i) {
         TimeSeries<T> combined;
         std::string name = sets[0][i].name();
@@ -1232,19 +1281,15 @@ TimeSeriesSet<T> operator*(const TimeSeriesSet<T>& set, const T& scalar) {
     return result;
 }
 
-// Compute norm2 difference between aligned sets
-
 template<class T>
 CVector norm2dif(TimeSeriesSet<T>& A, TimeSeriesSet<T>& B) {
     if (A.size() != B.size()) throw std::runtime_error("norm2dif: TimeSeriesSet sizes do not match");
-    CVector diff(A.size());
+    CVector diffv(A.size());
     for (size_t i = 0; i < A.size(); ++i) {
-        diff[i] = norm2(A[i] - B[i]);
+        diffv[i] = norm2(A[i] - B[i]);
     }
-    return diff;
+    return diffv;
 }
-
-// Sum of interpolated values across aligned sets at given time
 
 template<class T>
 CVector sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, double t) {
@@ -1263,7 +1308,7 @@ CVector sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, double t) {
 // Returns the maximum value across all time series
 template <class T>
 T TimeSeriesSet<T>::maxval() const {
-    T max_val = -1e12;
+    T max_val = (T)-1e12;
     for (size_t i = 0; i < this->size(); ++i)
         max_val = std::max((*this)[i].maxC(), max_val);
     return max_val;
@@ -1272,7 +1317,7 @@ T TimeSeriesSet<T>::maxval() const {
 // Returns the minimum value across all time series
 template <class T>
 T TimeSeriesSet<T>::minval() const {
-    T min_val = 1e12;
+    T min_val = (T)1e12;
     for (size_t i = 0; i < this->size(); ++i)
         min_val = std::min((*this)[i].minC(), min_val);
     return min_val;
@@ -1281,7 +1326,7 @@ T TimeSeriesSet<T>::minval() const {
 // Returns the minimum timestamp across all time series
 template <class T>
 T TimeSeriesSet<T>::mintime() const {
-    T min_time = 1e12;
+    T min_time = (T)1e12;
     for (size_t i = 0; i < this->size(); ++i)
         min_time = std::min((*this)[i].mint(), min_time);
     return min_time;
@@ -1290,25 +1335,89 @@ T TimeSeriesSet<T>::mintime() const {
 // Returns the maximum timestamp across all time series
 template <class T>
 T TimeSeriesSet<T>::maxtime() const {
-    T max_time = -1e12;
+    T max_time = (T)-1e12;
     for (size_t i = 0; i < this->size(); ++i)
         max_time = std::max((*this)[i].maxt(), max_time);
     return max_time;
 }
 
+
+// ============================================================
 // Timeseriesset mean as a single Timeseries
+//   - mean_ts(...)          : default = ROBUST (longest-grid mean, NO extrapolation)
+//   - mean_ts_union(...)    : UNION of timestamps (interpolates only, NO extrapolation)
+//   - mean_ts_grid(...)     : UNIFORM GRID via streaming interpolation (NO extrapolation)
+//   - mean_ts_longest(...)  : LONGEST series time grid (NO extrapolation)
+//
+// NEW (multi-column realizations use-case):
+//   - mean_ts_longest_cols(...) : Mean TimeSeriesSet over realizations, per column,
+//                                each column uses its own longest-grid mean
+//                                => each column can have its own t_end.
+// ============================================================
+
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item) const
 {
-    if (this->empty()) return TimeSeries<T>();
+    // Default robust mean: use the longest time-grid and skip series that
+    // cannot bracket the requested time (NO extrapolation).
+    return this->mean_ts_longest(start_item);
+}
 
-    TimeSeries<T> out = (*this)[0]/double(this->size());
-    const size_t max_points = this->maxnumpoints();
-    out.reserve(max_points);
+// -----------------------------------------------------------------------------
+// UNION-OF-TIMESTAMPS mean (robust; NO extrapolation)
+// -----------------------------------------------------------------------------
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item, T time_merge_tol) const
+{
+    TimeSeries<T> out;
+    if (this->empty()) return out;
 
-    for (size_t j = 1; j < this->size(); ++j) {
-         const TimeSeries<double>& ts = (*this)[(int)j];
-         out+= ts/double(this->size());
+    std::vector<T> all_t;
+    all_t.reserve(4096);
+
+    for (const auto& ts : *this) {
+        const int n = (int)ts.size();
+        for (int i = std::max(0, start_item); i < n; ++i) {
+            all_t.push_back((T)ts.getTime(i));
+        }
+    }
+    if (all_t.empty()) return out;
+
+    std::sort(all_t.begin(), all_t.end());
+
+    std::vector<T> ut;
+    ut.reserve(all_t.size());
+    ut.push_back(all_t[0]);
+    for (size_t i = 1; i < all_t.size(); ++i) {
+        if (std::abs(all_t[i] - ut.back()) > time_merge_tol) ut.push_back(all_t[i]);
+    }
+
+    out.reserve(ut.size());
+
+    for (T t : ut) {
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (const auto& ts : *this) {
+            if (ts.size() < 2) continue;
+
+            const int s = std::max(0, start_item);
+            if ((int)ts.size() - s < 2) continue;
+
+            const T t0 = (T)ts.getTime(s);
+            const T t1 = (T)ts.getTime((int)ts.size() - 1);
+
+            // STRICT support check: NO tolerance that expands range (prevents extrapolation)
+            if (t < t0 || t > t1) continue;
+
+            const T v = ts.interpol(t); // should interpolate inside support
+            if (std::isfinite((double)v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
+        }
+
+        if (cnt > 0) out.append((double)t, (T)(sum / (long double)cnt));
     }
 
     out.setName("Mean");
@@ -1339,7 +1448,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item, const std::vector<int>& 
         for (int idx : indices) {
             const auto& ts = (*this)[idx];
             if (i < ts.size()) {
-                sum += (long double)ts.getValue(i);
+                sum += (long double)ts.getValue((int)i);
                 ++count;
             }
         }
@@ -1347,7 +1456,7 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item, const std::vector<int>& 
         if (count == 0) continue;
 
         const auto& ref = (*this)[indices[0]];
-        T t = (i < ref.size()) ? ref.getTime(i) : (T)i;
+        T t = (i < ref.size()) ? ref.getTime((int)i) : (T)i;
         T m = (T)(sum / (long double)count);
 
         out.append(t, m);
@@ -1357,6 +1466,534 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts(int start_item, const std::vector<int>& 
     return out;
 }
 
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_union(int start_item,
+                                             const std::vector<int>& indices,
+                                             T time_merge_tol) const
+{
+    TimeSeries<T> out;
+    if (indices.empty()) return out;
+
+    std::vector<T> all_t;
+    all_t.reserve(4096);
+
+    for (int idx : indices) {
+        if (idx < 0 || (size_t)idx >= this->size())
+            throw std::out_of_range("mean_ts_union(indices): index out of range");
+
+        const auto& ts = (*this)[idx];
+        const int n = (int)ts.size();
+        for (int i = std::max(0, start_item); i < n; ++i) {
+            all_t.push_back((T)ts.getTime(i));
+        }
+    }
+    if (all_t.empty()) return out;
+
+    std::sort(all_t.begin(), all_t.end());
+
+    std::vector<T> ut;
+    ut.reserve(all_t.size());
+    ut.push_back(all_t[0]);
+    for (size_t i = 1; i < all_t.size(); ++i) {
+        if (std::abs(all_t[i] - ut.back()) > time_merge_tol) ut.push_back(all_t[i]);
+    }
+
+    out.reserve(ut.size());
+
+    for (T t : ut) {
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (int idx : indices) {
+            const auto& ts = (*this)[idx];
+            if (ts.size() < 2) continue;
+
+            const int s = std::max(0, start_item);
+            if ((int)ts.size() - s < 2) continue;
+
+            const T t0 = (T)ts.getTime(s);
+            const T t1 = (T)ts.getTime((int)ts.size() - 1);
+
+            // STRICT: NO extrapolation
+            if (t < t0 || t > t1) continue;
+
+            const T v = ts.interpol(t);
+            if (std::isfinite((double)v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
+        }
+
+        if (cnt > 0) out.append((double)t, (T)(sum / (long double)cnt));
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+// -----------------------------------------------------------------------------
+// ✅ mean_ts_grid (uniform grid, streaming interpolation; NO extrapolation)
+//   - time_eps is used ONLY for floating comparisons / cursor advance,
+//     NOT for expanding bracket ranges.
+// -----------------------------------------------------------------------------
+
+namespace {
+template <typename T>
+static inline bool ts_has_data_from(const TimeSeries<T>& ts, int start_item)
+{
+    const int n = (int)ts.size();
+    return (n >= 2 && start_item < n - 1);
+}
+} // anonymous
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
+                                            int start_item,
+                                            MeanGridMode mode,
+                                            T time_eps) const
+{
+    std::vector<int> indices;
+    indices.reserve(this->size());
+    for (int i = 0; i < (int)this->size(); ++i) indices.push_back(i);
+    return mean_ts_grid(dt, start_item, indices, mode, time_eps);
+}
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_grid(T dt,
+                                            int start_item,
+                                            const std::vector<int>& indices,
+                                            MeanGridMode mode,
+                                            T time_eps) const
+{
+    TimeSeries<T> out;
+    if (indices.empty()) return out;
+    if ((double)dt <= 0.0) throw std::invalid_argument("mean_ts_grid: dt must be > 0");
+
+    // Collect valid series
+    std::vector<int> valid;
+    valid.reserve(indices.size());
+
+    for (int idx : indices) {
+        if (idx < 0 || (size_t)idx >= this->size())
+            throw std::out_of_range("mean_ts_grid: index out of range");
+
+        const auto& ts = (*this)[idx];
+        if (ts_has_data_from(ts, start_item)) valid.push_back(idx);
+    }
+    if (valid.empty()) return out;
+
+    // Compute t_start / t_end depending on mode
+    double t_start = 0.0;
+    double t_end   = 0.0;
+
+    if (mode == MeanGridMode::Intersection) {
+        t_start = -std::numeric_limits<double>::infinity();
+        t_end   =  std::numeric_limits<double>::infinity();
+
+        for (int idx : valid) {
+            const auto& ts = (*this)[idx];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double a = (double)ts.getTime(s);
+            const double b = (double)ts.getTime(n - 1);
+
+            t_start = std::max(t_start, a);
+            t_end   = std::min(t_end,   b);
+        }
+    } else { // UnionAvailable
+        t_start =  std::numeric_limits<double>::infinity();
+        t_end   = -std::numeric_limits<double>::infinity();
+
+        for (int idx : valid) {
+            const auto& ts = (*this)[idx];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double a = (double)ts.getTime(s);
+            const double b = (double)ts.getTime(n - 1);
+
+            t_start = std::min(t_start, a);
+            t_end   = std::max(t_end,   b);
+        }
+    }
+
+    if (!(t_end > t_start)) return out;
+
+    const double eps = (double)time_eps;
+
+    // Number of grid points
+    const int64_t N = (int64_t)std::floor((t_end - t_start) / (double)dt + 1.0 + 1e-12);
+    if (N <= 0) return out;
+
+    out.reserve((size_t)N);
+
+    // Streaming cursor per series
+    std::vector<int> k(valid.size(), 0);
+
+    // Initialize k to start_item (bounded)
+    for (size_t j = 0; j < valid.size(); ++j) {
+        const auto& ts = (*this)[valid[j]];
+        const int n = (int)ts.size();
+        k[j] = std::max(0, std::min(start_item, n - 2)); // must have k+1 valid
+    }
+
+    for (int64_t i = 0; i < N; ++i) {
+        const double tt = t_start + (double)i * (double)dt;
+        if (tt > t_end + 1e-12) break;
+
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (size_t j = 0; j < valid.size(); ++j) {
+            const auto& ts = (*this)[valid[j]];
+            const int n = (int)ts.size();
+
+            const int s = std::max(0, start_item);
+            const double tmin = (double)ts.getTime(s);
+            const double tmax = (double)ts.getTime(n - 1);
+
+            // STRICT support check: NO range expansion (prevents extrapolation)
+            if (tt < tmin || tt > tmax) {
+                if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
+                continue;
+            }
+
+            int& kk = k[j];
+            if (kk < s) kk = s;
+            if (kk > n - 2) kk = n - 2;
+
+            // Advance cursor (eps only for numerical stability)
+            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) ++kk;
+
+            const double t0 = (double)ts.getTime(kk);
+            const double t1 = (double)ts.getTime(kk + 1);
+
+            // STRICT bracket containment (NO extrapolation). eps only to accept near-equality.
+            if (tt < t0 - eps || tt > t1 + eps) {
+                if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
+                continue;
+            }
+
+            const double v0 = (double)ts.getValue(kk);
+            const double v1 = (double)ts.getValue(kk + 1);
+
+            double v = v0;
+            const double denom = (t1 - t0);
+            if (denom != 0.0) {
+                double a = (tt - t0) / denom;
+                // Clamp a to [0,1] to eliminate any residual extrapolation from fp noise
+                if (a < 0.0) a = 0.0;
+                if (a > 1.0) a = 1.0;
+                v = (1.0 - a) * v0 + a * v1;
+            }
+
+            if (std::isfinite(v)) {
+                sum += (long double)v;
+                ++cnt;
+            } else {
+                if (mode == MeanGridMode::Intersection) { cnt = -999999; break; }
+            }
+        }
+
+        if (cnt <= 0) continue;
+        if (cnt == -999999) break;
+
+        out.append((T)tt, (T)(sum / (long double)cnt));
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+// -----------------------------------------------------------------------------
+// ✅ mean_ts_longest (LONGEST series time grid, skip missing series; NO extrapolation)
+// -----------------------------------------------------------------------------
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) const
+{
+    TimeSeries<T> out;
+    if (this->empty()) return out;
+
+    // Pick reference = longest usable series
+    int ref = -1;
+    int best_n = -1;
+    for (int i = 0; i < (int)this->size(); ++i) {
+        const auto& ts = (*this)[i];
+        if (!ts_has_data_from(ts, start_item)) continue;
+        const int n = (int)ts.size();
+        if (n > best_n) { best_n = n; ref = i; }
+    }
+    if (ref < 0) return out;
+
+    const auto& ref_ts = (*this)[ref];
+    const int nref = (int)ref_ts.size();
+    const int sref = std::max(0, start_item);
+    if (nref - sref < 2) return out;
+
+    // Valid series list
+    std::vector<int> valid;
+    valid.reserve(this->size());
+    for (int i = 0; i < (int)this->size(); ++i) {
+        if (ts_has_data_from((*this)[i], start_item)) valid.push_back(i);
+    }
+    if (valid.empty()) return out;
+
+    out.reserve((size_t)(nref - sref));
+    const double eps = (double)time_eps;
+
+    // Streaming cursor per series
+    std::vector<int> k(valid.size(), 0);
+    for (size_t j = 0; j < valid.size(); ++j) {
+        const auto& ts = (*this)[valid[j]];
+        const int n = (int)ts.size();
+        k[j] = std::max(0, std::min(start_item, n - 2));
+    }
+
+    for (int i = sref; i < nref; ++i) {
+        const double tt = (double)ref_ts.getTime(i);
+
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (size_t j = 0; j < valid.size(); ++j) {
+            const auto& ts = (*this)[valid[j]];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double tmin = (double)ts.getTime(s);
+            const double tmax = (double)ts.getTime(n - 1);
+
+            // STRICT support (no range expansion)
+            if (tt < tmin || tt > tmax) continue;
+
+            int& kk = k[j];
+            if (kk < s) kk = s;
+            if (kk > n - 2) kk = n - 2;
+
+            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) ++kk;
+
+            const double t0 = (double)ts.getTime(kk);
+            const double t1 = (double)ts.getTime(kk + 1);
+
+            // Strict bracket (eps only for near-equality)
+            if (tt < t0 - eps || tt > t1 + eps) continue;
+
+            const double v0 = (double)ts.getValue(kk);
+            const double v1 = (double)ts.getValue(kk + 1);
+
+            double v = v0;
+            const double denom = (t1 - t0);
+            if (denom != 0.0) {
+                double a = (tt - t0) / denom;
+                // Clamp to eliminate extrap from fp noise
+                if (a < 0.0) a = 0.0;
+                if (a > 1.0) a = 1.0;
+                v = (1.0 - a) * v0 + a * v1;
+            }
+
+            if (std::isfinite(v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
+        }
+
+        if (cnt <= 0) continue;
+        out.append((T)tt, (T)(sum / (long double)cnt));
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+template<typename T>
+TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
+                                                const std::vector<int>& indices,
+                                                T time_eps) const
+{
+    TimeSeries<T> out;
+    if (indices.empty()) return out;
+
+    int ref = -1;
+    int best_n = -1;
+
+    for (int idx : indices) {
+        if (idx < 0 || (size_t)idx >= this->size())
+            throw std::out_of_range("mean_ts_longest(indices): index out of range");
+
+        const auto& ts = (*this)[idx];
+        if (!ts_has_data_from(ts, start_item)) continue;
+
+        const int n = (int)ts.size();
+        if (n > best_n) { best_n = n; ref = idx; }
+    }
+    if (ref < 0) return out;
+
+    const auto& ref_ts = (*this)[ref];
+    const int nref = (int)ref_ts.size();
+    const int sref = std::max(0, start_item);
+    if (nref - sref < 2) return out;
+
+    std::vector<int> valid;
+    valid.reserve(indices.size());
+    for (int idx : indices) {
+        const auto& ts = (*this)[idx];
+        if (ts_has_data_from(ts, start_item)) valid.push_back(idx);
+    }
+    if (valid.empty()) return out;
+
+    out.reserve((size_t)(nref - sref));
+    const double eps = (double)time_eps;
+
+    std::vector<int> k(valid.size(), 0);
+    for (size_t j = 0; j < valid.size(); ++j) {
+        const auto& ts = (*this)[valid[j]];
+        const int n = (int)ts.size();
+        k[j] = std::max(0, std::min(start_item, n - 2));
+    }
+
+    for (int i = sref; i < nref; ++i) {
+        const double tt = (double)ref_ts.getTime(i);
+
+        long double sum = 0.0L;
+        int cnt = 0;
+
+        for (size_t j = 0; j < valid.size(); ++j) {
+            const auto& ts = (*this)[valid[j]];
+            const int n = (int)ts.size();
+            const int s = std::max(0, start_item);
+
+            const double tmin = (double)ts.getTime(s);
+            const double tmax = (double)ts.getTime(n - 1);
+
+            if (tt < tmin || tt > tmax) continue;
+
+            int& kk = k[j];
+            if (kk < s) kk = s;
+            if (kk > n - 2) kk = n - 2;
+
+            while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) ++kk;
+
+            const double t0 = (double)ts.getTime(kk);
+            const double t1 = (double)ts.getTime(kk + 1);
+
+            if (tt < t0 - eps || tt > t1 + eps) continue;
+
+            const double v0 = (double)ts.getValue(kk);
+            const double v1 = (double)ts.getValue(kk + 1);
+
+            double v = v0;
+            const double denom = (t1 - t0);
+            if (denom != 0.0) {
+                double a = (tt - t0) / denom;
+                if (a < 0.0) a = 0.0;
+                if (a > 1.0) a = 1.0;
+                v = (1.0 - a) * v0 + a * v1;
+            }
+
+            if (std::isfinite(v)) {
+                sum += (long double)v;
+                ++cnt;
+            }
+        }
+
+        if (cnt <= 0) continue;
+        out.append((T)tt, (T)(sum / (long double)cnt));
+    }
+
+    out.setName("Mean");
+    return out;
+}
+
+
+// -----------------------------------------------------------------------------
+// ✅ NEW: mean_ts_longest_cols
+//
+// Generic ensemble mean for "vector of TimeSeriesSet<T>".
+//
+// Use when you have an ENSEMBLE of runs/samples/realizations/etc, where each
+// member is a TimeSeriesSet<T> (multi-column), and you want one mean
+// TimeSeriesSet<T> where:
+//
+//   - output has max number of columns across members
+//   - each output column is averaged over members that HAVE that column
+//   - each column uses its OWN "longest time grid" (via mean_ts_longest)
+//   - NO extrapolation (inherits behavior of mean_ts_longest)
+//
+// Example:
+//   std::vector<TimeSeriesSet<double>> ensemble; // each element from a folder/run
+//   TimeSeriesSet<double> mean = mean_ts_longest_cols(ensemble, 0);
+//
+// -----------------------------------------------------------------------------
+
+template<typename T>
+static inline TimeSeriesSet<T>
+mean_ts_longest_cols_impl(const std::vector<TimeSeriesSet<T>>& sets,
+                          int start_item,
+                          T time_eps)
+{
+    TimeSeriesSet<T> out;
+    if (sets.empty()) return out;
+
+    // Max number of columns across members
+    size_t ncols = 0;
+    for (const auto& s : sets) ncols = std::max(ncols, s.size());
+    if (ncols == 0) return out;
+
+    out.resize(ncols);
+
+    // Column naming: take first non-empty name encountered for each column
+    for (size_t c = 0; c < ncols; ++c) {
+        for (const auto& s : sets) {
+            if (c < s.size()) {
+                const std::string nm = s[(int)c].name();
+                if (!nm.empty()) { out[(int)c].setName(nm); break; }
+            }
+        }
+        if (out[(int)c].name().empty())
+            out[(int)c].setName(std::string("Mean_col_") + std::to_string(c));
+    }
+
+    // Per-column mean
+    for (size_t c = 0; c < ncols; ++c) {
+        TimeSeriesSet<T> colset;
+        colset.reserve(sets.size());
+
+        for (const auto& s : sets) {
+            if (c < s.size()) colset.push_back(s[(int)c]);
+        }
+
+        // robust per-series mean using the column's longest grid
+        TimeSeries<T> m = colset.mean_ts_longest(start_item, time_eps);
+
+        if (m.name().empty()) m.setName(out[(int)c].name());
+        out[(int)c] = std::move(m);
+    }
+
+    out.name = "Mean";
+    return out;
+}
+
+// Public overload (NO default args here)
+template<typename T>
+static inline TimeSeriesSet<T>
+mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
+                     int start_item,
+                     T time_eps)
+{
+    return mean_ts_longest_cols_impl(sets, start_item, time_eps);
+}
+
+// Convenience overload: default epsilon ONLY HERE (prevents redeclaration error)
+template<typename T>
+static inline TimeSeriesSet<T>
+mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
+                     int start_item)
+{
+    return mean_ts_longest_cols_impl(sets, start_item, (T)1e-10);
+}
+
 
 #ifdef TORCH_SUPPORT
 template<typename T>
@@ -1364,7 +2001,6 @@ TimeSeriesSet<T> TimeSeriesSet<T>::fromTensor(const torch::Tensor& tensor,
                                               T start_time,
                                               T end_time,
                                               const std::vector<std::string>& series_names) {
-    // Ensure tensor is on CPU for data access
     torch::Tensor cpu_tensor = tensor.to(torch::kCPU);
 
     if (cpu_tensor.dim() != 2) {
@@ -1382,13 +2018,9 @@ TimeSeriesSet<T> TimeSeriesSet<T>::fromTensor(const torch::Tensor& tensor,
         throw std::invalid_argument("Tensor cannot have zero samples");
     }
 
-    // Calculate time step
     T dt = (end_time - start_time) / static_cast<T>(num_samples - 1);
-
-    // Create TimeSeriesSet
     TimeSeriesSet<T> result(static_cast<size_t>(num_series));
 
-    // Set series names
     for (int64_t series_idx = 0; series_idx < num_series; ++series_idx) {
         std::string name;
         if (series_idx < static_cast<int64_t>(series_names.size()) && !series_names[series_idx].empty()) {
@@ -1397,12 +2029,9 @@ TimeSeriesSet<T> TimeSeriesSet<T>::fromTensor(const torch::Tensor& tensor,
             name = "series_" + std::to_string(series_idx);
         }
         result.setSeriesName(static_cast<int>(series_idx), name);
-
-        // Reserve space for efficiency
         result[static_cast<int>(series_idx)].reserve(static_cast<size_t>(num_samples));
     }
 
-    // Fill each TimeSeries with data
     for (int64_t sample_idx = 0; sample_idx < num_samples; ++sample_idx) {
         T current_time = start_time + static_cast<T>(sample_idx) * dt;
 
@@ -1421,13 +2050,12 @@ torch::Tensor TimeSeriesSet<T>::toTensor(bool include_time, torch::Device device
         return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
     }
 
-    // Check that all series have the same number of points
     size_t num_points = (*this)[0].size();
     for (size_t i = 1; i < this->size(); ++i) {
         if ((*this)[i].size() != num_points) {
             throw std::runtime_error("All TimeSeries must have the same number of points. "
                                      "Series 0 has " + std::to_string(num_points) + " points, "
-                                                                    "but series " + std::to_string(i) + " has " +
+                                     "but series " + std::to_string(i) + " has " +
                                      std::to_string((*this)[i].size()) + " points.");
         }
     }
@@ -1436,7 +2064,6 @@ torch::Tensor TimeSeriesSet<T>::toTensor(bool include_time, torch::Device device
         return torch::empty({0}, torch::dtype(torch::kFloat32).device(device));
     }
 
-    // Verify that all series have corresponding time values (optional strict check)
     const auto& reference_series = (*this)[0];
     for (size_t i = 1; i < this->size(); ++i) {
         for (size_t j = 0; j < num_points; ++j) {
@@ -1451,20 +2078,17 @@ torch::Tensor TimeSeriesSet<T>::toTensor(bool include_time, torch::Device device
     int num_series = static_cast<int>(this->size());
     int num_cols = include_time ? num_series + 1 : num_series;
 
-    // Create tensor [num_points, num_series] or [num_points, num_series + 1]
     torch::Tensor tensor = torch::zeros({static_cast<int64_t>(num_points), num_cols},
                                         torch::dtype(torch::kFloat32).device(device));
 
     for (size_t point_idx = 0; point_idx < num_points; ++point_idx) {
         int col_idx = 0;
 
-        // Add time column if requested
         if (include_time) {
             tensor[point_idx][col_idx] = static_cast<float>(reference_series.getTime(point_idx));
             col_idx++;
         }
 
-        // Add all series values
         for (int series_idx = 0; series_idx < num_series; ++series_idx) {
             tensor[point_idx][col_idx] = static_cast<float>((*this)[series_idx].getValue(point_idx));
             col_idx++;
@@ -1486,29 +2110,24 @@ torch::Tensor TimeSeriesSet<T>::toTensorAtIntervals(double t_start, double t_end
         throw std::invalid_argument("Invalid time parameters: dt must be positive and t_end > t_start");
     }
 
-    // Calculate number of time points
     int64_t num_points = static_cast<int64_t>((t_end - t_start) / dt) + 1;
     int num_series = static_cast<int>(this->size());
     int num_cols = include_time ? num_series + 1 : num_series;
 
-    // Create tensor [num_points, num_series] or [num_points, num_series + 1]
     torch::Tensor tensor = torch::zeros({num_points, num_cols},
                                         torch::dtype(torch::kFloat32).device(device));
 
-    // Fill tensor with interpolated values
     for (int64_t point_idx = 0; point_idx < num_points; ++point_idx) {
         double current_time = t_start + point_idx * dt;
-        if (current_time > t_end) current_time = t_end; // Handle floating point precision
+        if (current_time > t_end) current_time = t_end;
 
         int col_idx = 0;
 
-        // Add time column if requested
         if (include_time) {
             tensor[point_idx][col_idx] = static_cast<float>(current_time);
             col_idx++;
         }
 
-        // Add interpolated values for all series
         for (int series_idx = 0; series_idx < num_series; ++series_idx) {
             T interpolated_value = (*this)[series_idx].interpol(static_cast<T>(current_time));
             tensor[point_idx][col_idx] = static_cast<float>(interpolated_value);
@@ -1519,5 +2138,4 @@ torch::Tensor TimeSeriesSet<T>::toTensorAtIntervals(double t_start, double t_end
     return tensor;
 }
 
-#endif //TORCH_SUPPORT
-
+#endif // TORCH_SUPPORT

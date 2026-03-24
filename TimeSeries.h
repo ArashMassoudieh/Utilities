@@ -18,14 +18,15 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <cmath>        // std::log, std::exp, std::fabs
+
 #ifdef GSL
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_multimin.h>
 #include <gsl/gsl_vector.h>
 #endif
+
 #ifdef arma
 #include "armadillo"
 #endif
@@ -41,15 +42,31 @@
 #include <torch/torch.h>
 #endif
 
- /**
-  * @brief Represents a data point in the time series.
-  */
+/**
+ * @brief Represents a data point in the time series.
+ */
 template<typename T>
 struct DataPoint {
     T t;                         ///< Time
     T c;                         ///< Value
     std::optional<T> d;          ///< Duration or distance (optional)
 };
+
+// ============================================================================
+// CTAD FIX for DataPoint{...} usage in TimeSeries.hpp
+// If TimeSeries<T>::log() (or other functions) do:
+//   DataPoint{pt.t, std::log(pt.c), pt.d}
+// the compiler can't deduce template parameter T without a deduction guide.
+// These guides make that code compile without changing TimeSeries.hpp.
+// ============================================================================
+
+// 3-arg construction (matches your failing case: (t, c, optional d))
+template<typename T>
+DataPoint(T, T, std::optional<T>) -> DataPoint<T>;
+
+// 2-arg construction (handy elsewhere)
+template<typename T>
+DataPoint(T, T) -> DataPoint<T>;
 
 /**
  * @brief Generic time series class template for storing and manipulating time-value pairs.
@@ -116,16 +133,16 @@ public:
 
     void clear();                                          ///< Clear all data
     bool resize(unsigned int newSize);                     ///< Resize internal data vectors
-    //void adjust_size(size_t new_size);                     ///< Adjust size to new_size exactly
+    //void adjust_size(size_t new_size);                   ///< Adjust size to new_size exactly
     void setNumPoints(size_t n);                           ///< Resize to n points (alias)
-	void removeNaNs();                                     ///< Remove points with NaN values
-	TimeSeries<T> removeNaNs() const; 				       ///< Return new TimeSeries without NaNs
+    void removeNaNs();                                     ///< Remove points with NaN values
+    TimeSeries<T> removeNaNs() const;                      ///< Return new TimeSeries without NaNs
     void addPoint(T t, T c, std::optional<T> d = std::nullopt); ///< Add new DataPoint
     bool append(T value);                                  ///< Append value at t = 0
     bool append(T t, T c);                                 ///< Append time-value pair
-	void append(const TimeSeries<T>& other);               ///< Append another TimeSeries to the end
+    void append(const TimeSeries<T>& other);               ///< Append another TimeSeries to the end
     void assign_D();                                       ///< Assign durations (d) based on value change intervals
-    
+
     // -------------------------------------------------------------------------
     // Structural Properties
     // -------------------------------------------------------------------------
@@ -133,16 +150,15 @@ public:
     bool isStructured() const {
         return structured_;
     };                                                     ///< Check if series is structured
-	void setStructured(bool structured) {
-		structured_ = structured;
-	}                                                       ///< Set structured status
+    void setStructured(bool structured) {
+        structured_ = structured;
+    }                                                       ///< Set structured status
     void detectStructure();                                ///< Identify if series is regularly spaced
     int Capacity() const;                                  ///< Get internal capacity
 
+    std::vector<T> tToStdVector() const;                   ///< Times to std::vector
+    std::vector<double> ValuesToStdVector() const;         ///< Values to std::vector
 
-    std::vector<T> tToStdVector() const;                    /// < Times to stt::vector
-
-    std::vector<double> ValuesToStdVector() const;           /// < Values to std::vector
     // -------------------------------------------------------------------------
     // File I/O
     // -------------------------------------------------------------------------
@@ -156,7 +172,8 @@ public:
 
     T interpol(const T& x) const;                          ///< Interpolate at x
     T interpol_D(const T& x) const;                        ///< Interpolate duration at x
-    T interpol(const T& x, const TimeSeries<T> &CumulativeDistribution, const double &correlationlength, bool addpoint = false );  ///<Interpolation with Gaussian sequential noise with exponential correlation function
+    T interpol(const T& x, const TimeSeries<T> &CumulativeDistribution,
+               const double &correlationlength, bool addpoint = false ); ///< Interpolation with Gaussian sequential noise (exp corr)
     TimeSeries<T> interpol(const std::vector<T>& x) const; ///< Interpolate over vector
     TimeSeries<T> interpol(const TimeSeries<T>& x) const;  ///< Interpolate over TimeSeries
     TimeSeries<T> interpol(const TimeSeries<T>* x) const;  ///< Interpolate over pointer
@@ -191,12 +208,13 @@ public:
     void setMaxFabs(T val);                                ///< Manually set cached max abs
     T getMaxFabs() const;                                  ///< Access cached max abs
 
-    T fitExponentialDecay() const;                         ///< Fit exponential decay model exp(-x/l) and return characteristic length l
-    T fitGaussianDecay() const;                            ///< Fit Gaussian decay model exp(-x^/l^2s) and return characteristic length l
+    T fitExponentialDecay() const;                         ///< Fit exp(-x/l) and return l
+    T fitGaussianDecay() const;                            ///< Fit exp(-(x/l)^2) and return l
 
 #ifdef GSL
     std::pair<T,T> fitMaternDecay() const;                 ///< Fit Matérn rho(r; nu, ell); returns {nu, ell}
 #endif
+
     // -------------------------------------------------------------------------
     // Transformations
     // -------------------------------------------------------------------------
@@ -210,10 +228,10 @@ public:
     TimeSeries<T> ConvertToRanks() const;                  ///< Map values to empirical ranks
     T Score(const T& val) const;                           ///< Rank score for value
     TimeSeries<T> inverse() const;                         ///< Swaps t and val
-    TimeSeries<T> inverse_cummulative_uniform(int nbins = 100) const;                         ///< Calculates the inverse cummulative uniformaized on the x axis
+    TimeSeries<T> inverse_cummulative_uniform(int nbins = 100) const; ///< Inverse cumulative uniformized on x-axis
     T inverse_CDF(T x) const;                              ///< Extract the value corresponding to the CDF
-#ifdef GSL
 
+#ifdef GSL
     TimeSeries<T> ConvertToNormalScore() const;            ///< Gaussianize using inverse CDF
 #endif
 
@@ -233,10 +251,11 @@ public:
     TimeSeries<T> getcummulative() const;                 ///< Cumulative integral
     TimeSeries<T> GetCummulativeDistribution() const;     ///< Sorted value CDF
     TimeSeries<T> distribution(int n_bins, int start_index) const; ///< Histogram density
-    TimeSeries<T> distributionLog(int n_bins, int start_index) const; ///<Histogram density with Log intervals
+    TimeSeries<T> distributionLog(int n_bins, int start_index) const; ///< Histogram density with Log intervals
+
     // Append operators
-    TimeSeries<T>& operator+=(const TimeSeries<T>& v);   // Add with interpolation
-    TimeSeries<T>& operator%=(const TimeSeries<T>& v);   // Add pointwise (same timestamps)
+    TimeSeries<T>& operator+=(const TimeSeries<T>& v);   ///< Add with interpolation
+    TimeSeries<T>& operator%=(const TimeSeries<T>& v);   ///< Add pointwise (same timestamps)
 
     // Integration
     T integrate() const;
@@ -288,7 +307,8 @@ public:
     TimeSeries<T> MapfromNormalScoreToDistribution(const TimeSeries<double>& distribution);
 #endif
 
-    void CreatePeriodicStepFunction(const T& t_start, const T& t_end, const T& duration, const T& gap, const T& magnitude);
+    void CreatePeriodicStepFunction(const T& t_start, const T& t_end, const T& duration,
+                                    const T& gap, const T& magnitude);
     TimeSeries<T> LogTransformX() const;
 
     // -------------------------------------------------------------------------
@@ -302,120 +322,50 @@ public:
 
     bool fileNotFound = false;
     bool fileNotCorrect = false;
-    void setdt(double dt) {dt_=dt;}
-    double getdt() const {return dt_;}
+    void setdt(double dt) { dt_ = dt; }
+    double getdt() const { return dt_; }
 
 #ifdef TORCH_SUPPORT
-    /**
-     * @brief Convert TimeSeries values to a torch::Tensor for ANN training.
-     * @param include_time If true, returns a 2D tensor with [time, value] pairs.
-     *                     If false, returns a 1D tensor with only values.
-     * @param device Target device for the tensor (CPU, CUDA, etc.)
-     * @return torch::Tensor containing the time series data
-     */
     torch::Tensor toTensor(bool include_time = false,
                            torch::Device device = torch::kCPU) const;
 
-    /**
-     * @brief Convert TimeSeries to a normalized torch::Tensor.
-     * @param include_time If true, includes normalized time values.
-     * @param value_min Minimum value for normalization (uses series min if not provided)
-     * @param value_max Maximum value for normalization (uses series max if not provided)
-     * @param device Target device for the tensor
-     * @return torch::Tensor with values normalized to [0, 1] range
-     */
     torch::Tensor toNormalizedTensor(bool include_time = false,
                                      std::optional<T> value_min = std::nullopt,
                                      std::optional<T> value_max = std::nullopt,
                                      torch::Device device = torch::kCPU) const;
 
-    /**
-     * @brief Convert TimeSeries to a sliding window tensor for sequence modeling.
-     * @param window_size Size of each window
-     * @param stride Step size between windows
-     * @param include_time Whether to include time values in each window
-     * @param device Target device for the tensor
-     * @return torch::Tensor of shape [num_windows, window_size, features]
-     */
     torch::Tensor toSlidingWindowTensor(int window_size,
                                         int stride = 1,
                                         bool include_time = false,
                                         torch::Device device = torch::kCPU) const;
 
-    /**
- * @brief Create a TimeSeries from a torch::Tensor.
- * @param tensor Input tensor (1D for values only, 2D for [time, value] pairs)
- * @param has_time If true, treats 2D tensor as [time, value] pairs
- * @param time_offset Starting time value if tensor contains values only
- * @param time_step Time increment if tensor contains values only
- * @param start_time Optional start time - if not provided, uses entire tensor
- * @param end_time Optional end time - if not provided, uses entire tensor
- * @return TimeSeries constructed from tensor data
- */
     static TimeSeries<T> fromTensor(const torch::Tensor& tensor,
                                     bool has_time = false,
                                     T time_offset = T{0},
                                     T time_step = T{1},
                                     std::optional<T> start_time = std::nullopt,
                                     std::optional<T> end_time = std::nullopt);
-    /**
-     * @brief Generate tensor with interpolated values at specified time intervals.
-     * @param t_start Start time
-     * @param t_end End time
-     * @param dt Time step increment
-     * @param include_time If true, returns [time, value] pairs
-     * @param device Target device for the tensor
-     * @return torch::Tensor with interpolated values at uniform time intervals
-     */
+
     torch::Tensor toTensorAtIntervals(T t_start, T t_end, T dt,
                                       bool include_time = false,
                                       torch::Device device = torch::kCPU) const;
 
-    /**
-     * @brief Generate tensor with interpolated values at specified time points.
-     * @param time_points Vector of time points where values should be interpolated
-     * @param include_time If true, returns [time, value] pairs
-     * @param device Target device for the tensor
-     * @return torch::Tensor with interpolated values at specified times
-     */
     torch::Tensor toTensorAtTimes(const std::vector<T>& time_points,
                                   bool include_time = false,
                                   torch::Device device = torch::kCPU) const;
 
-    /**
-     * @brief Generate normalized tensor with interpolated values at time intervals.
-     * @param t_start Start time
-     * @param t_end End time
-     * @param dt Time step increment
-     * @param include_time If true, includes normalized time values
-     * @param value_min Minimum value for normalization (auto-calculated if not provided)
-     * @param value_max Maximum value for normalization (auto-calculated if not provided)
-     * @param device Target device for the tensor
-     * @return torch::Tensor with normalized interpolated values
-     */
     torch::Tensor toNormalizedTensorAtIntervals(T t_start, T t_end, T dt,
                                                 bool include_time = false,
                                                 std::optional<T> value_min = std::nullopt,
                                                 std::optional<T> value_max = std::nullopt,
                                                 torch::Device device = torch::kCPU) const;
 
-    /**
-     * @brief Generate sliding window tensor from interpolated uniform time grid.
-     * @param t_start Start time
-     * @param t_end End time
-     * @param dt Time step increment
-     * @param window_size Size of each window
-     * @param stride Step size between windows
-     * @param include_time Whether to include time values in each window
-     * @param device Target device for the tensor
-     * @return torch::Tensor of shape [num_windows, window_size, features]
-     */
     torch::Tensor toSlidingWindowTensorAtIntervals(T t_start, T t_end, T dt,
                                                    int window_size, int stride = 1,
                                                    bool include_time = false,
                                                    torch::Device device = torch::kCPU) const;
-
 #endif // TORCH_SUPPORT
+
 private:
     bool structured_ = false;
     T dt_ = 0;
@@ -431,43 +381,24 @@ private:
     gsl_rng* r_ = nullptr;
     void ensureGSLInitialized();
 #endif
-
-
-
-
 };
 
+// ============================================================================
+// Free functions + operators (declarations)
+// ============================================================================
 
-/**
- * @brief Computes the squared L2 norm of a time series (sum of squared values).
- * @param series Input time series.
- * @return Norm squared.
- */
 template<typename T>
 T norm2(const TimeSeries<T>& series);
 
-/**
- * @brief Computes an R²-style correlation using absolute values of signals.
- * @param series1 First time series.
- * @param series2 Second time series.
- * @return R²-style coefficient.
- */
 template<typename T>
 T R2_c(const TimeSeries<T>& series1, const TimeSeries<T>& series2);
 
-/**
- * @brief Returns a copy of the time series with all values clamped below `scalar` raised to `scalar`.
- * @param series Input series.
- * @param scalar Threshold.
- * @return Clamped series.
- */
 template<typename T>
 TimeSeries<T> max(const TimeSeries<T>& series, T scalar);
 
 // Scalar multiplication
 template<typename T>
 TimeSeries<T> operator*(T alpha, const TimeSeries<T>& ts);
-
 
 template<typename T>
 TimeSeries<T> operator*(const TimeSeries<T>& ts, T alpha);
@@ -504,167 +435,18 @@ TimeSeries<T> operator%(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
 template<typename T>
 TimeSeries<T> operator&(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
 
-// --- Scalar Multiplication ---
-/**
-    * @brief Multiplies a scalar with a time series (scalar * series).
-    */
-template<typename T>
-TimeSeries<T> operator*(T alpha, const TimeSeries<T>& ts);
-
-/**
-     * @brief Multiplies a time series with a scalar (series * scalar).
-     */
-template<typename T>
-TimeSeries<T> operator*(const TimeSeries<T>& ts, T alpha);
-
-
-// --- Scalar Division ---
-/**
-     * @brief Divides a time series by a scalar.
-     */
-template<typename T>
-TimeSeries<T> operator/(const TimeSeries<T>& ts, T alpha);
-
-
-// --- Pointwise Division (Interpolated) ---
-/**
-     * @brief Divides one time series by another using interpolation.
-     */
-template<typename T>
-TimeSeries<T> operator/(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-
-// --- Pointwise Subtraction (Interpolated) ---
-/**
-     * @brief Subtracts one time series from another using interpolation.
-     */
-template<typename T>
-TimeSeries<T> operator-(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-
-// --- Pointwise Multiplication (Interpolated) ---
-/**
-     * @brief Multiplies two time series using interpolation.
-     */
-template<typename T>
-TimeSeries<T> operator*(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-
-// --- Subtract Scalar ---
-/**
-     * @brief Subtracts a scalar from all values in the time series.
-     */
-template<typename T>
-TimeSeries<T> operator-(const TimeSeries<T>& ts, T scalar);
-
-
-// --- Pointwise Division (Aligned) ---
-/**
-     * @brief Divides two time series pointwise, assuming aligned time stamps.
-     */
-template<typename T>
-TimeSeries<T> operator%(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-
-// --- Pointwise Addition (Aligned) ---
-/**
-     * @brief Adds two time series pointwise, assuming aligned time stamps.
-     */
-template<typename T>
-TimeSeries<T> operator&(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-/**
- * @brief Pointwise subtraction: time series 1 - interpolated time series 2.
- */
-
-template<typename T>
-TimeSeries<T> operator-(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-/**
- * @brief Pointwise product using interpolation: ts1 * interpol(ts2).
- */
-template<typename T>
-TimeSeries<T> operator*(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-/**
- * @brief Pointwise division using interpolation: ts1 / interpol(ts2).
- */
-template<typename T>
-TimeSeries<T> operator/(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-/**
- * @brief Subtracts a scalar from all values.
- */
-template<typename T>
-TimeSeries<T> operator-(const TimeSeries<T>& ts, T scalar);
-
-/**
- * @brief Multiplies every value in the series by a scalar.
- */
-template<typename T>
-TimeSeries<T> operator*(T scalar, const TimeSeries<T>& ts);
-
-/**
- * @brief Multiplies every value in the series by a scalar (right-hand).
- */
-template<typename T>
-TimeSeries<T> operator*(const TimeSeries<T>& ts, T scalar);
-
-/**
- * @brief Divides every value in the series by a scalar.
- */
-template<typename T>
-TimeSeries<T> operator/(const TimeSeries<T>& ts, T scalar);
-
-/**
- * @brief Element-wise division without interpolation.
- * Assumes aligned timestamps.
- */
-template<typename T>
-TimeSeries<T> operator%(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-/**
- * @brief Element-wise addition without interpolation.
- * Assumes aligned timestamps.
- */
-template<typename T>
-TimeSeries<T> operator&(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-/**
- * @brief Pointwise difference without interpolation (misused '>' for legacy reasons).
- */
+// Pointwise difference without interpolation (misused '>' for legacy reasons).
 template<typename T>
 TimeSeries<T> operator>(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2);
-
-/**
-    * @brief Computes the sum of interpolated values from multiple time series at a given time.
-    * @param series_list Vector of time series.
-    * @param time Target time.
-    * @return Sum of interpolated values.
-    */
 
 template<typename T>
 T sum_interpolate(const std::vector<TimeSeries<T>>& series_list, T time);
 
-
 namespace TimeSeriesMetrics {
-    
-    
-    /**
-     * @brief Computes the empirical percentile of a scalar value in a vector.
-     * @param values Vector of values.
-     * @param x Fraction (0 to 1).
-     * @return Percentile value corresponding to x.
-     */
+
     template<typename T>
     T percentile(const std::vector<T>& values, T x);
 
-    /**
-     * @brief Computes the percentiles at specified quantiles.
-     * @param values Vector of values.
-     * @param fractions Vector of quantile fractions.
-     * @return Vector of values at the given percentiles.
-     */
     template<typename T>
     std::vector<T> percentile(const std::vector<T>& values, const std::vector<T>& fractions);
 
@@ -676,21 +458,12 @@ T percentile(const std::vector<T>& values, T x);
 template<typename T>
 std::vector<T> percentile(const std::vector<T>& values, const std::vector<T>& fractions);
 
-/**
- * @brief Computes the sum of interpolated values across multiple time series at a given time.
- *
- * @param series_list Vector of time series to evaluate.
- * @param time The time at which to interpolate values.
- * @return T The sum of all interpolated values at the specified time.
- */
-template<typename T>
-T sum_interpolate(const std::vector<TimeSeries<T>>& series_list, T time);
-
 template<typename T>
 T Covariance(TimeSeries<T> BTC_p, TimeSeries<T> BTC_d);
 
 template <typename T>
-T covariance_mapped(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2, int start_item = 0, bool sample = false);
+T covariance_mapped(const TimeSeries<T>& ts1, const TimeSeries<T>& ts2,
+                    int start_item = 0, bool sample = false);
 
 inline int sign(double x) {
     return (x > 0) - (x < 0);
