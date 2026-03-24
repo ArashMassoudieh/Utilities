@@ -1,6 +1,11 @@
 #ifndef CDISTRIBUTION_H
 #define CDISTRIBUTION_H
 
+/**
+ * @file Distribution.h
+ * @brief Distribution declarations for PDF/CDF evaluation and random sampling.
+ */
+
 #include<vector>
 #include<string>
 #include "Vector.h"
@@ -24,15 +29,25 @@ class CDistribution
 #endif
 {
 public:
+    /** @name Lifecycle and configuration */
+    ///@{
     CDistribution();
     CDistribution(string name);
 	~CDistribution(void);
     static int NumberOfCoreParameters(string _name);
     bool CreateDistribution(const map<string,string> &Arguments);
+    ///@}
+
+    /** @brief Distribution parameters (interpretation depends on type). */
 	vector<double> params;
+    /** @brief Distribution name (e.g. normal, lognormal, gamma). */
 	string name;
+
+    /** @name Core evaluations */
+    ///@{
 	double evaluate(double x);
 	double evaluate_CDF(double x, bool flux_w = false);
+    ///@}
     static bool HasCommand(const string &cmd);
     vector<string> commands();
     static vector<string> Commands();
@@ -68,8 +83,10 @@ public:
 
 };
 
-//double erf(double x);
-//double erfc(double x);
+/**
+ * @name Free helper functions for distribution sampling and transforms
+ * @{
+ */
 double Gammapdf(double x, double k, double theta);
 double gamma(double x);
 double unitrandom();
@@ -86,4 +103,5 @@ double stdnormal_cdf(double u);
 double unifrandom(double xmin, double xmax);
 double std_normal_phi_inv(const double &u);
 double stdnormal_inv(const double &u);
+/** @} */
 #endif
