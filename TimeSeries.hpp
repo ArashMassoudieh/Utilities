@@ -2118,6 +2118,11 @@ TimeSeries<T> TimeSeries<T>::getcummulative() const {
 }
 
 template<typename T>
+TimeSeries<T> TimeSeries<T>::GetCummulativeDistribution() const {
+    return GetCummulativeDistribution(false);
+}
+
+template<typename T>
 TimeSeries<T> TimeSeries<T>::GetCummulativeDistribution(bool reverse) const {
     std::vector<T> values;
     values.reserve(this->size());

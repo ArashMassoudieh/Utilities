@@ -2,6 +2,12 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+/**
+ * @file Utilities.h
+ * @brief General-purpose helpers for string parsing, numeric conversion,
+ * file I/O helpers, and small math utilities.
+ */
+
 #undef _HAS_STD_BYTE
 
 #include <string>
@@ -34,7 +40,8 @@ struct timezone
 
 namespace aquiutils
 {
-
+    /** @name Lookup and parsing helpers */
+    ///@{
     int lookup(const std::vector<std::string> &s, const std::string &s1);
     int lookup(const std::vector<int> &s, const int &s1);
     int lookup(const std::vector<std::vector<int> > &s, const std::vector<int> &s1);
@@ -57,6 +64,10 @@ namespace aquiutils
     double atof(const std::string &S);
     double atoi(const std::string &S);
     std::string trim(const std::string &s);
+    ///@}
+
+    /** @name Vector/list convenience helpers */
+    ///@{
     void push_back(std::vector<std::string> &s, const std::vector<std::string> &s1);
     bool isnegative(const double &x);
     bool ispositive(const double &x);
@@ -74,12 +85,20 @@ namespace aquiutils
     std::vector<double> ATOF(std::vector<std::string> ii);
     std::string tolower(const std::string &S);
     std::vector<std::string> tolower(const std::vector<std::string> &S);
+    ///@}
+
+    /** @name Output/file helpers */
+    ///@{
     void writeline(std::ofstream& f, std::vector<std::string> s, std::string del=",");
     void writeline(std::ofstream& f, std::vector<std::vector<std::string>> s, std::string del=",", std::string del2="&");
     void writestring(std::ofstream& f, std::string s);
     void writestring(std::string filename, std::string s);
     void writenumber(std::ofstream& f, double s);
     void writeendl(std::ofstream& f);
+    ///@}
+
+    /** @name Numeric helpers */
+    ///@{
     double Heavyside(double x);
     double Pos(double x);
     double Neg(double x);
@@ -103,6 +122,7 @@ namespace aquiutils
     std::string remove_backslash_r(const std::string &ss);
     std::string GetOnlyFileName(const std::string &fullfilename);
     double avg(double x, double y, std::string type="arithmetic");
+    ///@}
     template<class T>
     T randompick(const std::vector<T> &vec)
     {

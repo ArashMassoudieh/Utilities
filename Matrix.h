@@ -1,6 +1,8 @@
-// Matrix.h: interface for the CMatrix class.
-//
-//////////////////////////////////////////////////////////////////////
+/**
+ * @file Matrix.h
+ * @brief Declaration of the CMatrix dense matrix class and matrix free
+ * functions.
+ */
 
 #pragma once
 
@@ -29,11 +31,19 @@ class CMatrix
 {
 friend class D5Matrix;
 private:
+    /** @brief Row count of the matrix. */
 	int numrows;
+    /** @brief Column count of the matrix. */
 	int numcols;
 	int range(int);
 public:
+    /**
+     * @brief Row-major matrix storage where each row is a CVector.
+     */
 	std::vector<CVector> matr;
+
+    /** @name Construction and sizing */
+    ///@{
     CMatrix(int numrows, int numcolumns);
 	CMatrix(int);
     static CMatrix Diag(int n);
@@ -47,6 +57,10 @@ public:
     CMatrix& operator=(mat&);
 #endif
 	CMatrix(const CVector&);
+    ///@}
+
+    /** @name Element access */
+    ///@{
     CVector& operator [](int);
     CVector operator[](int) const;
     double & operator()(int i, int j);
@@ -54,10 +68,15 @@ public:
 	int getnumrows() const;
 	int getnumcols() const;
 	virtual ~CMatrix();
+    ///@}
+
+    /** @name Arithmetic operations */
+    ///@{
 	CMatrix& operator=(const CMatrix&);
 	CMatrix & operator=(const double & m);
 	CMatrix& operator+=(const CMatrix&);
 	CMatrix& operator-=(const CMatrix &);
+    ///@}
 
 	friend CMatrix mult(CMatrix&, CMatrix&);
 	friend CVector mult(CMatrix&, CVector&);
@@ -90,7 +109,7 @@ public:
     CMatrix non_posdef_elems_m(double tol = 1);
     CMatrix Preconditioner(double tol = 1);
     std::vector<std::string> toString(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>()) const;
-	std::vector<std::string> toHtml(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>());
+    std::vector<std::string> toHtml(std::string format = "", std::vector<std::string> columnHeaders = std::vector<std::string>(), std::vector<std::string> rowHeaders = std::vector<std::string>());
     void setnumcolrows();
 	void ScaleDiagonal(double x);
     void setcol(int i,  const CVector &V);
@@ -104,6 +123,10 @@ public:
 
 };
 
+/**
+ * @name Free functions for matrix algebra and normalization
+ * @{
+ */
 double det(const CMatrix &);
 CMatrix Log(const CMatrix &M1);
 CMatrix Exp(const CMatrix &M1);
@@ -146,5 +169,6 @@ CVector normalize_max( const CVector &V, const CMatrix &M2);
 CVector normalize_max( const CVector &V, const CVector &D);
 
 CMatrix Identity(int rows);
+/** @} */
 
 
