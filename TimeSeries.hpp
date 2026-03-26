@@ -2123,6 +2123,11 @@ TimeSeries<T> TimeSeries<T>::GetCummulativeDistribution() const {
 }
 
 template<typename T>
+TimeSeries<T> TimeSeries<T>::GetCummulativeDistribution(bool reverse) {
+    return static_cast<const TimeSeries<T>&>(*this).GetCummulativeDistribution(reverse);
+}
+
+template<typename T>
 TimeSeries<T> TimeSeries<T>::GetCummulativeDistribution(bool reverse) const {
     std::vector<T> values;
     values.reserve(this->size());

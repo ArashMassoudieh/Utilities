@@ -259,6 +259,7 @@ public:
      * @param reverse If true, return exceedance-style ordering.
      * @return TimeSeries containing cumulative probability vs. sorted value.
      */
+    TimeSeries<T> GetCummulativeDistribution(bool reverse);
     TimeSeries<T> GetCummulativeDistribution(bool reverse) const;
     TimeSeries<T> distribution(int n_bins, int start_index) const; ///< Histogram density
     TimeSeries<T> distributionLog(int n_bins, int start_index) const; ///< Histogram density with Log intervals
