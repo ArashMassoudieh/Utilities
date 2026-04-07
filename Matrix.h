@@ -123,6 +123,26 @@ public:
 
 };
 
+class CopulaBinnedMatrix : public CMatrix
+{
+public:
+    CopulaBinnedMatrix();
+    explicit CopulaBinnedMatrix(int nBins);
+
+    void createBins(int nBins);
+    void addUnitPair(double u1, double u2);
+    void accumulateUnitPairs(const std::vector<double> &u1, const std::vector<double> &u2);
+    void normalizeToUnitMass();
+
+    int binCount() const;
+    double totalMass() const;
+
+private:
+    int nBins_;
+    double totalMass_;
+    int unitToBin(double u) const;
+};
+
 /**
  * @name Free functions for matrix algebra and normalization
  * @{

@@ -6,6 +6,7 @@
 #include "math.h"
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #define ARMA_DONT_PRINT_ERRORS
 #ifdef _arma
 #include "armadillo"
@@ -1316,6 +1317,84 @@ void CMatrix::setrow(int j,  const CVector &V)
 {
     for (int i = 0; i < getnumcols(); i++)
         matr[j][i] = V.vec[i];
+}
+
+CopulaBinnedMatrix::CopulaBinnedMatrix()
+    : CMatrix(), nBins_(0), totalMass_(0.0)
+{
+}
+
+CopulaBinnedMatrix::CopulaBinnedMatrix(int nBins)
+    : CMatrix(), nBins_(0), totalMass_(0.0)
+{
+    createBins(nBins);
+}
+
+void CopulaBinnedMatrix::createBins(int nBins)
+{
+    if (nBins <= 0)
+    {
+        Resize(0, 0);
+        nBins_ = 0;
+        totalMass_ = 0.0;
+        return;
+    }
+
+    Resize(nBins, nBins);
+    setval(0.0);
+    nBins_ = nBins;
+    totalMass_ = 0.0;
+}
+
+int CopulaBinnedMatrix::unitToBin(double u) const
+{
+    if (nBins_ <= 0) return 0;
+    if (u <= 0.0) return 0;
+    if (u >= 1.0) return nBins_ - 1;
+
+    int idx = static_cast<int>(std::floor(u * nBins_));
+    if (idx < 0) idx = 0;
+    if (idx >= nBins_) idx = nBins_ - 1;
+    return idx;
+}
+
+void CopulaBinnedMatrix::addUnitPair(double u1, double u2)
+{
+    if (nBins_ <= 0) return;
+
+    const int i = unitToBin(u1);
+    const int j = unitToBin(u2);
+    matr[i][j] += 1.0;
+    totalMass_ += 1.0;
+}
+
+void CopulaBinnedMatrix::accumulateUnitPairs(const std::vector<double> &u1, const std::vector<double> &u2)
+{
+    const size_t count = std::min(u1.size(), u2.size());
+    for (size_t k = 0; k < count; ++k)
+        addUnitPair(u1[k], u2[k]);
+}
+
+void CopulaBinnedMatrix::normalizeToUnitMass()
+{
+    if (totalMass_ <= 0.0) return;
+
+    const double inv = 1.0 / totalMass_;
+    for (int i = 0; i < getnumrows(); ++i)
+        for (int j = 0; j < getnumcols(); ++j)
+            matr[i][j] *= inv;
+
+    totalMass_ = 1.0;
+}
+
+int CopulaBinnedMatrix::binCount() const
+{
+    return nBins_;
+}
+
+double CopulaBinnedMatrix::totalMass() const
+{
+    return totalMass_;
 }
 
 
