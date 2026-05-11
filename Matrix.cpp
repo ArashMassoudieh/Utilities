@@ -1299,6 +1299,17 @@ double & CMatrix::operator()(unsigned int i, unsigned int j)
     return matr[i].vec[j];
 }
 
+double CMatrix::operator()(int i, int j) const
+{
+    return matr[i].vec[j];
+}
+
+double CMatrix::operator()(unsigned int i, unsigned int j) const
+{
+    return matr[i].vec[j];
+}
+
+
 void CMatrix::ScaleDiagonal(double x)
 {
 	for (int i = 0; i < getnumcols(); i++)

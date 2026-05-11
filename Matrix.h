@@ -65,6 +65,8 @@ public:
     CVector operator[](int) const;
     double & operator()(int i, int j);
     double & operator()(unsigned int i, unsigned int j);
+    double   operator()(int i, int j) const;
+    double   operator()(unsigned int i, unsigned int j) const;
 	int getnumrows() const;
 	int getnumcols() const;
 	virtual ~CMatrix();

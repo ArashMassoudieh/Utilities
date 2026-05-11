@@ -1908,7 +1908,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
 
 
 // -----------------------------------------------------------------------------
-// ✅ NEW: mean_ts_longest_cols
 //
 // Generic ensemble mean for "vector of TimeSeriesSet<T>".
 //

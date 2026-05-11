@@ -303,7 +303,6 @@ T sum_interpolate(std::vector<TimeSeriesSet<T>>& sets, T t, std::string name);
 template<class T>
 int max_n_vars(std::vector<TimeSeriesSet<T>>& sets);
 
-// ✅ NEW: mean over ensemble of multi-column TimeSeriesSet<T>
 // Each column is averaged independently using longest-grid logic.
 // Each output column may have its own t_end.
 //
@@ -312,13 +311,9 @@ int max_n_vars(std::vector<TimeSeriesSet<T>>& sets);
 
 // Full overload (NO defaults here)
 template<typename T>
-TimeSeriesSet<T> mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
+static TimeSeriesSet<T> mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
                                       int start_item,
                                       T time_eps);
 
-// Convenience overload (defaults live ONLY here)
-template<typename T>
-TimeSeriesSet<T> mean_ts_longest_cols(const std::vector<TimeSeriesSet<T>>& sets,
-                                      int start_item = 0);
 
 #include "TimeSeriesSet.hpp"
