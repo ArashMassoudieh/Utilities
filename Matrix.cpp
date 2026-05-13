@@ -1445,3 +1445,76 @@ CMatrix CMatrix::readCSV(const std::string &filename)
     return M;
 }
 
+// -----------------------------------------------------------------------
+// CMatrix::sinkhornNormalize
+//
+// Iteratively rescales rows and columns of a non-negative square matrix
+// so that all row sums and column sums equal target_sum. The Sinkhorn-
+// Knopp algorithm alternates between row-normalization and column-
+// normalization; for any non-negative square matrix with full support,
+// it converges geometrically to a doubly-stochastic-up-to-scale matrix.
+//
+// For binned empirical copulas stored as M[i][j] = theta(u_i, u'_j) * du
+// (so each row would integrate to 1 in the absence of sampling noise),
+// the natural target is target_sum = n (= numrows), reflecting that the
+// discrete marginals should be uniform on the n-bin grid.
+//
+// Returns:
+//   true   converged to within tol
+//   false  failed to converge OR encountered a zero row/column
+//          (matrix is left in an intermediate state in the latter case;
+//           in the former it is returned as the best estimate)
+// -----------------------------------------------------------------------
+bool CopulaBinnedMatrix::sinkhornNormalize(int    max_iter,
+                                double tol,
+                                double target_sum)
+{
+    const int n = getnumrows();
+    if (n == 0 || getnumcols() != n) {
+        std::cerr << "[sinkhorn] matrix must be square and non-empty\n";
+        return false;
+    }
+    const double target = (target_sum > 0.0) ? target_sum
+                                             : static_cast<double>(n);
+
+    for (int iter = 0; iter < max_iter; ++iter) {
+        // ---- Row normalization ----
+        for (int i = 0; i < n; ++i) {
+            double rs = 0.0;
+            for (int j = 0; j < n; ++j) rs += (*this)[i][j];
+            if (rs <= 0.0) {
+                std::cerr << "[sinkhorn] zero row sum at row " << i
+                          << " (iter " << iter << ")\n";
+                return false;
+            }
+            const double scale = target / rs;
+            for (int j = 0; j < n; ++j) (*this)[i][j] *= scale;
+        }
+
+        // ---- Column normalization ----
+        for (int j = 0; j < n; ++j) {
+            double cs = 0.0;
+            for (int i = 0; i < n; ++i) cs += (*this)[i][j];
+            if (cs <= 0.0) {
+                std::cerr << "[sinkhorn] zero column sum at col " << j
+                          << " (iter " << iter << ")\n";
+                return false;
+            }
+            const double scale = target / cs;
+            for (int i = 0; i < n; ++i) (*this)[i][j] *= scale;
+        }
+
+        // ---- Convergence check (row sums, since cols are now exact) ----
+        double max_dev = 0.0;
+        for (int i = 0; i < n; ++i) {
+            double rs = 0.0;
+            for (int j = 0; j < n; ++j) rs += (*this)[i][j];
+            const double dev = std::abs(rs - target);
+            if (dev > max_dev) max_dev = dev;
+        }
+        if (max_dev < tol) return true;
+    }
+    std::cerr << "[sinkhorn] did not converge in " << max_iter << " iters\n";
+    return false;
+}
+

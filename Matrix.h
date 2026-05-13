@@ -139,6 +139,15 @@ public:
     int binCount() const;
     double totalMass() const;
 
+    // Iteratively rescale row and column sums until both equal target_sum
+    // (default: number of rows, i.e., the uniform-marginal copula
+    // normalization where each row integrates to 1 with bin width 1/n).
+    // Returns true on convergence, false on max-iter exhaustion or zero
+    // row/column sums.
+    bool sinkhornNormalize(int    max_iter   = 200,
+                           double tol        = 1e-10,
+                           double target_sum = -1.0);
+
 private:
     int nBins_;
     double totalMass_;
