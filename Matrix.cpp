@@ -1409,3 +1409,39 @@ double CopulaBinnedMatrix::totalMass() const
 }
 
 
+CMatrix CMatrix::readCSV(const std::string &filename)
+{
+    std::ifstream file(filename);
+    if (!file.good())
+        throw std::runtime_error("CMatrix::readCSV: cannot open " + filename);
+
+    std::vector<std::vector<double>> rows;
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        std::vector<double> row;
+        std::stringstream ss(line);
+        std::string tok;
+        while (std::getline(ss, tok, ',')) {
+            // trim whitespace
+            size_t a = tok.find_first_not_of(" \t\r\n");
+            size_t b = tok.find_last_not_of(" \t\r\n");
+            if (a == std::string::npos) continue;
+            row.push_back(std::atof(tok.substr(a, b - a + 1).c_str()));
+        }
+        if (!row.empty()) rows.push_back(std::move(row));
+    }
+    if (rows.empty())
+        throw std::runtime_error("CMatrix::readCSV: empty file " + filename);
+
+    const int nr = (int)rows.size();
+    const int nc = (int)rows[0].size();
+    CMatrix M(nr, nc);
+    for (int i = 0; i < nr; ++i) {
+        if ((int)rows[i].size() != nc)
+            throw std::runtime_error("CMatrix::readCSV: ragged rows in " + filename);
+        for (int j = 0; j < nc; ++j) M(i, j) = rows[i][j];
+    }
+    return M;
+}
+

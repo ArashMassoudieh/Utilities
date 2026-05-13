@@ -98,6 +98,7 @@ public:
     void setvaldiag(double a);
     void writetofile(FILE *f);
     void writetofile(std::string filename);
+    static CMatrix readCSV(const std::string &filename);
     double min();
     double max();
     CMatrix abs() const;
