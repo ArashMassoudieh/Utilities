@@ -1726,7 +1726,6 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
         if (n > best_n) { best_n = n; ref = i; }
     }
     if (ref < 0) return out;
-
     const auto& ref_ts = (*this)[ref];
     const int nref = (int)ref_ts.size();
     const int sref = std::max(0, start_item);
@@ -1739,8 +1738,8 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
         if (ts_has_data_from((*this)[i], start_item)) valid.push_back(i);
     }
     if (valid.empty()) return out;
-
     out.reserve((size_t)(nref - sref));
+
     const double eps = (double)time_eps;
 
     // Streaming cursor per series
@@ -1751,32 +1750,28 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
         k[j] = std::max(0, std::min(start_item, n - 2));
     }
 
+    bool seen_full = false;   // have we entered the fully-covered region?
+
     for (int i = sref; i < nref; ++i) {
         const double tt = (double)ref_ts.getTime(i);
-
         long double sum = 0.0L;
         int cnt = 0;
-
         for (size_t j = 0; j < valid.size(); ++j) {
             const auto& ts = (*this)[valid[j]];
             const int n = (int)ts.size();
             const int s = std::max(0, start_item);
-
             const double tmin = (double)ts.getTime(s);
             const double tmax = (double)ts.getTime(n - 1);
-
             // STRICT support (no range expansion)
             if (tt < tmin || tt > tmax) continue;
 
             int& kk = k[j];
             if (kk < s) kk = s;
             if (kk > n - 2) kk = n - 2;
-
             while (kk < n - 2 && (double)ts.getTime(kk + 1) < tt - eps) ++kk;
 
             const double t0 = (double)ts.getTime(kk);
             const double t1 = (double)ts.getTime(kk + 1);
-
             // Strict bracket (eps only for near-equality)
             if (tt < t0 - eps || tt > t1 + eps) continue;
 
@@ -1792,20 +1787,26 @@ TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item, T time_eps) cons
                 if (a > 1.0) a = 1.0;
                 v = (1.0 - a) * v0 + a * v1;
             }
-
             if (std::isfinite(v)) {
                 sum += (long double)v;
                 ++cnt;
             }
         }
-
         if (cnt <= 0) continue;
+
+        // Head: not yet fully covered  -> skip this sample
+        // Tail: previously fully covered, now collapsing -> stop
+        if (cnt < (int)valid.size()) {
+            if (seen_full) break;
+            else            continue;
+        }
+        seen_full = true;
         out.append((T)tt, (T)(sum / (long double)cnt));
     }
-
     out.setName("Mean");
     return out;
 }
+
 
 template<typename T>
 TimeSeries<T> TimeSeriesSet<T>::mean_ts_longest(int start_item,
@@ -1939,7 +1940,6 @@ mean_ts_longest_cols_impl(const std::vector<TimeSeriesSet<T>>& sets,
     size_t ncols = 0;
     for (const auto& s : sets) ncols = std::max(ncols, s.size());
     if (ncols == 0) return out;
-
     out.resize(ncols);
 
     // Column naming: take first non-empty name encountered for each column
@@ -1958,18 +1958,19 @@ mean_ts_longest_cols_impl(const std::vector<TimeSeriesSet<T>>& sets,
     for (size_t c = 0; c < ncols; ++c) {
         TimeSeriesSet<T> colset;
         colset.reserve(sets.size());
-
         for (const auto& s : sets) {
             if (c < s.size()) colset.push_back(s[(int)c]);
         }
-
         // robust per-series mean using the column's longest grid
         TimeSeries<T> m = colset.mean_ts_longest(start_item, time_eps);
 
-        if (m.name().empty()) m.setName(out[(int)c].name());
+        // Preserve the original column name we resolved above.
+        // (mean_ts_longest unconditionally sets the name to "Mean",
+        //  which would otherwise overwrite the per-location label.)
+        const std::string colname = out[(int)c].name();
         out[(int)c] = std::move(m);
+        out[(int)c].setName(colname);
     }
-
     out.name = "Mean";
     return out;
 }
